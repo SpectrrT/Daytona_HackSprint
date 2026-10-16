@@ -33,6 +33,15 @@ function candidate(id: string, parentId?: string): Candidate {
 const failure: FailureEvidence = { id: "public-failure", testId: "simultaneous", testName: "Concurrent count", seed: 42, cycle: 2, expected: 1, actual: 2, summary: "Unit fixture: a simultaneous read/write changed the count.", reproduced: true, trace: [], sequence: [{ reset: true, read: false, write: false, data: 0 }, { reset: false, read: true, write: true, data: 2 }] };
 function result(c: Candidate, regressions = 1): EvaluationResult { return { source: c.source, sourceHash: c.sourceHash, backend: "verilator", cycles: 20, reproduced: false,
   checks: [...["order", "simultaneous", "full-replace", "empty-concurrent", "reset-active", "red-seeded", ...Array.from({ length: regressions }, (_, i) => `regression-${i}`), "agent-red-a"].map((id) => ({ id, name: id, passed: true, hidden: false, cycles: 1, summary: "Unit verifier adapter." })), { id: "held-out", name: "Hidden", passed: true, hidden: true, cycles: 1, summary: "Unit verifier adapter." }] }; }
+test("a public Red attack about held output is not mistaken for the held-out check", async () => {
+  const r = run(), c = candidate("c1"), memory = new LessonMemory(new TestGraph(), writer);
+  const red = { ...failure, id: "red-failure", testId: "agent-red-singleton-stream-with-held-output" };
+  r.regressions = [red];
+  await memory.recordCandidate(r, c);
+  assert.equal((await memory.recordBreach(r, c, red)).status, "proposed");
+  for (const testId of ["held-out", "held_out-2", "hidden"]) await assert.rejects(memory.recordBreach(r, c, { ...red, testId }), /public failures/);
+});
+
 async function proposed() {
   const r = run(), parent = candidate("c1"), child = candidate("c2", "c1"), backend = new TestGraph();
   const memory = new LessonMemory(backend, writer); r.regressions = [structuredClone(failure)];
