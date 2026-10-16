@@ -70,6 +70,7 @@
 .roster-agents{grid-area:agents;display:flex;gap:3px;justify-content:flex-end}
 .agent-pip{display:grid;place-items:center;width:16px;height:16px;border-radius:50%;font-family:'IBM Plex Mono',monospace;font-size:8.5px;font-weight:600;color:#a7ac9f;background:#f1f2ec}
 .agent-pip.blue.done{background:#e3e9f8;color:#4c6bb5}
+.agent-pip.imported{background:transparent;border:1px dashed #c3c7bb;text-decoration:line-through}
 .agent-pip.red.done{background:#f6e7e1;color:#aa624a}
 .agent-pip.busy{animation:pip-pulse 1.1s ease-in-out infinite}
 .agent-pip.blue.busy{color:#4c6bb5}

@@ -10,14 +10,14 @@ import { createServer } from "./server.js";
 const t0 = Date.UTC(2026, 9, 16, 17, 0, 0);
 const agent = (role: "blue" | "red") => ({ role, provider: "codex-cli" as const, model: "gpt-5-codex", startedAt: t0, durationMs: 42_000, inputTokens: 9000, outputTokens: 1200 });
 const c1: Candidate = {
-  id: "c1", generation: 0, label: "circular_fifo", variant: "generated", status: "building", source: "module fifo; endmodule",
+  id: "c1", generation: 0, label: "circular_fifo", variant: "generated", status: "building", source: "",
   checks: [], score: 0, lessons: [], cycles: 0, createdAt: t0,
 };
 const attacks = [{ id: "a1", name: "wrap at full", hypothesis: "Pointer wrap drops the oldest word", sequence: [{ reset: false, write: true, read: false, data: 7 }] }];
 const checks = [{ id: "d1", name: "Directed fill", passed: true, cycles: 40, hidden: false, summary: "ok" }, { id: "h1", name: "Held-out", passed: true, cycles: 90, hidden: true, summary: "ok" }];
 const step = (seq: number, type: EvolutionEvent["type"], message: string, payload?: Candidate) =>
   ({ seq, ts: t0 + seq * 1000, runId: "r1", type, message, ...(payload ? { candidateId: payload.id, payload } : {}) }) as EvolutionEvent;
-const verified: Candidate = { ...c1, status: "verified", agent: agent("blue"), rationale: "Count register keeps full and empty exact.", redAgent: agent("red"), redRationale: "Probing the wrap boundary.", attacks, checks, sourceHash: "ab".repeat(32) };
+const verified: Candidate = { ...c1, source: "module fifo; endmodule", status: "verified", agent: agent("blue"), rationale: "Count register keeps full and empty exact.", redAgent: agent("red"), redRationale: "Probing the wrap boundary.", attacks, checks, sourceHash: "ab".repeat(32) };
 
 const run: EvolutionRun = {
   id: "r1", prompt: "32-entry FIFO", provider: "daytona", status: "completed", contract: { hash: "cd".repeat(32) } as EvolutionRun["contract"],
@@ -26,8 +26,8 @@ const run: EvolutionRun = {
   events: [
     step(1, "run.started", "Run started."),
     step(2, "candidate.created", "Created c1.", c1),
-    step(3, "candidate.updated", "Blue answered.", { ...c1, agent: agent("blue"), rationale: verified.rationale }),
-    step(4, "candidate.updated", "Red answered.", { ...c1, agent: agent("blue"), rationale: verified.rationale, redAgent: agent("red"), redRationale: verified.redRationale, attacks }),
+    step(3, "candidate.updated", "Blue answered.", { ...c1, source: verified.source, agent: agent("blue"), rationale: verified.rationale }),
+    step(4, "candidate.updated", "Red answered.", { ...c1, source: verified.source, agent: agent("blue"), rationale: verified.rationale, redAgent: agent("red"), redRationale: verified.redRationale, attacks }),
     step(5, "candidate.updated", "Testing.", { ...verified, status: "testing", checks: [] }),
     step(6, "candidate.updated", "Verified.", verified),
     step(7, "champion.selected", "c1 is the champion."),
@@ -89,6 +89,17 @@ test("get_agent_transcript filters to one speaker", async () => {
   const out = text(await client.callTool({ name: "get_agent_transcript", arguments: { run_id: "r1", speaker: "red" } }));
   assert.match(out, /Probing the wrap boundary/);
   assert.doesNotMatch(out, /BLUE|VERIFIER/);
+  await client.close();
+});
+
+test("an imported starter is never attributed to Blue", async () => {
+  const starter: Candidate = { ...c1, id: "c1", label: "Imported manual faulty starter", source: "module fifo; endmodule" };
+  const imported = { ...run, id: "r2", events: [{ ...step(1, "candidate.created", "Imported a manual fault-seeded starter. No Blue model invocation is claimed.", starter), runId: "r2" }] };
+  globalThis.fetch = (async () => Response.json(imported)) as typeof fetch;
+  const client = await connect();
+  const out = text(await client.callTool({ name: "get_agent_transcript", arguments: { run_id: "r2" } }));
+  assert.match(out, /LAB +c1 +Imported a manual fault-seeded starter/);
+  assert.doesNotMatch(out, /BLUE/);
   await client.close();
 });
 
