@@ -154,12 +154,24 @@ test("a failed lesson review cannot promote an unreviewed explanation", async ()
   assert.deepEqual(await memory.retrieve(f.r), []);
 });
 
+test("ancestry transfers the invariant while the repair recipe stays on its originating family", async () => {
+  const f = await proposed();
+  const recipe = "Source-specific repair: replace the two competing count assignments in this implementation.";
+  const principle = "When concurrent operations are accepted, their combined state change must match the contract. Audit unrelated rules separately.";
+  const memory = new LessonMemory(f.backend, async input => ({ ...await writer(input), text: recipe, transferText: principle }));
+  await memory.validate(f.r, f.child, result(f.child), ["agent-red-a"]);
+  assert.equal((await memory.retrieve(f.r, ["simultaneous"]))[0]!.text, recipe);
+  assert.equal((await memory.retrieve(f.r, ["empty_boundary"]))[0]!.text, principle);
+  assert.equal((await memory.retrieve(f.r, ["full_boundary"]))[0]!.text, principle);
+  assert.equal((await memory.snapshot(f.r)).nodes.find(n => n.kind === "lesson")!.text, recipe);
+});
+
 test("grounded lessons keep actual repair excerpts and reject invented citations", () => {
   const parent = candidate("parent"), repair = candidate("repair", "parent");
   parent.source = "assign occupancy = wrong_count;";
   repair.source = "assign occupancy = corrected_count;";
   const input = { run: run(), candidate: parent, failure, family: "occupancy" as const, repair };
-  const answer = { text: "Expose the state register used to calculate accepted operations through the occupancy port.", sourceLines: [1], repairLines: [1] };
+  const answer = { text: "Expose the state register used to calculate accepted operations through the occupancy port.", transferText: "Status outputs must reflect the actual committed state; review every contract rule independently.", sourceLines: [1], repairLines: [1] };
   assert.match(groundedLesson(input, answer), /Passing descendant excerpt:\nassign occupancy = corrected_count;/);
   assert.throws(() => groundedLesson(input, { ...answer, sourceLines: [999] }), /citations/);
   assert.throws(() => groundedLesson(input, { ...answer, repairLines: [] }), /citations/);

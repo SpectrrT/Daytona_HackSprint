@@ -77,6 +77,11 @@ it is reviewed again against the actual passing descendant. Exact source
 excerpts are checked against both executed designs and retained in the lesson.
 This grounds the explanation in the repair; it is not formal proof of prose.
 Legacy frozen corpora remain unchanged, including their original limitations.
+New parent-family retrieval transfers a short implementation-independent
+principle. A concrete repair recipe is returned only for its originating family;
+it is not copied onto a sibling architecture. Both forms retain the same
+source-bound supporting evidence. Existing corpora without separate transfer
+text retain their historical retrieval behavior for reproducibility.
 
 Evaluation targets the sibling `empty_boundary` through parent `occupancy`.
 The contract states the empty-boundary requirement for every arm. This is a
