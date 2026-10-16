@@ -87,12 +87,15 @@ test("result preserves measured same-input comparison while excluding capabiliti
   const raw = output(await client.callTool({ name: "get_agent_result", arguments: { run_id: run.id } }));
   const result = JSON.parse(raw);
   assert.equal(result.champion, "c2");
+  assert.equal(result.presentation.status, "success");
   assert.equal(result.candidates[0].origin, "manual fault fixture");
   assert.deepEqual(result.same_input_comparison[0].candidates, [{ candidate: "c1", verdict: "failed" }, { candidate: "c2", verdict: "passed" }]);
   assert.equal(result.candidates[1].sandbox_id, "sandbox-child");
   assert.doesNotMatch(raw, /private-capability|token=|\/private\/|SECRET_HELD_OUT_INPUT/);
   run.status = "failed";
-  assert.equal(JSON.parse(output(await client.callTool({ name: "get_agent_result", arguments: { run_id: run.id } }))).champion, null);
+  const stoppedResult = JSON.parse(output(await client.callTool({ name: "get_agent_result", arguments: { run_id: run.id } })));
+  assert.equal(stoppedResult.champion, null);
+  assert.notEqual(stoppedResult.presentation.status, "success");
   await client.close();
 });
 

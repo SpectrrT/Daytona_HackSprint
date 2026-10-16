@@ -8,6 +8,15 @@ The product's output is a tested design, reproducible failure cases, readable le
 
 ## Use it from Claude
 
+For the recording layout, run `pnpm demo` in a full-screen terminal. Claude stays
+at the top, with separate Blue, Red and Verifier panels below. The panels follow
+real events from runs created after the layout opens, including new Daytona
+sandbox IDs. They do not start extra model jobs or show private model reasoning.
+The final green `SUCCESS | VERIFIED REPAIR` summary requires a completed run,
+a model-written verified champion, and passing checks. Failed and stopped runs
+show no verified result. The verifier panel prints measured regression, fresh
+attack, directed, held-out and useful-task counts.
+
 ```sh
 pnpm install
 # Configure DAYTONA_API_KEY and ANCHOR_API_KEY in .env.

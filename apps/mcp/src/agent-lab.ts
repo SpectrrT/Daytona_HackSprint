@@ -1,6 +1,7 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import type { LabCandidate, LabCheck, LabRun, LabRunSummary } from "@antibody/shared/agent-lab";
+import { demoVerdict } from "@antibody/shared/agent-lab-presentation";
 
 type Request = <T>(path: string, init?: RequestInit) => Promise<T>;
 type QueuedRun = { id: string; status: "queued" };
@@ -36,6 +37,7 @@ export function publicAgentRun(run: LabRun | QueuedRun) {
     reproduced_failures: run.failures.length,
     candidates: run.candidates.map(candidateSummary),
     champion: run.status === "completed" ? run.championId ?? null : null,
+    presentation: demoVerdict(run),
     lessons: run.lessons, error: run.error ?? null,
     measurement: "Finite checks against frozen contracts and synthetic business records; these counts are not an overall security percentage.",
   };
