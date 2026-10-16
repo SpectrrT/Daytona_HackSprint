@@ -1,3 +1,5 @@
+import { runBedrockStructured } from "../agents/bedrock.js";
+import { traced, agentAttributes } from "../telemetry/index.js";
 import { mkdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { randomUUID } from "node:crypto";
@@ -30,7 +32,7 @@ async function invoke<T>(role: "blue" | "red", runId: string, candidateId: strin
   const artifactPath = join(config.DATA_DIR, "software-runs", runId, "agents", `${candidateId}-${role}-${randomUUID()}`);
   await mkdir(artifactPath, { recursive: true, mode: 0o700 });
   const input = { role, artifactPath, binary: config.CODEX_BIN, prompt, schema: outputSchema(schema), timeoutMs: config.AGENT_TIMEOUT_SECONDS * 1000, model: role === "blue" ? config.BLUE_MODEL : config.RED_MODEL, signal };
-  const result = await (config.AGENT_PROVIDER === "anthropic" ? runAnthropicStructured(input) : runCodexWithRetry(input));
+  const result = await traced(role, runId, {"hollow.candidate_id":candidateId,"hollow.provider":config.AGENT_PROVIDER}, () => config.AGENT_PROVIDER === "bedrock" ? runBedrockStructured(input) : config.AGENT_PROVIDER === "anthropic" ? runAnthropicStructured(input) : runCodexWithRetry(input), value => agentAttributes(value.agent));
   const answer = schema.parse(result.answer);
   const validatedPath = result.agent.artifactPath ?? artifactPath;
   await writeFile(join(validatedPath, "answer.json"), JSON.stringify(answer, null, 2), { mode: 0o600 });

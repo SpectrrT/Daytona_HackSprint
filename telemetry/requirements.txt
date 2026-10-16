@@ -1,0 +1,5 @@
+arize==8.59.1
+arize-otel==0.14.1
+opentelemetry-sdk==1.39.0
+opentelemetry-exporter-otlp==1.39.0
+matplotlib==3.11.2

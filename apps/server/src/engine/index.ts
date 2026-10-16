@@ -11,6 +11,7 @@ import { buildBlue, searchRed } from "../agents/index.js";
 import { AgentCallError } from "../agents/codex.js";
 import { validateRtl } from "../lab/validation.js";
 import type { LessonMemory } from "../memory/graph.js";
+import { traced } from "../telemetry/index.js";
 
 export interface EvaluationRequest {
   runId: string; candidateId: string; variant: CandidateVariant; provider: "local" | "daytona";
@@ -127,6 +128,12 @@ export class EvolutionEngine {
   }
 
   private async run(id: string, seed: number, signal: AbortSignal, verification?: RepairVerificationInput): Promise<void> {
+    return traced("run", id, {}, () => this.runUntraced(id, seed, signal, verification), () => {
+      const run = this.store.get(id)!;
+      return { "hollow.run_status": run.status, "hollow.regressions": run.regressions.length, "hollow.cycles": run.budget.usedCycles };
+    });
+  }
+  private async runUntraced(id: string, seed: number, signal: AbortSignal, verification?: RepairVerificationInput): Promise<void> {
     try {
       throwIfStopped(signal);
       if (this.store.get(id)!.recursive) { await this.runRecursive(id, seed, signal, verification!); return; }
@@ -307,7 +314,7 @@ export class EvolutionEngine {
     const run = this.store.get(id)!;
     assertFrozenContract(run.contract);
     const candidateId = `c${run.candidates.length + 1}`;
-    let candidate: Candidate = { id: candidateId, parentId: parent?.id, generation, label: `Blue agent · design ${candidateId}`, variant: "generated", status: "building", source: "", checks: [], score: 0, lessons: this.memory ? (await this.memory.retrieve(run, undefined, signal)).map((lesson) => lesson.text!) : [...new Set(run.candidates.flatMap((c) => c.lessons))], cycles: 0, createdAt: Date.now() };
+    let candidate: Candidate = { id: candidateId, parentId: parent?.id, generation, label: `Blue agent · design ${candidateId}`, variant: "generated", status: "building", source: "", checks: [], score: 0, lessons: config.MEMORY_MODE === "none" || config.MEMORY_MODE === "flat" ? [] : this.memory ? (await this.memory.retrieve(run, undefined, signal)).map((lesson) => lesson.text!) : [...new Set(run.candidates.flatMap((c) => c.lessons))], cycles: 0, createdAt: Date.now() };
     await this.store.emit(id, { type: "candidate.created", candidateId, message: parent ? `Blue is writing repaired child ${candidateId} from ${parent.id}.` : `Blue is writing independent design ${candidateId} from the frozen contract.`, payload: candidate });
     let proposal: Awaited<ReturnType<AgentTeam["buildBlue"]>>;
     try {
@@ -358,7 +365,7 @@ export class EvolutionEngine {
     const accepted = passesAcceptance(result, run.regressions.length, attackIds);
     const reproduced = Boolean(result.failure?.reproduced && result.reproduced);
     const failure = result.failure ? { ...result.failure, reproduced } : undefined;
-    const lesson = !this.memory && reproduced && failure ? lessonFor(failure) : result.buildError ? `Build rejected by the independent lab: ${result.buildError.slice(0, 1800)}` : undefined;
+    const lesson = config.MEMORY_MODE === "graph" && !this.memory && reproduced && failure ? lessonFor(failure) : result.buildError ? `Build rejected by the independent lab: ${result.buildError.slice(0, 1800)}` : undefined;
     candidate = { ...candidate, status: accepted ? "verified" : reproduced || result.buildError ? "failed" : "rejected", checks: result.checks, failure, buildError: result.buildError, score: scoreEvaluation(result), backend: result.backend, sandboxId: result.sandboxId, artifactPath: result.artifactPath, cycles: candidate.cycles + result.cycles, regressionCount: run.regressions.length, lessons: lesson ? [...new Set([...candidate.lessons, lesson])] : candidate.lessons };
     await this.store.emit(id, { type: "candidate.updated", candidateId: candidate.id, message: accepted ? `${candidate.label} passed all hardware, Red-agent and current regression gates.` : result.buildError ? `${candidate.label} failed to build: ${result.buildError}` : `${candidate.label} failed acceptance; no model's self-assessment is used as a verdict.`, payload: candidate });
     if (failure && reproduced) {
