@@ -76,11 +76,12 @@ export function AgentConsole({ run, selectedId, onSelect }: { run: EvolutionRun;
 
 function RosterItem({ candidate: c, champion, active, working, onClick }: { candidate: Candidate; champion: boolean; active: boolean; working?: Speaker; onClick: () => void }) {
   const verdict = c.status === 'verified' ? (champion ? 'champion' : 'verified') : c.status === 'failed' || c.status === 'rejected' ? c.status : 'running';
+  const imported = !c.agent && !!c.source;
   return <button className={`roster-item ${active ? 'active' : ''}`} onClick={onClick}>
     <span className="roster-id">{c.id}</span>
-    <span className="roster-name">{c.label}<small>{c.parentId ? `repair of ${c.parentId}` : `generation ${c.generation}`}</small></span>
+    <span className="roster-name">{c.label}<small>{imported ? 'imported, not written by Blue' : c.parentId ? `repair of ${c.parentId}` : `generation ${c.generation}`}</small></span>
     <span className="roster-agents">
-      <span className={`agent-pip blue ${c.agent ? 'done' : working === 'blue' ? 'busy' : ''}`} title={c.agent ? 'Blue answered' : 'Blue pending'}>B</span>
+      <span className={`agent-pip blue ${imported ? 'imported' : c.agent ? 'done' : working === 'blue' ? 'busy' : ''}`} title={imported ? 'Imported source: no Blue model call' : c.agent ? 'Blue answered' : 'Blue pending'}>B</span>
       <span className={`agent-pip red ${c.attacks?.length ? 'done' : working === 'red' ? 'busy' : ''}`} title={c.attacks?.length ? `Red authored ${c.attacks.length} attacks` : 'Red pending'}>R</span>
     </span>
     <span className={`roster-verdict ${verdict}`}>{verdict === 'champion' || verdict === 'verified' ? <Check size={11}/> : verdict === 'failed' || verdict === 'rejected' ? <X size={11}/> : null}{verdict}</span>

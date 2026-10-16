@@ -70,8 +70,10 @@ export function failureFamily(failure: FailureEvidence): Family {
   if (/output|valid/.test(failure.testId)) return "output_register";
   return "fifo_contract";
 }
+/** Red's attacks (controller-prefixed agent-red-) are public by construction; "held-out" must be a whole word, not "held-output". */
+const privateTest = (testId: string) => !testId.startsWith("agent-red-") && /(^|[^a-z])(held[-_ ]?out|hidden)([^a-z]|$)/i.test(testId);
 function publicFailure(failure: FailureEvidence): void {
-  if (!failure.reproduced || /held[-_ ]?out|hidden/i.test(failure.testId) || !failure.sequence.length) {
+  if (!failure.reproduced || privateTest(failure.testId) || !failure.sequence.length) {
     throw new MemoryError("Only independently reproduced public failures may enter graph memory.");
   }
 }

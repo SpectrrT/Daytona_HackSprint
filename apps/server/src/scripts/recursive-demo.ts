@@ -8,6 +8,7 @@ import { EvolutionEngine } from "../engine/index.js";
 import { createApp } from "../index.js";
 import { configuredMemory } from "../memory/index.js";
 import { RunStore } from "../store.js";
+import { startArizeTracing } from "../telemetry/arize.js";
 
 await requireHardwareSnapshot();
 const memory = configuredMemory();
@@ -15,13 +16,14 @@ await memory?.backend.check();
 // A fresh checkout/data directory owns this controller. Never call the recovery
 // loader against another controller's journal while its agents may be running.
 const store = new RunStore(config.DATA_DIR);
+const tracing = startArizeTracing(store);
 const engine = new EvolutionEngine(store, undefined, undefined, memory);
 const server = serve({ fetch: createApp(store, engine).fetch, port: config.PORT, hostname: "127.0.0.1" });
 let closing = false;
 const shutdown = async () => {
   if (closing) return;
   closing = true;
-  await engine.stopAll(); await store.flush(); server.close();
+  await engine.stopAll(); await store.flush(); await tracing?.shutdown(); server.close();
 };
 process.once("SIGINT", () => { void shutdown(); });
 process.once("SIGTERM", () => { void shutdown(); });

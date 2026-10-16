@@ -59,7 +59,9 @@ export function buildTranscript(run: Pick<EvolutionRun, "events">): TranscriptLi
       case "candidate.created": {
         const c = e.payload as Candidate;
         seen.set(c.id, c);
-        say(e, "blue", c.parentId ? `Writing repaired design ${c.id}, branching from ${c.parentId}.` : `Writing design ${c.id} from the frozen contract.`, { candidateId: c.id, meta: c.label });
+        // Blue's designs start empty; source with no model call is an imported starter, never Blue's work.
+        if (c.source && !c.agent) say(e, "system", e.message, { candidateId: c.id, meta: c.label });
+        else say(e, "blue", c.parentId ? `Writing repaired design ${c.id}, branching from ${c.parentId}.` : `Writing design ${c.id} from the frozen contract.`, { candidateId: c.id, meta: c.label });
         break;
       }
       case "candidate.updated": {
