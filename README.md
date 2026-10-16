@@ -62,6 +62,10 @@ Use the returned URL as `PUBLIC_DASHBOARD_URL` in `.env`, restart the local cont
 
 Preview metadata is stored at `data/runs/<id>/evidence-preview.json`. Signed links expire after six hours, and the preview sandbox auto-stops after 30 idle minutes. Use the scoped cleanup command when it is no longer needed. Browser checks verify the product; the independent hardware verifier controls design acceptance.
 
+## Shared graph memory
+
+Optional SurrealDB Agent Memory integration stores source-bound failures and Blue-written lessons on a run-scoped attack-family graph. A lesson remains proposed until a descendant passes the complete acceptance and regression gate. Only validated parent-family lessons are retrieved for later Blue and Red calls. Read the [memory module guide](apps/server/src/memory/README.md) for configuration, read-only APIs, validation limits and the live graph write/read check. The current controller-owned family hierarchy is not a claim of implemented Red branch mutation.
+
 ## Verify changes
 
 ```sh

@@ -34,6 +34,11 @@ const schema = z.object({
   /** Forks that run at the same time. */
   ROUND_CONCURRENCY: z.coerce.number().int().min(1).max(16).default(4),
 
+  // ---- Run-scoped SurrealDB Agent Memory (optional) ----
+  SURREAL_CONTEXT_URL: optionalString,
+  SURREAL_CONTEXT_ID: optionalString,
+  SURREAL_API_KEY: optionalString,
+
   // ---- Claude ----
   ANTHROPIC_API_KEY: optionalString,
   /** Not read from ANTHROPIC_BASE_URL so a shell's value does not leak in. */

@@ -9,6 +9,7 @@ import { type InitialRun, RunStore, TerminalRunError } from "../store.js";
 import { assertFrozenContract, freezeContract } from "./contract.js";
 import { buildBlue, searchRed } from "../agents/index.js";
 import { validateRtl } from "../lab/validation.js";
+import type { LessonMemory } from "../memory/graph.js";
 
 export interface EvaluationRequest {
   runId: string; candidateId: string; variant: CandidateVariant; provider: "local" | "daytona";
@@ -37,7 +38,7 @@ export class CapacityError extends Error {}
 export class EvolutionEngine {
   private readonly active = new Map<string, ActiveRun>();
   private demoTask?: Promise<EvolutionRun>;
-  constructor(private readonly store: RunStore, private readonly evaluate: Evaluator = evaluateCandidate, private readonly agents: AgentTeam = { buildBlue, searchRed }) {}
+  constructor(private readonly store: RunStore, private readonly evaluate: Evaluator = evaluateCandidate, private readonly agents: AgentTeam = { buildBlue, searchRed }, readonly memory?: LessonMemory) {}
 
   async start(request: CreateRunRequest, id: string = randomUUID()): Promise<string> {
     return this.startRun(request, id);
@@ -223,7 +224,7 @@ export class EvolutionEngine {
     const run = this.store.get(id)!;
     assertFrozenContract(run.contract);
     const candidateId = `c${run.candidates.length + 1}`;
-    let candidate: Candidate = { id: candidateId, parentId: parent?.id, generation, label: `Blue agent · design ${candidateId}`, variant: "generated", status: "building", source: "", checks: [], score: 0, lessons: [...new Set(run.candidates.flatMap((c) => c.lessons))], cycles: 0, createdAt: Date.now() };
+    let candidate: Candidate = { id: candidateId, parentId: parent?.id, generation, label: `Blue agent · design ${candidateId}`, variant: "generated", status: "building", source: "", checks: [], score: 0, lessons: this.memory ? (await this.memory.retrieve(run, undefined, signal)).map((lesson) => lesson.text!) : [...new Set(run.candidates.flatMap((c) => c.lessons))], cycles: 0, createdAt: Date.now() };
     await this.store.emit(id, { type: "candidate.created", candidateId, message: parent ? `Blue is writing repaired child ${candidateId} from ${parent.id}.` : `Blue is writing independent design ${candidateId} from the frozen contract.`, payload: candidate });
     const proposal = await this.agents.buildBlue({ runId: id, candidateId, contract: run.contract, parent, lessons: candidate.lessons, failures: run.regressions, generation, branch, signal });
     throwIfStopped(signal);
@@ -236,7 +237,9 @@ export class EvolutionEngine {
   private async challengeGenerated(id: string, candidate: Candidate, seed: number, signal: AbortSignal, round = 0): Promise<void> {
     throwIfStopped(signal);
     const run = this.store.get(id)!;
-    const red = await this.agents.searchRed({ runId: id, candidateId: candidate.id, contract: run.contract, candidate: { source: candidate.source, label: candidate.label }, failures: run.regressions, round, seed, signal });
+    await this.memory?.recordCandidate(run, candidate, signal);
+    const validatedLessons = this.memory ? (await this.memory.retrieve(run, undefined, signal)).map((lesson) => lesson.text!) : [];
+    const red = await this.agents.searchRed({ lessons: validatedLessons, runId: id, candidateId: candidate.id, contract: run.contract, candidate: { source: candidate.source, label: candidate.label }, failures: run.regressions, round, seed, signal });
     throwIfStopped(signal);
     candidate = { ...candidate, status: "testing", redAgent: red.agent, attacks: red.attacks, redRationale: red.rationale };
     await this.store.emit(id, { type: "candidate.updated", candidateId: candidate.id, message: `Red authored ${red.attacks.length} new attacks: ${red.rationale}. Executing actual RTL with Verilator in Daytona.`, payload: candidate });
@@ -252,12 +255,25 @@ export class EvolutionEngine {
     const accepted = passesAcceptance(result, run.regressions.length, attackIds);
     const reproduced = Boolean(result.failure?.reproduced && result.reproduced);
     const failure = result.failure ? { ...result.failure, reproduced } : undefined;
-    const lesson = reproduced && failure ? lessonFor(failure) : result.buildError ? `Build rejected by the independent lab: ${result.buildError.slice(0, 1800)}` : undefined;
+    const lesson = !this.memory && reproduced && failure ? lessonFor(failure) : result.buildError ? `Build rejected by the independent lab: ${result.buildError.slice(0, 1800)}` : undefined;
     candidate = { ...candidate, status: accepted ? "verified" : reproduced || result.buildError ? "failed" : "rejected", checks: result.checks, failure, buildError: result.buildError, score: scoreEvaluation(result), backend: result.backend, sandboxId: result.sandboxId, artifactPath: result.artifactPath, cycles: candidate.cycles + result.cycles, regressionCount: run.regressions.length, lessons: lesson ? [...new Set([...candidate.lessons, lesson])] : candidate.lessons };
     await this.store.emit(id, { type: "candidate.updated", candidateId: candidate.id, message: accepted ? `${candidate.label} passed all hardware, Red-agent and current regression gates.` : result.buildError ? `${candidate.label} failed to build: ${result.buildError}` : `${candidate.label} failed acceptance; no model's self-assessment is used as a verdict.`, payload: candidate });
     if (failure && reproduced) {
       await this.store.emit(id, { type: "failure.reproduced", candidateId: candidate.id, message: failure.summary, payload: failure });
       if (!this.store.get(id)!.regressions.some((item) => JSON.stringify(item.sequence) === JSON.stringify(failure.sequence))) await this.store.emit(id, { type: "regression.added", candidateId: candidate.id, message: `Verified failure retained permanently: ${failure.testName}.`, payload: failure });
+    }
+    if (this.memory && failure && reproduced) {
+      const current = this.store.get(id)!;
+      const proposal = await this.memory.recordBreach(current, candidate, failure, signal);
+      await this.store.emit(id, { type: "lesson.learned", candidateId: candidate.id, message: `Blue proposed a lesson on ${proposal.family}. Pending descendant validation: ${proposal.text}`, payload: { lesson: proposal.text, status: proposal.status, family: proposal.family, memoryId: proposal.id } });
+    }
+    if (this.memory && accepted) {
+      const validated = await this.memory.validate(this.store.get(id)!, candidate, result, attackIds, signal);
+      if (validated.length) {
+        candidate = { ...candidate, lessons: [...new Set([...candidate.lessons, ...validated.map((item) => item.text!)])] };
+        await this.store.emit(id, { type: "candidate.updated", candidateId: candidate.id, message: `Validated ${validated.length} Blue lessons against the complete acceptance and inherited regression suite.`, payload: candidate });
+        for (const item of validated) await this.store.emit(id, { type: "lesson.learned", candidateId: candidate.id, message: `Validated parent-family lesson: ${item.text}`, payload: { lesson: item.text, status: "validated", family: item.family, memoryId: item.id } });
+      }
     }
     if (lesson) await this.store.emit(id, { type: "lesson.learned", candidateId: candidate.id, message: lesson, payload: { lesson } });
   }

@@ -11,6 +11,7 @@ import { supportsPrompt } from "./engine/contract.js";
 import { requireHardwareSnapshot } from "./daytona/client.js";
 import { runAnchorAudit } from "./browser/session.js";
 import { store as defaultStore, type RunStore } from "./store.js";
+import { configuredMemory } from "./memory/index.js";
 import type { EvolutionEvent } from "@hollow-purple/shared/evolution";
 
 const createSchema = z.object({
@@ -32,7 +33,7 @@ function agentsReady(): boolean {
   return agentCheck.ready;
 }
 
-export function createApp(store: RunStore = defaultStore, engine = new EvolutionEngine(store)): Hono {
+export function createApp(store: RunStore = defaultStore, engine = new EvolutionEngine(store, undefined, undefined, configuredMemory())): Hono {
   const app = new Hono();
   const audits = new Set<string>();
   app.use("/api/*", bodyLimit({ maxSize: 16 * 1024, onError: (c) => c.json({ error: "Request body exceeds 16 KiB." }, 413) }));
@@ -64,6 +65,17 @@ export function createApp(store: RunStore = defaultStore, engine = new Evolution
     if (!agentsReady()) return c.json({ error: "The live agent runtime is unavailable. Sign in with Codex CLI, or configure AGENT_PROVIDER=anthropic with explicit Blue/Red models and ANTHROPIC_API_KEY." }, 503);
     await requireHardwareSnapshot();
     return c.json({ id: await engine.start(parsed.data) }, 201);
+  });
+  app.get("/api/memory/status", async (c) => {
+    if (!engine.memory) return c.json({ configured: false, connected: false });
+    try { await engine.memory.backend.check(); return c.json({ configured: true, connected: true }); }
+    catch { return c.json({ configured: true, connected: false, error: "Surreal graph connection check failed." }); }
+  });
+  app.get("/api/runs/:id/memory", async (c) => {
+    const run = store.get(c.req.param("id"));
+    if (!run) return c.json({ error: "Run not found." }, 404);
+    if (!engine.memory) return c.json({ configured: false, nodes: [], edges: [] });
+    return c.json({ configured: true, ...await engine.memory.snapshot(run) });
   });
   app.get("/api/runs/:id", (c) => {
     const run = store.get(c.req.param("id"));
@@ -137,7 +149,7 @@ export function createApp(store: RunStore = defaultStore, engine = new Evolution
 
 export async function startServer(): Promise<void> {
   await defaultStore.load();
-  const engine = new EvolutionEngine(defaultStore);
+  const engine = new EvolutionEngine(defaultStore, undefined, undefined, configuredMemory());
   const server = serve({ fetch: createApp(defaultStore, engine).fetch, port: config.PORT, hostname: "0.0.0.0" });
   console.log(`Hollow Purple controller listening on http://localhost:${config.PORT}`);
   let closing = false;
