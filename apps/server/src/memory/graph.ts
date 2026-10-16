@@ -28,6 +28,7 @@ export const nodeSchema = z.object({
   supportingFailureIds: z.array(z.string().max(200)).max(1).optional(),
   text: z.string().min(20).max(2000).optional(), status: z.enum(["proposed", "validated"]).optional(),
   validatedBy: safe.optional(), validationSourceHash: hash.optional(),
+  validationMethod: z.enum(["source-grounded-repair"]).optional(),
   writer: z.object({ role: z.literal("blue"), provider: z.enum(["codex-cli", "anthropic", "bedrock"]), model: z.string().max(120), durationMs: z.number().nonnegative() }).strict().optional(),
 }).strict().superRefine((value, context) => {
   const require = (condition: unknown, message: string) => { if (!condition) context.addIssue({ code: "custom", message }); };
@@ -49,7 +50,7 @@ export interface GraphBackend {
   entity(name: string, signal?: AbortSignal): Promise<Entity | undefined>;
 }
 export interface LessonAnswer { text: string; agent: NonNullable<GraphNode["writer"]> }
-export type LessonWriter = (input: { run: EvolutionRun; candidate: Candidate; failure: FailureEvidence; family: Family; signal?: AbortSignal }) => Promise<LessonAnswer>;
+export type LessonWriter = (input: { run: EvolutionRun; candidate: Candidate; failure: FailureEvidence; family: Family; repair?: Candidate; signal?: AbortSignal }) => Promise<LessonAnswer>;
 export class MemoryError extends Error { constructor(message: string) { super(message); this.name = "MemoryError"; } }
 const digest = (value: unknown) => createHash("sha256").update(JSON.stringify(value)).digest("hex");
 export function name(runId: string, kind: GraphNode["kind"], key: string): string {
@@ -186,7 +187,15 @@ export class LessonMemory {
       const failure = graph.nodes.find((n) => n.kind === "failure" && n.failureId === support[0] && n.candidateId === lesson.candidateId);
       const index = run.regressions.findIndex((f) => f.id === failure?.regressionId);
       if (index < 0 || !failure || failure.sourceHash !== lesson.sourceHash || failure.regressionDigest !== digest(run.regressions[index]) || !result.checks.some((c) => c.id === `regression-${index}` && c.passed && !c.hidden)) continue;
-      validated.push({ ...lesson, status: "validated", validatedBy: candidate.id, validationSourceHash: candidate.sourceHash });
+      // A passing child validates the repair, not the original explanation. Rewrite
+      // the proposal against both actual sources before making it retrievable.
+      const original = run.candidates.find(c => c.id === lesson.candidateId);
+      if (!original || original.sourceHash !== lesson.sourceHash) throw new MemoryError("Lesson review lacks the original executed source.");
+      sourceBound(original);
+      const answer = await this.writer({ run, candidate: original, failure: run.regressions[index]!, family: lesson.family!, repair: candidate, signal });
+      signal?.throwIfAborted();
+      if (/\u2014|[\u{1F300}-\u{1FAFF}]/u.test(answer.text)) throw new MemoryError("Lesson text must use plain punctuation and no emojis.");
+      validated.push(nodeSchema.parse({ ...lesson, text: answer.text, writer: answer.agent, status: "validated", validatedBy: candidate.id, validationSourceHash: candidate.sourceHash, validationMethod: "source-grounded-repair" }));
     }
     if (validated.length) await this.backend.write(run.id, validated, validated.map((n) => ({ source: n.id, relation: "validated_by", target: name(run.id, "candidate", candidate.id) })), signal);
     return validated;

@@ -4,17 +4,24 @@ import type { AgentInvocation, Candidate, EvaluationResult, FailureEvidence } fr
 import { buildBlue, searchRed } from "../agents/index.js";
 import { evaluateCandidate } from "../lab/index.js";
 import { retrieveContext, type Corpus, type MemoryMode } from "./memory.js";
+import { repairChallenge } from "./challenge.js";
 
 export interface Trial {
   seed: number; mode: MemoryMode; status: "running" | "completed" | "missing"; error?: string;
+  task?: "synthesis" | "compound-repair-v1"; startingSourceHash?: string;
   evaluations: { generation: number; completedAt?: number; result: EvaluationResult; blue: AgentInvocation; red: AgentInvocation; retrieval: { ids: string[]; bytes: number; path: string[] } }[];
   generationsUntilAllGates: number | null; regressionsReintroduced: number; wallMs: number;
 }
 export const publicPass = (result: EvaluationResult) => !result.buildError && result.checks.some(c => !c.hidden) && result.checks.filter(c => !c.hidden).every(c => c.passed);
-export async function runTrial(input: { runId: string; seed: number; mode: MemoryMode; corpus: Corpus; generations: number; onEvaluation?: (trial: Trial) => Promise<void> }, dependencies = { buildBlue, searchRed, evaluateCandidate }): Promise<Trial> {
+export async function runTrial(input: { runId: string; seed: number; mode: MemoryMode; corpus: Corpus; generations: number; task?: "synthesis" | "compound-repair-v1"; onEvaluation?: (trial: Trial) => Promise<void> }, dependencies = { buildBlue, searchRed, evaluateCandidate }): Promise<Trial> {
   const started = Date.now();
   const trial: Trial = { seed: input.seed, mode: input.mode, status: "running", evaluations: [], generationsUntilAllGates: null, regressionsReintroduced: 0, wallMs: 0 };
   const failures: FailureEvidence[] = []; let parent: Candidate | undefined;
+  if (input.task === "compound-repair-v1") {
+    const fixture = repairChallenge(input.seed);
+    trial.task = input.task; trial.startingSourceHash = fixture.sourceHash;
+    parent = { id: "repair-input", generation: 0, label: "Manual repair input, not an evaluated Blue design", variant: "generated", status: "queued", source: fixture.source, sourceHash: fixture.sourceHash, checks: [], lessons: [], score: 0, cycles: 0, createdAt: started };
+  }
   try {
     for (let generation = 0; generation < input.generations; generation++) {
       const id = `g${generation}`;
@@ -24,7 +31,8 @@ export async function runTrial(input: { runId: string; seed: number; mode: Memor
       const result = await dependencies.evaluateCandidate({ runId: input.runId, candidateId: id, source: blue.source, variant: "generated", provider: "daytona", seed: input.seed, regressions: [...input.corpus.failures, ...failures], attacks: red.attacks, suite: "ablation-exam" });
       if (result.backend !== "verilator" || result.source !== blue.source || result.sourceHash !== createHash("sha256").update(blue.source).digest("hex")) throw new Error("Evaluation source provenance differs from the executed Blue design.");
       trial.evaluations.push({ generation, completedAt: Date.now(), result, blue: blue.agent, red: red.agent, retrieval: { ids: retrieval.ids, bytes: retrieval.bytes, path: retrieval.path } });
-      if (generation > 0) trial.regressionsReintroduced += result.checks.filter(c => /^regression-/.test(c.id) && !c.passed).length;
+      const priorPassed = new Set(trial.evaluations.slice(0, -1).flatMap(e => e.result.checks.filter(c => /^regression-/.test(c.id) && c.passed).map(c => c.id)));
+      trial.regressionsReintroduced += result.checks.filter(c => /^regression-/.test(c.id) && !c.passed && priorPassed.has(c.id)).length;
       const accepted = passesAcceptance(result, input.corpus.failures.length + failures.length, red.attacks.map(a => `agent-red-${a.id.replace(/^agent-red-/, "").toLowerCase()}`)) && result.checks.some(c => c.id === "transfer-empty-boundary" && c.hidden && c.passed);
       if (accepted && trial.generationsUntilAllGates === null) trial.generationsUntilAllGates = generation + 1;
       trial.wallMs = Date.now() - started;
