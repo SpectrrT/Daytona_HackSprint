@@ -27,6 +27,7 @@ export const nodeSchema = z.object({
   regressionId: z.string().max(200).optional(), regressionDigest: hash.optional(),
   supportingFailureIds: z.array(z.string().max(200)).max(1).optional(),
   text: z.string().min(20).max(2000).optional(), status: z.enum(["proposed", "validated"]).optional(),
+  transferText: z.string().min(20).max(800).optional(),
   validatedBy: safe.optional(), validationSourceHash: hash.optional(),
   validationMethod: z.enum(["source-grounded-repair"]).optional(),
   writer: z.object({ role: z.literal("blue"), provider: z.enum(["codex-cli", "anthropic", "bedrock"]), model: z.string().max(120), durationMs: z.number().nonnegative() }).strict().optional(),
@@ -49,7 +50,7 @@ export interface GraphBackend {
   write(runId: string, nodes: GraphNode[], edges: GraphEdge[], signal?: AbortSignal): Promise<void>;
   entity(name: string, signal?: AbortSignal): Promise<Entity | undefined>;
 }
-export interface LessonAnswer { text: string; agent: NonNullable<GraphNode["writer"]> }
+export interface LessonAnswer { text: string; transferText?: string; agent: NonNullable<GraphNode["writer"]> }
 export type LessonWriter = (input: { run: EvolutionRun; candidate: Candidate; failure: FailureEvidence; family: Family; repair?: Candidate; signal?: AbortSignal }) => Promise<LessonAnswer>;
 export class MemoryError extends Error { constructor(message: string) { super(message); this.name = "MemoryError"; } }
 const digest = (value: unknown) => createHash("sha256").update(JSON.stringify(value)).digest("hex");
@@ -111,9 +112,9 @@ export class LessonMemory {
     if (existing) return existing.node;
     const answer = await this.writer({ run, candidate, failure, family, signal });
     signal?.throwIfAborted();
-    if (/\u2014|[\u{1F300}-\u{1FAFF}]/u.test(answer.text)) throw new MemoryError("Lesson text must use plain punctuation and no emojis.");
+    if (/\u2014|[\u{1F300}-\u{1FAFF}]/u.test(answer.text + (answer.transferText ?? ""))) throw new MemoryError("Lesson text must use plain punctuation and no emojis.");
     const failed = node(run, "failure", key, { candidateId: candidate.id, sourceHash: candidate.sourceHash, family: leaf, label: failure.summary, failureId: failure.id, failureDigest: digest(failure), regressionId: regression.id, regressionDigest: digest(regression) });
-    const lesson = node(run, "lesson", key, { candidateId: candidate.id, sourceHash: candidate.sourceHash, family, label: "Blue lesson", text: answer.text, status: "proposed", supportingFailureIds: [failure.id], writer: answer.agent });
+    const lesson = node(run, "lesson", key, { candidateId: candidate.id, sourceHash: candidate.sourceHash, family, label: "Blue lesson", text: answer.text, transferText: answer.transferText, status: "proposed", supportingFailureIds: [failure.id], writer: answer.agent });
     await this.backend.write(run.id, [failed, lesson], [
       { source: name(run.id, "run", "root"), relation: "contains", target: failed.id },
       { source: name(run.id, "run", "root"), relation: "contains", target: lesson.id },
@@ -163,7 +164,13 @@ export class LessonMemory {
       const validator = graph.nodes.find((n) => n.kind === "candidate" && n.candidateId === lesson.validatedBy && n.sourceHash === lesson.validationSourceHash);
       if (!validator || !graph.edges.some((e) => e.source === lesson.id && e.relation === "validated_by" && e.target === validator.id)) throw new MemoryError("Validated lesson lacks its source-bound validation edge.");
     }
-    return lessons;
+    return lessons.map(lesson => {
+      const origin = graph.nodes.find(n => n.kind === "failure" && lesson.supportingFailureIds?.includes(n.failureId!))?.family;
+      // Implementation recipes stay with their originating bug family. Parent
+      // edges transfer the invariant, not a code snippet from another design.
+      const exactFamily = families.length === 1 && families[0] === origin;
+      return !exactFamily && lesson.transferText ? { ...lesson, text: lesson.transferText } : lesson;
+    });
   }
 
   async validate(run: EvolutionRun, candidate: Candidate, result: EvaluationResult, attackIds: string[], signal?: AbortSignal): Promise<GraphNode[]> {
@@ -194,8 +201,8 @@ export class LessonMemory {
       sourceBound(original);
       const answer = await this.writer({ run, candidate: original, failure: run.regressions[index]!, family: lesson.family!, repair: candidate, signal });
       signal?.throwIfAborted();
-      if (/\u2014|[\u{1F300}-\u{1FAFF}]/u.test(answer.text)) throw new MemoryError("Lesson text must use plain punctuation and no emojis.");
-      validated.push(nodeSchema.parse({ ...lesson, text: answer.text, writer: answer.agent, status: "validated", validatedBy: candidate.id, validationSourceHash: candidate.sourceHash, validationMethod: "source-grounded-repair" }));
+      if (/\u2014|[\u{1F300}-\u{1FAFF}]/u.test(answer.text + (answer.transferText ?? ""))) throw new MemoryError("Lesson text must use plain punctuation and no emojis.");
+      validated.push(nodeSchema.parse({ ...lesson, text: answer.text, transferText: answer.transferText, writer: answer.agent, status: "validated", validatedBy: candidate.id, validationSourceHash: candidate.sourceHash, validationMethod: "source-grounded-repair" }));
     }
     if (validated.length) await this.backend.write(run.id, validated, validated.map((n) => ({ source: n.id, relation: "validated_by", target: name(run.id, "candidate", candidate.id) })), signal);
     return validated;
