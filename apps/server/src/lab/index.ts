@@ -10,6 +10,7 @@ import { CANDIDATE_DIR, Computer, provisionCandidate } from "../daytona/computer
 import { observeModel, type Observation } from "./model.js";
 import { buildTests, type LabTest } from "./tests.js";
 import { CandidateBuildError, validateRtl } from "./validation.js";
+import { traced } from "../telemetry/index.js";
 
 export const MAX_EVALUATION_CYCLES = 20_000;
 const LAB_DIR = join(REPO_ROOT, "lab");
@@ -125,7 +126,14 @@ export interface EvaluateCandidateInput {
 }
 
 /** Execute candidate observations, then grade and replay them outside its sandbox. */
-export async function evaluateCandidate(input: EvaluateCandidateInput): Promise<EvaluationResult> {
+export function evaluateCandidate(input: EvaluateCandidateInput): Promise<EvaluationResult> {
+  return traced("verifier", input.runId, { "hollow.candidate_id": input.candidateId }, () => evaluateCandidateUntraced(input), (result) => ({
+    "hollow.backend": result.backend, "hollow.source_hash": result.sourceHash, "hollow.checks_passed": result.checks.filter((check) => check.passed).length,
+    "hollow.checks_total": result.checks.length, "hollow.cycles": result.cycles, "hollow.reproduced": result.reproduced,
+    "hollow.score": result.checks.length ? result.checks.filter((check) => check.passed).length / result.checks.length : undefined,
+  }));
+}
+async function evaluateCandidateUntraced(input: EvaluateCandidateInput): Promise<EvaluationResult> {
   const { runId, candidateId, variant, provider, seed, regressions, signal } = input;
   aborted(signal);
   if ((input.source !== undefined || variant === "generated") && provider !== "daytona") throw new Error("Blue-authored RTL requires Daytona Verilator execution; a behavioral model cannot verify arbitrary source.");

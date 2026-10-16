@@ -7,6 +7,7 @@ import { assertFrozenContract } from "../engine/contract.js";
 import { AgentCallError, type AgentAnswer } from "./codex.js";
 import { runCodexWithRetry } from "./retry.js";
 import { runAnthropicStructured } from "./llm.js";
+import { traced, agentAttributes } from "../telemetry/index.js";
 import { BLUE_SOURCE_LIMIT, RED_ATTACK_COUNT, RED_SEQUENCE_LIMIT, blueAnswerSchema, outputSchema, parseBlueAnswer, parseRedAnswer, redAnswerSchema } from "./schemas.js";
 
 export interface BlueInput {
@@ -76,17 +77,23 @@ async function rejectInvalid(result: AgentAnswer, role: string): Promise<never> 
   await writeFile(join(result.agent.artifactPath!, "invocation.json"), JSON.stringify({ ...result.agent, status: "invalid_response" }, null, 2), { mode: 0o600 });
   throw new AgentCallError("invalid_response", `${role} model answer failed the strict response schema or attack bounds. No candidate or attack was substituted.`);
 }
-export async function buildBlue(input: BlueInput): Promise<BlueProposal> {
+async function buildBlueUntraced(input: BlueInput): Promise<BlueProposal> {
   const result = await invoke("blue", input, buildBluePrompt(input));
   let answer: ReturnType<typeof parseBlueAnswer>;
   try { answer = parseBlueAnswer(result.answer); } catch { return rejectInvalid(result, "Blue"); }
   await saveValidated(result, answer);
   return { ...answer, agent: result.agent };
 }
-export async function searchRed(input: RedInput): Promise<RedProposal> {
+async function searchRedUntraced(input: RedInput): Promise<RedProposal> {
   const result = await invoke("red", input, buildRedPrompt(input));
   let answer: ReturnType<typeof parseRedAnswer>;
   try { answer = parseRedAnswer(result.answer); } catch { return rejectInvalid(result, "Red"); }
   await saveValidated(result, answer);
   return { ...answer, agent: result.agent };
+}
+export function buildBlue(input: BlueInput): Promise<BlueProposal> {
+  return traced("blue", input.runId, { "hollow.candidate_id": input.candidateId, "hollow.generation": input.generation }, () => buildBlueUntraced(input), (result) => agentAttributes(result.agent));
+}
+export function searchRed(input: RedInput): Promise<RedProposal> {
+  return traced("red", input.runId, { "hollow.candidate_id": input.candidateId }, () => searchRedUntraced(input), (result) => agentAttributes(result.agent));
 }

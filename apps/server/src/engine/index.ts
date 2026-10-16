@@ -10,6 +10,7 @@ import { assertFrozenContract, freezeContract } from "./contract.js";
 import { buildBlue, searchRed } from "../agents/index.js";
 import { validateRtl } from "../lab/validation.js";
 import type { LessonMemory } from "../memory/graph.js";
+import { traced } from "../telemetry/index.js";
 
 export interface EvaluationRequest {
   runId: string; candidateId: string; variant: CandidateVariant; provider: "local" | "daytona";
@@ -126,6 +127,12 @@ export class EvolutionEngine {
   }
 
   private async run(id: string, seed: number, signal: AbortSignal, verification?: RepairVerificationInput): Promise<void> {
+    return traced("run", id, {}, () => this.runUntraced(id, seed, signal, verification), () => {
+      const run = this.store.get(id)!;
+      return { "hollow.run_status": run.status, "hollow.regressions": run.regressions.length, "hollow.cycles": run.budget.usedCycles };
+    });
+  }
+  private async runUntraced(id: string, seed: number, signal: AbortSignal, verification?: RepairVerificationInput): Promise<void> {
     try {
       throwIfStopped(signal);
       if (this.store.get(id)!.recursive) { await this.runRecursive(id, seed, signal, verification!); return; }

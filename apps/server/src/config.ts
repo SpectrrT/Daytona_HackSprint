@@ -39,6 +39,11 @@ const schema = z.object({
   SURREAL_CONTEXT_ID: optionalString,
   SURREAL_API_KEY: optionalString,
 
+  ARIZE_ENABLED: bool.default(false),
+  ARIZE_API_KEY: optionalString,
+  ARIZE_SPACE_ID: optionalString,
+  ARIZE_PYTHON: optionalString,
+
   // ---- Claude ----
   ANTHROPIC_API_KEY: optionalString,
   /** Not read from ANTHROPIC_BASE_URL so a shell's value does not leak in. */

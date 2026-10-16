@@ -12,6 +12,7 @@ import { requireHardwareSnapshot } from "./daytona/client.js";
 import { runAnchorAudit } from "./browser/session.js";
 import { store as defaultStore, type RunStore } from "./store.js";
 import { configuredMemory } from "./memory/index.js";
+import { telemetryStatus, flushTelemetry } from "./telemetry/index.js";
 import type { EvolutionEvent } from "@hollow-purple/shared/evolution";
 
 const createSchema = z.object({
@@ -44,6 +45,7 @@ export function createApp(store: RunStore = defaultStore, engine = new Evolution
     return c.json({ error: "The request failed. Check the server log and retained run evidence." }, 500);
   });
   app.get("/api/health", (c) => c.json({ status: "ok" }));
+  app.get("/api/telemetry/status", (c) => c.json(telemetryStatus()));
   app.get("/api/system", (c) => c.json({
     providers: { daytona: Boolean(config.DAYTONA_API_KEY), anchor: Boolean(config.ANCHOR_API_KEY && config.PUBLIC_DASHBOARD_URL), model: agentsReady() },
     agentsReady: agentsReady(), agentProvider: config.AGENT_PROVIDER,
@@ -157,6 +159,7 @@ export async function startServer(): Promise<void> {
     if (closing) return; closing = true;
     await engine.stopAll();
     await defaultStore.flush();
+    await flushTelemetry();
     server.close();
   };
   process.once("SIGINT", () => { void shutdown(); });

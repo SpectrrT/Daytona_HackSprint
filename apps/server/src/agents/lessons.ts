@@ -7,6 +7,7 @@ import type { LessonWriter } from "../memory/graph.js";
 import { runCodexWithRetry } from "./retry.js";
 import { runAnthropicStructured } from "./llm.js";
 import { outputSchema } from "./schemas.js";
+import { traced, agentAttributes } from "../telemetry/index.js";
 
 export const lessonAnswerSchema = z.object({ text: z.string().min(20).max(2000) }).strict();
 export const buildLessonPrompt = (input: Parameters<LessonWriter>[0]): string => [
@@ -19,7 +20,7 @@ export const buildLessonPrompt = (input: Parameters<LessonWriter>[0]): string =>
       sequenceLength: input.failure.sequence.length, sequenceWindow: input.failure.sequence.slice(-24), trace: input.failure.trace.slice(-8), reproduced: true } }),
 ].join("\n\n");
 
-export const writeBlueLesson: LessonWriter = async (input) => {
+export const writeBlueLesson: LessonWriter = (input) => traced("lesson_writer", input.run.id, { "hollow.candidate_id": input.candidate.id, "hollow.generation": input.candidate.generation }, async () => {
   if (!/^[a-zA-Z0-9_-]{1,100}$/.test(input.run.id) || !/^[a-zA-Z0-9_-]{1,100}$/.test(input.candidate.id)) throw new Error("Invalid lesson artifact identifier.");
   const artifactPath = join(config.DATA_DIR, "runs", input.run.id, "agents", `${input.candidate.id}-blue-lesson-${randomUUID()}`);
   await mkdir(artifactPath, { recursive: true, mode: 0o700 });
@@ -29,4 +30,4 @@ export const writeBlueLesson: LessonWriter = async (input) => {
   const answer = lessonAnswerSchema.parse(result.answer);
   await writeFile(join(artifactPath, "answer.json"), JSON.stringify(answer), { mode: 0o600 });
   return { text: answer.text, agent: { role: "blue", provider: result.agent.provider, model: result.agent.model, durationMs: result.agent.durationMs } };
-};
+}, (result) => agentAttributes(result.agent));
