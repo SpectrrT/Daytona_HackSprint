@@ -1,0 +1,39 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "attack_worlds": {
+      "title": "Attack Worlds",
+      "type": "integer"
+    },
+    "breaches": {
+      "title": "Breaches",
+      "type": "integer"
+    },
+    "clean_worlds": {
+      "title": "Clean Worlds",
+      "type": "integer"
+    },
+    "false_alarms": {
+      "title": "False Alarms",
+      "type": "integer"
+    },
+    "generation": {
+      "title": "Generation",
+      "type": "integer"
+    },
+    "passed": {
+      "title": "Passed",
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "generation",
+    "passed",
+    "attack_worlds",
+    "breaches",
+    "clean_worlds",
+    "false_alarms"
+  ],
+  "title": "ExamDone",
+  "type": "object"
+}

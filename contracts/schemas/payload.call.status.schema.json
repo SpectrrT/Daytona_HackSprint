@@ -1,0 +1,47 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "conversation_id": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Conversation Id"
+    },
+    "detail": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Detail"
+    },
+    "status": {
+      "enum": [
+        "dialing",
+        "ringing",
+        "in_progress",
+        "approved",
+        "declined",
+        "failed",
+        "skipped"
+      ],
+      "title": "Status",
+      "type": "string"
+    }
+  },
+  "required": [
+    "status"
+  ],
+  "title": "CallStatus",
+  "type": "object"
+}

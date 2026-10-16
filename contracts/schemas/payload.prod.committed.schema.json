@@ -1,0 +1,41 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "dollars_refunded": {
+      "title": "Dollars Refunded",
+      "type": "number"
+    },
+    "plan_id": {
+      "title": "Plan Id",
+      "type": "string"
+    },
+    "preview_url": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Preview Url"
+    },
+    "refunds_issued": {
+      "title": "Refunds Issued",
+      "type": "integer"
+    },
+    "snapshot": {
+      "title": "Snapshot",
+      "type": "string"
+    }
+  },
+  "required": [
+    "plan_id",
+    "snapshot",
+    "refunds_issued",
+    "dollars_refunded"
+  ],
+  "title": "ProdCommitted",
+  "type": "object"
+}

@@ -1,0 +1,34 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "attack_id": {
+      "title": "Attack Id",
+      "type": "string"
+    },
+    "generation": {
+      "title": "Generation",
+      "type": "integer"
+    },
+    "id": {
+      "title": "Id",
+      "type": "string"
+    },
+    "text": {
+      "title": "Text",
+      "type": "string"
+    },
+    "world_id": {
+      "title": "World Id",
+      "type": "string"
+    }
+  },
+  "required": [
+    "id",
+    "generation",
+    "attack_id",
+    "world_id",
+    "text"
+  ],
+  "title": "Lesson",
+  "type": "object"
+}

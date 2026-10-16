@@ -1,0 +1,36 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "attack_id": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Attack Id"
+    },
+    "generation": {
+      "title": "Generation",
+      "type": "integer"
+    },
+    "sandbox_id": {
+      "title": "Sandbox Id",
+      "type": "string"
+    },
+    "world_id": {
+      "title": "World Id",
+      "type": "string"
+    }
+  },
+  "required": [
+    "world_id",
+    "generation",
+    "attack_id",
+    "sandbox_id"
+  ],
+  "title": "WorldForked",
+  "type": "object"
+}

@@ -1,0 +1,123 @@
+{
+  "$defs": {
+    "Knobs": {
+      "additionalProperties": false,
+      "properties": {
+        "idempotency_key": {
+          "default": false,
+          "title": "Idempotency Key",
+          "type": "boolean"
+        },
+        "max_retries": {
+          "default": 3,
+          "maximum": 10,
+          "minimum": 0,
+          "title": "Max Retries",
+          "type": "integer"
+        },
+        "per_customer_cap": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Per Customer Cap"
+        },
+        "per_order_lock": {
+          "default": false,
+          "title": "Per Order Lock",
+          "type": "boolean"
+        },
+        "ticket_policy": {
+          "default": "follow",
+          "enum": [
+            "follow",
+            "facts_only",
+            "ignore"
+          ],
+          "title": "Ticket Policy",
+          "type": "string"
+        },
+        "trust_source": {
+          "default": "app_db",
+          "enum": [
+            "app_db",
+            "provider"
+          ],
+          "title": "Trust Source",
+          "type": "string"
+        },
+        "verify_before_retry": {
+          "default": false,
+          "title": "Verify Before Retry",
+          "type": "boolean"
+        }
+      },
+      "title": "Knobs",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "generation": {
+      "title": "Generation",
+      "type": "integer"
+    },
+    "id": {
+      "title": "Id",
+      "type": "string"
+    },
+    "knobs": {
+      "$ref": "#/$defs/Knobs"
+    },
+    "lessons_used": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Lessons Used",
+      "type": "array"
+    },
+    "parent_id": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Parent Id"
+    },
+    "permissions": {
+      "items": {
+        "enum": [
+          "db.read",
+          "tickets.read",
+          "payments.refund",
+          "payments.status",
+          "outbox.send"
+        ],
+        "type": "string"
+      },
+      "title": "Permissions",
+      "type": "array"
+    },
+    "selection_sql": {
+      "title": "Selection Sql",
+      "type": "string"
+    }
+  },
+  "required": [
+    "id",
+    "generation",
+    "selection_sql",
+    "permissions"
+  ],
+  "title": "BluePlan",
+  "type": "object"
+}

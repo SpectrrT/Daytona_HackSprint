@@ -1,0 +1,58 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "attack_worlds": {
+      "title": "Attack Worlds",
+      "type": "integer"
+    },
+    "clean_worlds": {
+      "title": "Clean Worlds",
+      "type": "integer"
+    },
+    "dollars_lost": {
+      "title": "Dollars Lost",
+      "type": "number"
+    },
+    "exam": {
+      "default": false,
+      "title": "Exam",
+      "type": "boolean"
+    },
+    "false_alarms": {
+      "title": "False Alarms",
+      "type": "integer"
+    },
+    "generation": {
+      "title": "Generation",
+      "type": "integer"
+    },
+    "mode": {
+      "default": "parallel",
+      "enum": [
+        "parallel",
+        "sequential"
+      ],
+      "title": "Mode",
+      "type": "string"
+    },
+    "seconds": {
+      "title": "Seconds",
+      "type": "number"
+    },
+    "survived": {
+      "title": "Survived",
+      "type": "integer"
+    }
+  },
+  "required": [
+    "generation",
+    "attack_worlds",
+    "survived",
+    "clean_worlds",
+    "false_alarms",
+    "dollars_lost",
+    "seconds"
+  ],
+  "title": "GenDone",
+  "type": "object"
+}

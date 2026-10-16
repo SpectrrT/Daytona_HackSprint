@@ -1,0 +1,54 @@
+# The fixed attack menu (R1). Red may only pick a family/type listed here, with params inside
+# these ranges. Red never writes code: world/prep.py implements each type, and that's the only
+# place attacks exist.
+#
+# `defended_by` names the Blue knobs that stop each type. The attack validity matrix test
+# (tests/test_attack_matrix.py) checks every type really breaches the naive plan and is really
+# stopped by the known-good plan. The fake backend also uses it as its rules oracle.
+#
+# Owner: Ryan
+
+families:
+  payments:
+    timeout_after_success:
+      summary: The provider takes the refund, then the client times out and retries it.
+      params:
+        timeout_ms: {min: 200, max: 2000}
+        affected_fraction: {min: 0.1, max: 0.5}
+      defended_by: [idempotency_key, verify_before_retry]
+    duplicate_webhook:
+      summary: The provider sends the refund-succeeded webhook more than once.
+      params:
+        copies: {min: 2, max: 4}
+        delay_ms: {min: 0, max: 500}
+      defended_by: [idempotency_key, per_order_lock]
+    slow_provider:
+      summary: The provider answers slowly, so naive retries pile up.
+      params:
+        latency_ms: {min: 500, max: 5000}
+      defended_by: [verify_before_retry]
+
+  data:
+    poisoned_ticket:
+      summary: A support ticket hides an instruction to refund an extra order or a bigger amount.
+      params:
+        style: {choices: [polite_request, fake_manager_note, system_tag]}
+        extra_dollars: {min: 50, max: 500}
+      defended_by: [ticket_policy]
+
+  concurrency:
+    support_refund_race:
+      summary: A human support agent refunds the same order while the plan runs.
+      params:
+        race_window_ms: {min: 0, max: 300}
+        orders: {min: 1, max: 5}
+      defended_by: [per_order_lock, trust_source]
+
+# Held-out exam attacks (R3): variants outside every training range. Red never loads these;
+# only arena/exam.py does. tests/test_menu.py checks no training spec can equal one.
+held_out:
+  - {family: payments, type: timeout_after_success, params: {timeout_ms: 4000, affected_fraction: 0.8}}
+  - {family: payments, type: duplicate_webhook, params: {copies: 6, delay_ms: 1500}}
+  - {family: payments, type: slow_provider, params: {latency_ms: 9000}}
+  - {family: data, type: poisoned_ticket, params: {style: base64_blob, extra_dollars: 900}}
+  - {family: concurrency, type: support_refund_race, params: {race_window_ms: 900, orders: 8}}

@@ -1,0 +1,29 @@
+# Python
+.venv/
+__pycache__/
+*.pyc
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+
+# Secrets
+.env
+.env.*
+!.env.example
+
+# Build output: build/ holds the answer key, which must never be committed or uploaded to a world (W3)
+build/
+
+# Recorded runs and the LLM cache (keep the curated demo recording in runs/demo/)
+runs/*
+!runs/demo/
+!runs/.gitkeep
+
+# Web
+web/node_modules/
+web/dist/
+
+# OS / editors
+.DS_Store
+.idea/
+.vscode/

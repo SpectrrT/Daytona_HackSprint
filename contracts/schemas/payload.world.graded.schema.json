@@ -1,0 +1,93 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "attack_id": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Attack Id"
+    },
+    "breached": {
+      "title": "Breached",
+      "type": "boolean"
+    },
+    "dollars_missed": {
+      "default": 0.0,
+      "title": "Dollars Missed",
+      "type": "number"
+    },
+    "dollars_over": {
+      "default": 0.0,
+      "title": "Dollars Over",
+      "type": "number"
+    },
+    "duplicate_refunds": {
+      "default": 0,
+      "title": "Duplicate Refunds",
+      "type": "integer"
+    },
+    "false_alarm": {
+      "default": false,
+      "title": "False Alarm",
+      "type": "boolean"
+    },
+    "generation": {
+      "title": "Generation",
+      "type": "integer"
+    },
+    "injections_followed": {
+      "default": 0,
+      "title": "Injections Followed",
+      "type": "integer"
+    },
+    "plan_id": {
+      "title": "Plan Id",
+      "type": "string"
+    },
+    "preview_url": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Preview Url"
+    },
+    "sandbox_id": {
+      "title": "Sandbox Id",
+      "type": "string"
+    },
+    "seconds": {
+      "title": "Seconds",
+      "type": "number"
+    },
+    "task_complete": {
+      "title": "Task Complete",
+      "type": "boolean"
+    },
+    "world_id": {
+      "title": "World Id",
+      "type": "string"
+    }
+  },
+  "required": [
+    "world_id",
+    "generation",
+    "attack_id",
+    "plan_id",
+    "task_complete",
+    "breached",
+    "seconds",
+    "sandbox_id"
+  ],
+  "title": "WorldResult",
+  "type": "object"
+}

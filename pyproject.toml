@@ -1,0 +1,47 @@
+[build-system]
+requires = ["setuptools>=69"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "antibody"
+version = "0.1.0"
+description = "Red and Blue agents evolve against each other inside forked copies of production (Daytona HackSprint NYC, Oct 2026)"
+requires-python = ">=3.11"
+dependencies = [
+  "pydantic>=2.7",
+  "pyyaml>=6.0",
+  "python-dotenv>=1.0",
+  "httpx>=0.27",
+  "fastapi>=0.115",
+  "uvicorn[standard]>=0.30",
+  "sse-starlette>=2.1",
+  "daytona>=0.224",
+  "anthropic[bedrock]",
+  "surrealdb>=2.0",
+  "arize-otel>=0.14",
+  "openinference-instrumentation-anthropic",
+  "elevenlabs>=2.0",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8", "jsonschema>=4.22", "ruff>=0.6"]
+
+[tool.setuptools.packages.find]
+include = ["contracts*", "world*", "arena*", "agents*", "grader*", "memory*", "telemetry*", "voice*", "scripts*"]
+
+[tool.setuptools.package-data]
+"*" = ["*.yaml", "*.sql", "*.surql", "*.json"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = [
+  "daytona: needs DAYTONA_API_KEY and a built prod snapshot",
+  "live: calls a paid external API (Bedrock, ElevenLabs, Arize)",
+]
+
+[tool.ruff]
+line-length = 120
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP"]
+ignore = ["E402"]  # arena/app.py loads .env before importing modules that read it

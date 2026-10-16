@@ -1,0 +1,56 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "family": {
+      "title": "Family",
+      "type": "string"
+    },
+    "generation": {
+      "title": "Generation",
+      "type": "integer"
+    },
+    "held_out": {
+      "default": false,
+      "title": "Held Out",
+      "type": "boolean"
+    },
+    "id": {
+      "title": "Id",
+      "type": "string"
+    },
+    "params": {
+      "additionalProperties": true,
+      "title": "Params",
+      "type": "object"
+    },
+    "parent_id": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Parent Id"
+    },
+    "seed": {
+      "title": "Seed",
+      "type": "integer"
+    },
+    "type": {
+      "title": "Type",
+      "type": "string"
+    }
+  },
+  "required": [
+    "id",
+    "family",
+    "type",
+    "seed",
+    "generation"
+  ],
+  "title": "AttackSpec",
+  "type": "object"
+}
