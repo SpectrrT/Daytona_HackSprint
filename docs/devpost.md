@@ -1,4 +1,4 @@
-# Hollow Purple
+# Antibody
 
 **Tagline:** Blue builds it, Red tries to break it, an independent verifier decides, and only a person can ship it, all driven from Claude Code on Daytona.
 
@@ -8,7 +8,7 @@ Coding agents write code faster than teams can review it, and too many agent loo
 
 ## What it does
 
-Hollow Purple hardens a design against a frozen contract, starting with a 32-entry, 16-bit FIFO.
+Antibody hardens a design against a frozen contract, starting with a 32-entry, 16-bit FIFO.
 
 - **Blue**, a model agent, writes the RTL. **Red**, a separate agent, reads it and writes four clock-edge attack sequences.
 - **Daytona** gives each design its own sandbox, where Verilator compiles it and replays directed checks, Red's attacks, every inherited regression and a hidden held-out stream that neither agent sees.

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { ArrowDownToLine, ArrowRight, ArrowUpRight, Check, ChevronDown, Code2, ExternalLink, FileText, GitBranch, Loader2, LockKeyhole, MessageSquare, Play, RotateCcw, ShieldCheck, ShoppingCart, Square, Terminal, X } from 'lucide-react';
-import { AGENT_ENVIRONMENTS, type AgentEnvironment, type LabCandidate, type LabRun, type LabRunSummary, type LabTrial } from '@hollow-purple/shared/agent-lab';
+import { AGENT_ENVIRONMENTS, type AgentEnvironment, type LabCandidate, type LabRun, type LabRunSummary, type LabTrial } from '@antibody/shared/agent-lab';
 import './agent-lab.css';
 const icons = { support: MessageSquare, procurement: ShoppingCart, engineering: Terminal };
 const formatTime = (at: number) => new Date(at).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', second: '2-digit' });

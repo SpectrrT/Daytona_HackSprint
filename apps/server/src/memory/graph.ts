@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
 import { z } from "zod";
-import type { Candidate, EvaluationResult, EvolutionRun, FailureEvidence } from "@hollow-purple/shared/evolution";
+import type { Candidate, EvaluationResult, EvolutionRun, FailureEvidence } from "@antibody/shared/evolution";
 import { passesAcceptance } from "../arena/tools.js";
 import { assertFrozenContract } from "../engine/contract.js";
 

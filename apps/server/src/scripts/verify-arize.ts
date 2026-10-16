@@ -6,7 +6,7 @@ import { BasicTracerProvider, SimpleSpanProcessor, type SpanExporter } from "@op
 /**
  * Sends one span to Arize AX and reports whether it was accepted.
  *
- *   pnpm --filter @hollow-purple/server exec node --import tsx src/scripts/verify-arize.ts
+ *   pnpm --filter @antibody/server exec node --import tsx src/scripts/verify-arize.ts
  */
 
 const space = process.env.ARIZE_SPACE_ID;
@@ -22,10 +22,10 @@ const probe: SpanExporter = {
   shutdown: () => otlp.shutdown(),
 };
 const provider = new BasicTracerProvider({
-  resource: resourceFromAttributes({ "service.name": "hollow-purple-lab", "openinference.project.name": project, model_id: project }),
+  resource: resourceFromAttributes({ "service.name": "antibody-lab", "openinference.project.name": project, model_id: project }),
   spanProcessors: [new SimpleSpanProcessor(probe)],
 });
-const span = provider.getTracer("hollow-purple-lab").startSpan("arize connectivity check", {
+const span = provider.getTracer("antibody-lab").startSpan("arize connectivity check", {
   attributes: { "openinference.span.kind": "CHAIN", "input.value": "ping", "output.value": "pong" },
 });
 span.end();

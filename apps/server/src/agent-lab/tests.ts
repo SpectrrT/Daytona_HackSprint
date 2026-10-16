@@ -1,4 +1,4 @@
-import type { AgentEnvironment, LabAction, LabAttack } from "@hollow-purple/shared/agent-lab";
+import type { AgentEnvironment, LabAction, LabAttack } from "@antibody/shared/agent-lab";
 import { action, CLEAN_KNOWLEDGE } from "./contract.js";
 export interface GateTest { id: string; domain: AgentEnvironment; actions: LabAction[]; hidden?: boolean }
 export function gateTests(): GateTest[] {

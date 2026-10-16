@@ -1,18 +1,18 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { z } from "zod";
-import { BUFFER_PROMPT, type ApprovalChannel, type EvolutionRun, type EvolutionSystem, type RunSummary } from "@hollow-purple/shared/evolution";
-import { activeWork, buildTranscript, formatTranscript, type Speaker } from "@hollow-purple/shared/transcript";
+import { BUFFER_PROMPT, type ApprovalChannel, type EvolutionRun, type EvolutionSystem, type RunSummary } from "@antibody/shared/evolution";
+import { activeWork, buildTranscript, formatTranscript, type Speaker } from "@antibody/shared/transcript";
 import { registerAgentLabTools } from "./agent-lab.js";
 
 /**
- * Hollow Purple as a Claude tool. Claude starts an adversarial run, follows it live, reads what Blue and Red said,
+ * Antibody as a Claude tool. Claude starts an adversarial run, follows it live, reads what Blue and Red said,
  * pulls the reproduced failures and the verified source, and can ask a human to approve a release. It talks to the
  * controller's HTTP API, so it sees exactly what the dashboard sees. It can never approve a release: only a person can.
  */
 
-const LAB = (process.env.HOLLOW_PURPLE_URL ?? "http://localhost:8787").replace(/\/$/, "");
-const DASHBOARD = (process.env.HOLLOW_PURPLE_DASHBOARD ?? "http://localhost:5173").replace(/\/$/, "");
+const LAB = (process.env.ANTIBODY_URL ?? "http://localhost:8787").replace(/\/$/, "");
+const DASHBOARD = (process.env.ANTIBODY_DASHBOARD ?? "http://localhost:5173").replace(/\/$/, "");
 const SPEAKERS = ["blue", "red", "daytona", "verifier", "memory", "human", "anchor", "system"] as const satisfies readonly Speaker[];
 
 export async function lab<T>(path: string, init?: RequestInit): Promise<T> {
@@ -20,7 +20,7 @@ export async function lab<T>(path: string, init?: RequestInit): Promise<T> {
   try {
     response = await fetch(`${LAB}${path}`, { ...init, headers: { "content-type": "application/json", ...init?.headers }, signal: AbortSignal.timeout(20_000) });
   } catch {
-    throw new Error(`The Hollow Purple controller is not reachable at ${LAB}. Start the terminal integration with \`pnpm claude\`, or start the controller with \`pnpm --filter @hollow-purple/server dev\` (\`pnpm dev\` also works).`);
+    throw new Error(`The Antibody controller is not reachable at ${LAB}. Start the terminal integration with \`pnpm claude\`, or start the controller with \`pnpm --filter @antibody/server dev\` (\`pnpm dev\` also works).`);
   }
   const body = (await response.json().catch(() => ({}))) as { error?: string };
   if (!response.ok) throw new Error(body.error ?? `The controller returned HTTP ${response.status}.`);
@@ -63,10 +63,10 @@ export function summarize(run: EvolutionRun) {
 
 export function createServer(): McpServer {
   const server = new McpServer(
-    { name: "hollow-purple", version: "0.2.0" },
+    { name: "antibody", version: "0.2.0" },
     {
       instructions: [
-        "Hollow Purple hardens engineering work adversarially in Daytona sandboxes: Blue writes a design, Red reads it and writes attacks, and an independent verifier decides. Every reproduced failure becomes a permanent regression test that descendants must pass.",
+        "Antibody hardens engineering work adversarially in Daytona sandboxes: Blue writes a design, Red reads it and writes attacks, and an independent verifier decides. Every reproduced failure becomes a permanent regression test that descendants must pass.",
         "For tool-using agents, prompt injection, purchasing, support or release controls: agent_lab_status → start_agent_hardening → watch_agent_run repeatedly, carrying next_after_event, until settled → get_agent_failures → get_agent_repair → get_agent_result. Stay in Claude's terminal; no website or dashboard is needed. The current agent suite uses three explicit frozen contracts, not an arbitrary external target.",
         "A new run must actually be started when requested. Existing runs are archived evidence, never a substitute. Follow the run to its measured verdict even when model calls take several minutes. Report actual Red inputs, reproduced effects, Blue source edits and useful-work checks. Never claim universal security or attribute the manual starter to Blue.",
         "For explicitly requested hardware/FIFO designs only: lab_status → start_hardening_run → watch_run repeatedly (pass back next_after_seq) → get_agent_transcript, get_failure_evidence and get_design_source.",

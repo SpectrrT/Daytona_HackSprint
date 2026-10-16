@@ -1,6 +1,6 @@
 import { createHash, randomUUID } from "node:crypto";
-import type { Candidate, CandidateVariant, CreateRunRequest, EvaluationResult, EvolutionRun, FailureEvidence, RedAttack } from "@hollow-purple/shared/evolution";
-import { BUFFER_PROMPT } from "@hollow-purple/shared/evolution";
+import type { Candidate, CandidateVariant, CreateRunRequest, EvaluationResult, EvolutionRun, FailureEvidence, RedAttack } from "@antibody/shared/evolution";
+import { BUFFER_PROMPT } from "@antibody/shared/evolution";
 import { bestCandidate, lessonFor, passesAcceptance, scoreEvaluation } from "../arena/tools.js";
 import { StoppedError, throwIfStopped } from "../arena/types.js";
 import { config } from "../config.js";

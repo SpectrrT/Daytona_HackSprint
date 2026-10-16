@@ -1,7 +1,7 @@
 import { spawn } from "node:child_process";
 import { mkdir, readFile, rm, stat, writeFile } from "node:fs/promises";
 import { join } from "node:path";
-import type { AgentInvocation } from "@hollow-purple/shared/evolution";
+import type { AgentInvocation } from "@antibody/shared/evolution";
 
 const MAX_PROCESS_BYTES = 2 * 1024 * 1024;
 const MAX_FINAL_BYTES = 256 * 1024;

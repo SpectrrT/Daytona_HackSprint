@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import type { AgentInvocation, Candidate, EvolutionEvent, EvolutionRun, FailureEvidence } from "@hollow-purple/shared/evolution";
+import type { AgentInvocation, Candidate, EvolutionEvent, EvolutionRun, FailureEvidence } from "@antibody/shared/evolution";
 import { passesAcceptance } from "../arena/tools.js";
 import { assertFrozenContract } from "../engine/contract.js";
 

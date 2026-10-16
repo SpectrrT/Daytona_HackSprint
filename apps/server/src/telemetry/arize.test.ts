@@ -4,7 +4,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { test } from "node:test";
 import { InMemorySpanExporter } from "@opentelemetry/sdk-trace-base";
-import { BUFFER_PROMPT, type Candidate, type EvaluationResult } from "@hollow-purple/shared/evolution";
+import { BUFFER_PROMPT, type Candidate, type EvaluationResult } from "@antibody/shared/evolution";
 import { freezeContract } from "../engine/contract.js";
 import { EvolutionEngine } from "../engine/index.js";
 import { RunStore } from "../store.js";

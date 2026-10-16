@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
-import type { TimeseriesRow } from '@hollow-purple/shared/charts';
-import { MEMORY_ARM_LABELS } from '@hollow-purple/shared/charts';
+import type { TimeseriesRow } from '@antibody/shared/charts';
+import { MEMORY_ARM_LABELS } from '@antibody/shared/charts';
 const colors:Record<string,string>={none:'#77a5ff',flat:'#e4b364',graph:'#be99ff',recorded:'#7dcfc5'};
 const label=(arm:string)=>MEMORY_ARM_LABELS[arm]??'Recorded run';
 interface Point { generation:number; fresh:number; found:number; fixed:number; passed:number; total:number }

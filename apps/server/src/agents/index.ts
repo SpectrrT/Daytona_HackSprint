@@ -2,7 +2,7 @@ import { runBedrockStructured } from "./bedrock.js";
 import { randomUUID } from "node:crypto";
 import { mkdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
-import type { BlueProposal, Candidate, FailureEvidence, FrozenContract, RedProposal } from "@hollow-purple/shared/evolution";
+import type { BlueProposal, Candidate, FailureEvidence, FrozenContract, RedProposal } from "@antibody/shared/evolution";
 import { config } from "../config.js";
 import { assertFrozenContract } from "../engine/contract.js";
 import { AgentCallError, type AgentAnswer } from "./codex.js";
@@ -17,7 +17,7 @@ export interface BlueInput {
 }
 export interface RedInput {
   runId: string; candidateId: string; contract: FrozenContract; candidate: { source: string; label: string };
-  memoryContext?: string[]; failures: FailureEvidence[]; round: number; seed: number; signal?: AbortSignal; lessons?: string[]; priorAttacks?: import("@hollow-purple/shared/evolution").RedAttack[];
+  memoryContext?: string[]; failures: FailureEvidence[]; round: number; seed: number; signal?: AbortSignal; lessons?: string[]; priorAttacks?: import("@antibody/shared/evolution").RedAttack[];
 }
 const safeId = (id: string) => { if (!/^[a-zA-Z0-9_-]{1,100}$/.test(id)) throw new Error("Invalid agent artifact identifier."); return id; };
 const text = (value: string, limit = 4000) => value.length <= limit ? value : `${value.slice(0, limit)} [context truncated]`;

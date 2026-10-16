@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
 import { appendFile, mkdir, readFile, rename, writeFile } from "node:fs/promises";
 import { join } from "node:path";
-import type { LabCandidate, LabFailure, LabRun, LabTrial } from "@hollow-purple/shared/agent-lab";
+import type { LabCandidate, LabFailure, LabRun, LabTrial } from "@antibody/shared/agent-lab";
 import { config, REPO_ROOT } from "../config.js";
 import { DaytonaAgentAdapter, APP_DIR, DESKTOP_DIR, pause } from "./adapter.js";
 import { blueAgent, redAgent, type AgentContext } from "./agents.js";

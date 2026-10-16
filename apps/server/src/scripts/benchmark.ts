@@ -3,7 +3,7 @@ import { execFileSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 import { mkdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
-import { BUFFER_PROMPT, type RedAttack } from "@hollow-purple/shared/evolution";
+import { BUFFER_PROMPT, type RedAttack } from "@antibody/shared/evolution";
 import { searchRed } from "../agents/index.js";
 import { benchmarkFixtures, hash, type BenchmarkFixture } from "../benchmarks/fixtures.js";
 import { benchmarkCandidateId, boundedMap, pairedTiming, summarize, type Measurement } from "../benchmarks/metrics.js";

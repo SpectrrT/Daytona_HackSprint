@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import type { ApprovalChannel, EvolutionRun } from '@hollow-purple/shared/evolution';
+import type { ApprovalChannel, EvolutionRun } from '@antibody/shared/evolution';
 import { ConversationProvider, useConversation } from '@elevenlabs/react';
 import { Check, FlaskConical, LockKeyhole, Mic, MicOff, PackageCheck, PhoneCall, ShieldCheck, TrendingUp, X } from 'lucide-react';
 

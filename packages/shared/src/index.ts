@@ -1,4 +1,4 @@
-// Hollow Purple: before an AI agent may do something irreversible, Red (the Chaos
+// Antibody: before an AI agent may do something irreversible, Red (the Chaos
 // Agent, which injects realistic operational faults) and Blue (MAH0RAGA, which
 // evolves the agent's guardrails) compete for generations inside forked copies of
 // production. A separate grader scores every round. Purple is the agent

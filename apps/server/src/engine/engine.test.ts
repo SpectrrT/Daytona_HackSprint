@@ -3,7 +3,7 @@ import { mkdtemp, readFile, rm, appendFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { test } from "node:test";
-import { BUFFER_PROMPT, type EvaluationResult, type FailureEvidence } from "@hollow-purple/shared/evolution";
+import { BUFFER_PROMPT, type EvaluationResult, type FailureEvidence } from "@antibody/shared/evolution";
 import { passesAcceptance } from "../arena/tools.js";
 import { RunStore } from "../store.js";
 import { EvolutionEngine } from "./index.js";

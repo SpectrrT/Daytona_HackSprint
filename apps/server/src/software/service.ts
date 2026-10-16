@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { readFile, readdir } from "node:fs/promises";
 import { join } from "node:path";
-import type { SoftwareRun, SoftwareRunSummary } from "@hollow-purple/shared/software";
+import type { SoftwareRun, SoftwareRunSummary } from "@antibody/shared/software";
 import { config } from "../config.js";
 import { runSoftwareExperiment, softwareDirectory } from "./engine.js";
 

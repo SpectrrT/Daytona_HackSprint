@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
-import type { EvolutionRun } from "@hollow-purple/shared/evolution";
+import type { EvolutionRun } from "@antibody/shared/evolution";
 import { config } from "../config.js";
 import { buildBlue, searchRed } from "../agents/index.js";
 import { writeBlueLesson } from "../agents/lessons.js";

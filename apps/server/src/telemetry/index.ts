@@ -3,7 +3,7 @@ import { spawn } from "node:child_process";
 import { mkdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { config, REPO_ROOT } from "../config.js";
-import type { AgentInvocation } from "@hollow-purple/shared/evolution";
+import type { AgentInvocation } from "@antibody/shared/evolution";
 
 export type Attributes = Record<string, string | number | boolean | undefined>;
 export interface SpanRecord { traceId: string; spanId: string; parentSpanId?: string; name: string; startedAt: number; endedAt: number; status: "ok" | "error"; attributes: Record<string, string | number | boolean> }
@@ -53,7 +53,7 @@ export async function traced<T>(role: "blue" | "red" | "target" | "lesson_writer
   const startedAt = Date.now();
   const root = hash(`${runId}:root`, 16);
   const record: SpanRecord = { traceId: hash(runId, 32), spanId: role === "run" ? root : randomBytes(8).toString("hex"), parentSpanId: role === "run" ? undefined : root,
-    name: `hollow-purple.${role}`, startedAt, endedAt: startedAt, status: "ok", attributes: safeAttributes({ "hollow.run_id": runId, "hollow.role": role, "openinference.span.kind": ["blue", "red", "target", "lesson_writer"].includes(role) ? "LLM" : "CHAIN", ...attrs }) };
+    name: `antibody.${role}`, startedAt, endedAt: startedAt, status: "ok", attributes: safeAttributes({ "hollow.run_id": runId, "hollow.role": role, "openinference.span.kind": ["blue", "red", "target", "lesson_writer"].includes(role) ? "LLM" : "CHAIN", ...attrs }) };
   try {
     const result = await task(); record.attributes = safeAttributes({ ...record.attributes, ...resultAttrs(result) }); return result;
   } catch (error) { record.status = "error"; throw error; }

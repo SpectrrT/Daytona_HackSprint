@@ -75,7 +75,7 @@ def main():
     }}, indent=2))
     (directory / "edit-manifest.json").write_text(json.dumps({"source": str(video), "source_sha256": hashlib.sha256(video.read_bytes()).hexdigest(), "actual_terminal_footage": True, "cursor_source": "Measured X11 pointer position and button samples, transformed with the identical cuts", "captions": False, "segments": manifest}, indent=2))
     if args.recordly:
-        output = directory / "hollow-purple-claude-terminal.mp4"
+        output = directory / "antibody-claude-terminal.mp4"
         environment = {key: os.environ[key] for key in ["PATH", "HOME", "TMPDIR"] if key in os.environ}
         environment.update({"LANG": "en_US.UTF-8", "RECORDLY_SMOKE_EXPORT": "1", "RECORDLY_SMOKE_EXPORT_PROJECT": str(project), "RECORDLY_SMOKE_EXPORT_OUTPUT": str(output), "RECORDLY_SMOKE_EXPORT_QUALITY": "source", "RECORDLY_SMOKE_EXPORT_FPS": "30"})
         with (directory / "recordly-export.log").open("w") as log:

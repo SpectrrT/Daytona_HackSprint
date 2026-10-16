@@ -1,20 +1,20 @@
-# Hollow Purple: 3-minute pitch
+# Antibody: 3-minute pitch
 
 About 420 spoken words, which is roughly 2:45 at a steady pace. The release agent speaks for about 15 seconds during beat 5. Lines in brackets are stage directions; don't read them aloud. Beat numbers match the beat sheet below.
 
 ## Before you go on
 
-- Run `pnpm dev`. In Claude Code, in this repository, approve the `hollow-purple` MCP server and allow its tools so no permission prompt appears on stage. Ask Claude for `lab_status`: "Daytona HDL simulation", "Blue and Red agents" and "Arize tracing" should be ready, and the "Release approval" check should mention the ElevenLabs release agent.
+- Run `pnpm dev`. In Claude Code, in this repository, approve the `antibody` MCP server and allow its tools so no permission prompt appears on stage. Ask Claude for `lab_status`: "Daytona HDL simulation", "Blue and Red agents" and "Arize tracing" should be ready, and the "Release approval" check should mention the ElevenLabs release agent.
 - Allow the microphone in the dashboard tab. Without it, the release agent can't hear you.
 - A live run takes roughly 2 to 4 minutes per design, and the smallest budget is 3 designs, so a run started on stage won't finish during the pitch. About 15 minutes before your slot, have Claude start a warm-up run with the beat 1 prompt and note its run id. On stage, beat 1 starts a fresh run, and beats 3 to 5 use the warm-up run.
 - Beat 3 needs a reproduced failure, and a normal run may not produce one, because a correct design can pass every attack. Before your slot, ask Claude for `get_failure_evidence` on the warm-up run. To make beat 3 far more likely, use the recursive sample as the warm-up run. It starts from a FIFO we broke on purpose, labelled "NOT Blue-generated", and Blue writes a repair only after a failure is reproduced. It can run up to five designs and eight evaluations, so start it early. It runs its own controller on port 8787 and doesn't load older runs, so stop `pnpm dev` first, then run these two commands from the repository root:
 
 ```bash
-pnpm --filter @hollow-purple/server exec node --import tsx src/scripts/recursive-demo.ts
+pnpm --filter @antibody/server exec node --import tsx src/scripts/recursive-demo.ts
 ```
 
 ```bash
-pnpm --filter @hollow-purple/web dev
+pnpm --filter @antibody/web dev
 ```
 
 - Warm-up run for beats 3 to 5: on Tensae's laptop, `0061f2cb-dcf2-4e87-8128-615b19b1aa1c` is a completed recursive-sample run with a reproduced failure, a regression test, a champion and a pending voice approval. A second completed run, `47aba9b2-3ab3-4039-9949-54d313b5bd2a`, has a champion and a pending voice approval but no reproduced failure, and it's visible only under the normal controller (`pnpm dev`). Don't approve or decline either run in rehearsal: after a champion is released or declined, it can't be approved again.
@@ -25,9 +25,9 @@ pnpm --filter @hollow-purple/web dev
 
 Coding agents now write code faster than anyone can review it. So the hard question isn't whether a model can write it. It's who checks the model.
 
-Hollow Purple is an adversarial engineering loop. Blue, a model agent, builds a design. Red, a separate agent, reads that design and tries to break it. Neither gets a vote. An independent verifier decides, from evidence.
+Antibody is an adversarial engineering loop. Blue, a model agent, builds a design. Red, a separate agent, reads that design and tries to break it. Neither gets a vote. An independent verifier decides, from evidence.
 
-And there's no new tool to learn: Hollow Purple is an MCP server.
+And there's no new tool to learn: Antibody is an MCP server.
 
 **[Beat 1: Claude Code starts the run]**
 
@@ -59,7 +59,7 @@ The controller confirms with ElevenLabs that this conversation was held with our
 
 Arize traces every Blue and Red call and every verdict. Blue and Red can run on Claude through AWS Bedrock. And the same loop already runs on software: a checkout app in Daytona, with Anchor driving a real browser.
 
-This is simulation evidence, not a formal proof. But every claim has a receipt. We built a dashboard, but you don't need one: Claude is the interface. Ask in plain English, and get back a tested design, the failures that shaped it, and a person's yes. That's Hollow Purple.
+This is simulation evidence, not a formal proof. But every claim has a receipt. We built a dashboard, but you don't need one: Claude is the interface. Ask in plain English, and get back a tested design, the failures that shaped it, and a person's yes. That's Antibody.
 
 ## Live demo beat sheet
 

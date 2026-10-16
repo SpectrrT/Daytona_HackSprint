@@ -1,8 +1,8 @@
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
 import { test } from "node:test";
-import type { AgentInvocation, EvolutionRun, EvolutionSystem, FailureEvidence } from "@hollow-purple/shared/evolution";
-import { BUFFER_PROMPT } from "@hollow-purple/shared/evolution";
+import type { AgentInvocation, EvolutionRun, EvolutionSystem, FailureEvidence } from "@antibody/shared/evolution";
+import { BUFFER_PROMPT } from "@antibody/shared/evolution";
 import { freezeContract } from "../engine/contract.js";
 import { sanitizeRun, sanitizeSystem } from "./publish-evidence.js";
 

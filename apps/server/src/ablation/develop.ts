@@ -1,7 +1,7 @@
 import { readFile, writeFile, mkdir } from "node:fs/promises";
 import { join } from "node:path";
-import type { Candidate, EvaluationResult, EvolutionRun } from "@hollow-purple/shared/evolution";
-import { BUFFER_PROMPT } from "@hollow-purple/shared/evolution";
+import type { Candidate, EvaluationResult, EvolutionRun } from "@antibody/shared/evolution";
+import { BUFFER_PROMPT } from "@antibody/shared/evolution";
 import { config, REPO_ROOT } from "../config.js";
 import { freezeContract } from "../engine/contract.js";
 import { evaluateCandidate } from "../lab/index.js";

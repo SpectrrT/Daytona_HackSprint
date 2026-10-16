@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import type { BrowserTrial, SoftwareCheck, SoftwareRun } from "@hollow-purple/shared/software";
-import { checkOutcome, softwareProgress } from "@hollow-purple/shared/software-progress";
+import type { BrowserTrial, SoftwareCheck, SoftwareRun } from "@antibody/shared/software";
+import { checkOutcome, softwareProgress } from "@antibody/shared/software-progress";
 import { freezeSoftwareContract } from "./contract.js";
 
 const check = (id: string, passed: boolean, recordedAt?: number): SoftwareCheck => ({ id, passed, summary: "Observed verdict", requests: 3, hidden: false, recordedAt });

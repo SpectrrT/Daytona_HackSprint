@@ -1,7 +1,7 @@
 import { assertFrozenContract, freezeContract } from "../engine/contract.js";
-import { BUFFER_PROMPT } from "@hollow-purple/shared/evolution";
+import { BUFFER_PROMPT } from "@antibody/shared/evolution";
 import { createHash } from "node:crypto";
-import type { EvolutionRun, FailureEvidence } from "@hollow-purple/shared/evolution";
+import type { EvolutionRun, FailureEvidence } from "@antibody/shared/evolution";
 import { FAMILIES, LessonMemory, failureFamily, type Family, type GraphNode, type GraphEdge } from "../memory/graph.js";
 
 export type MemoryMode = "none" | "flat" | "graph";

@@ -1,4 +1,4 @@
-import type { CandidateVariant } from "@hollow-purple/shared/evolution";
+import type { CandidateVariant } from "@antibody/shared/evolution";
 import type { LabTest } from "./tests.js";
 
 export interface Observation { valid: boolean; data: number; full: boolean; empty: boolean; occupancy: number }

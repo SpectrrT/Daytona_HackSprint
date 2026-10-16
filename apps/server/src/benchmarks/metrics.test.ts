@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import type { EvaluationResult } from "@hollow-purple/shared/evolution";
+import type { EvaluationResult } from "@antibody/shared/evolution";
 import { benchmarkFixtures } from "./fixtures.js";
 import { benchmarkCandidateId, boundedMap, pairedTiming, summarize, type Measurement } from "./metrics.js";
 import { validateRtl, validateSequence } from "../lab/validation.js";

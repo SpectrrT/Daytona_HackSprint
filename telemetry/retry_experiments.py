@@ -50,7 +50,7 @@ def publish(path):
                 client.experiments.get(experiment=experiment["id"])
             return old
     slots = [{"repeat": key[0], "domain": key[1]} for key in sorted(pairs)]
-    dataset_name = "hollow-purple-retries-" + evidence["id"]
+    dataset_name = "antibody-retries-" + evidence["id"]
     try:
         dataset = client.datasets.create(name=dataset_name, space=os.environ["ARIZE_SPACE_ID"], examples=slots, force_http=True)
     except Exception:

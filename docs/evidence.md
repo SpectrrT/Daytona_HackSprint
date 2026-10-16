@@ -5,7 +5,7 @@ controlled benchmarks, not a claim of general model superiority.
 
 ## Lead with this
 
-> Same Claude. Zero duplicate actions. Hollow Purple handled 9/9 concurrent retry
+> Same Claude. Zero duplicate actions. Antibody handled 9/9 concurrent retry
 > cases correctly, versus 0/9 with model-only execution, while both completed all
 > 9 clean controls. Our Blue-written guard eliminated all 9 duplicate effects.
 

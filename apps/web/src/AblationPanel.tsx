@@ -6,7 +6,7 @@ export function AblationPanel() {
   const [study, setStudy] = useState<Study | null>(null);
   useEffect(() => { let disposed = false; const update = () => fetch('/api/ablation/latest').then(r => r.json()).then(value => { if (!disposed) setStudy(value); }).catch(() => {}); void update(); const timer = setInterval(update, 10000); return () => { disposed = true; clearInterval(timer); }; }, []);
   const count = (v?: Count) => v?.evaluated ? `${v.passed}/${v.evaluated}` : 'Pending';
-  const labels = [['none', 'A', 'Claude alone', 'Contract and current public failures'], ['flat', 'B', 'Raw retrieval', 'Similar past failures and counterexample traces'], ['graph', 'C', 'Hollow Purple graph', 'Validated lessons through family ancestry']];
+  const labels = [['none', 'A', 'Claude alone', 'Contract and current public failures'], ['flat', 'B', 'Raw retrieval', 'Similar past failures and counterexample traces'], ['graph', 'C', 'Antibody graph', 'Validated lessons through family ancestry']];
   const transferred = study?.graphTransfer?.some(t => t.lessonsRetrieved > 0 && t.path.includes('occupancy'));
   return <section className="ablation-panel" aria-label="Memory ablation evidence">
     <div className="ablation-heading"><div><small>CONTROLLED MEMORY EXPERIMENT</small><h2>Does the lesson graph help Claude?</h2></div><span>{study?.status && study.status !== 'missing' ? study.status.replaceAll('-', ' ') : 'Awaiting a real run'}</span></div>

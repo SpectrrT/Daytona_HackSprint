@@ -1,4 +1,4 @@
-import type { FailureEvidence, RedAttack, Stimulus } from "@hollow-purple/shared/evolution";
+import type { FailureEvidence, RedAttack, Stimulus } from "@antibody/shared/evolution";
 import { validateRedAttacks, validateSequence } from "./validation.js";
 
 export interface LabTest { id: string; name: string; hidden: boolean; sequence: Stimulus[] }

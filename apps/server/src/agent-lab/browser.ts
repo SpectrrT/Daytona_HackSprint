@@ -2,8 +2,8 @@ import assert from "node:assert/strict";
 import { writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { chromium, type Browser, type Page } from "playwright-core";
-import type { EngineeringContract } from "@hollow-purple/shared/evolution";
-import type { LabAction, LabAttack, LabTrial } from "@hollow-purple/shared/agent-lab";
+import type { EngineeringContract } from "@antibody/shared/evolution";
+import type { LabAction, LabAttack, LabTrial } from "@antibody/shared/agent-lab";
 import { createAnchorSession, endAnchorSession, type AnchorSession } from "../browser/anchor.js";
 import { DaytonaAgentAdapter, pause } from "./adapter.js";
 import { targetAgent, type AgentContext } from "./agents.js";
@@ -14,7 +14,7 @@ export class LabBrowser {
   private constructor(private readonly desktop: DaytonaAgentAdapter, private readonly session: AnchorSession,
     private readonly anchor: Browser, private readonly native: Browser, readonly viewer: Page, readonly app: Page) {}
   static async connect(desktop: DaytonaAgentAdapter, directory: string): Promise<LabBrowser> {
-    const session = await createAnchorSession(["hollow-purple", "cross-domain-agent-lab"]);
+    const session = await createAnchorSession(["antibody", "cross-domain-agent-lab"]);
     let anchor: Browser | undefined, native: Browser | undefined;
     try {
       anchor = await chromium.connectOverCDP(session.cdpUrl, { timeout: 30000 });

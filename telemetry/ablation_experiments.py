@@ -70,13 +70,13 @@ def publish(path):
                 client.experiments.get(experiment=item["id"])
             return prior
     slots = [{"seed": seed, "contract_hash": results["contractHash"], "corpus_hash": results["corpusHash"]} for seed in results["seeds"]]
-    dataset_name = "hollow-purple-paired-seeds-v2-" + results["runId"]
+    dataset_name = "antibody-paired-seeds-v2-" + results["runId"]
     try:
         dataset = client.datasets.create(name=dataset_name, space=space, examples=slots, force_http=True)
     except Exception:
         dataset = client.datasets.get(dataset=dataset_name, space=space)
     receipt = {"status": "pending", "datasetId": dataset.id, "runId": results["runId"], "experiments": [], "errors": [], "evidenceMode": "recorded hardware evidence; Arize SDK deterministic evaluators"}
-    for mode, label in [("none", "A Claude alone"), ("flat", "B Raw retrieval"), ("graph", "C Hollow Purple graph")]:
+    for mode, label in [("none", "A Claude alone"), ("flat", "B Raw retrieval"), ("graph", "C Antibody graph")]:
         trials = {t["seed"]: t for t in results["trials"] if t["mode"] == mode}
 
         def task(dataset_row):

@@ -4,7 +4,7 @@ import { execFileSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
-import type { EvolutionRun } from "@hollow-purple/shared/evolution";
+import type { EvolutionRun } from "@antibody/shared/evolution";
 import { buildBlue } from "../agents/index.js";
 import { auditDaytonaDesktop } from "../browser/desktop.js";
 import { config, REPO_ROOT } from "../config.js";
@@ -47,7 +47,7 @@ async function main() {
     labels: { app: "hollow-purple", purpose: "visible-desktop" }, autoStopInterval: 30, autoDeleteInterval: -1,
   }, { timeout: 180 });
   const sandboxId = sandbox.id;
-  assert.equal(sandbox.labels?.app, "hollow-purple");
+  assert.equal(sandbox.labels?.app, "antibody");
   assert.equal(sandbox.labels?.purpose, "visible-desktop", "Refusing to modify an unrelated sandbox.");
   const computer = new Computer(sandbox);
   const outputDir = join(config.DATA_DIR, "runs", runId, "native-desktop");

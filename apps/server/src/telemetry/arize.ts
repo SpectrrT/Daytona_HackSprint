@@ -3,7 +3,7 @@ import { OTLPTraceExporter } from "@opentelemetry/exporter-trace-otlp-proto";
 import { resourceFromAttributes } from "@opentelemetry/resources";
 import { BasicTracerProvider, BatchSpanProcessor, SimpleSpanProcessor, type SpanExporter } from "@opentelemetry/sdk-trace-base";
 import { z } from "zod";
-import type { AgentInvocation, ApprovalState, Candidate, EvolutionEvent, EvolutionRun, ReleaseRecord } from "@hollow-purple/shared/evolution";
+import type { AgentInvocation, ApprovalState, Candidate, EvolutionEvent, EvolutionRun, ReleaseRecord } from "@antibody/shared/evolution";
 import "../config.js"; // loads .env before the variables below are read
 import type { RunStore } from "../store.js";
 
@@ -178,10 +178,10 @@ export function startArizeTracing(store: RunStore, exporter?: SpanExporter): Tel
     ? new SimpleSpanProcessor(exporter)
     : new BatchSpanProcessor(new OTLPTraceExporter({ url: env.ARIZE_OTLP_URL, headers: { space_id: env.ARIZE_SPACE_ID!, api_key: env.ARIZE_API_KEY! } }));
   const provider = new BasicTracerProvider({
-    resource: resourceFromAttributes({ "service.name": "hollow-purple-lab", "openinference.project.name": env.ARIZE_PROJECT_NAME, model_id: env.ARIZE_PROJECT_NAME }),
+    resource: resourceFromAttributes({ "service.name": "antibody-lab", "openinference.project.name": env.ARIZE_PROJECT_NAME, model_id: env.ARIZE_PROJECT_NAME }),
     spanProcessors: [processor],
   });
-  const tracer = new RunTracer(provider.getTracer("hollow-purple-lab"));
+  const tracer = new RunTracer(provider.getTracer("antibody-lab"));
   const stop = store.observe((event) => {
     try { tracer.handle(event); } catch (error) { console.warn("[arize]", error instanceof Error ? error.message : error); }
   });

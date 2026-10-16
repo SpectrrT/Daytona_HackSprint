@@ -1,7 +1,7 @@
 import { serve } from "@hono/node-server";
 import { readFile, mkdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
-import { BUFFER_PROMPT } from "@hollow-purple/shared/evolution";
+import { BUFFER_PROMPT } from "@antibody/shared/evolution";
 import { config, REPO_ROOT } from "../config.js";
 import { requireHardwareSnapshot } from "../daytona/client.js";
 import { EvolutionEngine } from "../engine/index.js";

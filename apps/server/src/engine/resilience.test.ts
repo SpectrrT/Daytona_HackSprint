@@ -4,7 +4,7 @@ import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { test } from "node:test";
-import { BUFFER_PROMPT, type AgentInvocation, type EvaluationResult } from "@hollow-purple/shared/evolution";
+import { BUFFER_PROMPT, type AgentInvocation, type EvaluationResult } from "@antibody/shared/evolution";
 import { AgentCallError } from "../agents/codex.js";
 import { RunStore } from "../store.js";
 import { EvolutionEngine, type AgentTeam, type EvaluationRequest } from "./index.js";

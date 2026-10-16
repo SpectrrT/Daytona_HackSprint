@@ -1,4 +1,4 @@
-import type { CheckoutInput } from "@hollow-purple/shared/software";
+import type { CheckoutInput } from "@antibody/shared/software";
 
 export interface SoftwareTest { id: string; hidden: boolean; batches: CheckoutInput[][] }
 const purchase = (requestId: unknown, quantity: unknown): CheckoutInput => ({ requestId, quantity });

@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { freezeSoftwareContract } from "./contract.js";
 import { verifyCheckout } from "./verifier.js";
-import type { LedgerSnapshot, ObservedRequest } from "@hollow-purple/shared/software";
+import type { LedgerSnapshot, ObservedRequest } from "@antibody/shared/software";
 
 const sourceHash = "a".repeat(64), runtimeHash = "b".repeat(64), contract = freezeSoftwareContract(123);
 const order = { id: 7, requestId: "one", quantity: 1, totalCents: 1999 };

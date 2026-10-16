@@ -37,7 +37,7 @@ def export_span(record):
     if record.get("parentSpanId"):
         parent = SpanContext(trace_id=int(record["traceId"], 16), span_id=int(record["parentSpanId"], 16), is_remote=True, trace_flags=TraceFlags(TraceFlags.SAMPLED))
         context = trace.set_span_in_context(NonRecordingSpan(parent))
-    span = provider.get_tracer("hollow-purple").start_span(record["name"], context=context, start_time=int(record["startedAt"] * 1_000_000), attributes=record["attributes"])
+    span = provider.get_tracer("antibody").start_span(record["name"], context=context, start_time=int(record["startedAt"] * 1_000_000), attributes=record["attributes"])
     span.set_status(Status(StatusCode.ERROR if record["status"] == "error" else StatusCode.OK))
     span.end(end_time=int(record["endedAt"] * 1_000_000))
     flushed = provider.force_flush(timeout_millis=15000)

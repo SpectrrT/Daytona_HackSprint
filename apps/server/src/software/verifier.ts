@@ -1,4 +1,4 @@
-import type { CheckoutContract, CheckoutInput, LedgerSnapshot, RequestBatch, SoftwareCheck } from "@hollow-purple/shared/software";
+import type { CheckoutContract, CheckoutInput, LedgerSnapshot, RequestBatch, SoftwareCheck } from "@antibody/shared/software";
 import { assertSoftwareContract } from "./contract.js";
 
 type Order = { requestId: string; quantity: number; totalCents: number };

@@ -113,7 +113,7 @@ data/telemetry-venv/bin/python -m pip install -r telemetry/requirements.txt
 
 Set `ARIZE_ENABLED=true`, `ARIZE_API_KEY`, `ARIZE_SPACE_ID` and, if necessary,
 `ARIZE_PYTHON`. OpenInference spans for Blue, Red, lesson writing and verification
-use `arize.otel.register` with project `hollow-purple`. Only bounded identifiers,
+use `arize.otel.register` with project `antibody`. Only bounded identifiers,
 usage and verifier metrics leave the application through these role spans.
 Prompts, source, credentials, signed URLs and hidden stimuli are excluded.
 

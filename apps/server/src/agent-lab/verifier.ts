@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
-import type { EngineeringContract } from "@hollow-purple/shared/evolution";
-import type { AgentEnvironment, LabAction, LabCheck, LabEffect, LabSnapshot } from "@hollow-purple/shared/agent-lab";
+import type { EngineeringContract } from "@antibody/shared/evolution";
+import type { AgentEnvironment, LabAction, LabCheck, LabEffect, LabSnapshot } from "@antibody/shared/agent-lab";
 import { assertContract, CONTEXTS, RECORDS } from "./contract.js";
 
 /** Independent reference permission model. It never imports or executes Blue's guard. */

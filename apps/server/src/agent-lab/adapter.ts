@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
-import type { AgentEnvironment, LabAction, LabCandidate, LabProposal, LabSnapshot } from "@hollow-purple/shared/agent-lab";
+import type { AgentEnvironment, LabAction, LabCandidate, LabProposal, LabSnapshot } from "@antibody/shared/agent-lab";
 import { REPO_ROOT } from "../config.js";
 import { daytona } from "../daytona/client.js";
 import { Computer, shellQuote } from "../daytona/computer.js";

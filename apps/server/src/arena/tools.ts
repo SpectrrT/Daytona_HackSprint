@@ -1,4 +1,4 @@
-import type { Candidate, EvaluationResult, FailureEvidence } from "@hollow-purple/shared/evolution";
+import type { Candidate, EvaluationResult, FailureEvidence } from "@antibody/shared/evolution";
 
 /** One aggregate score is useful for branching, but never substitutes for acceptance. */
 export function scoreEvaluation(result: EvaluationResult): number {

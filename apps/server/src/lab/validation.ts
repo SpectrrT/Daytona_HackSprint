@@ -1,4 +1,4 @@
-import type { RedAttack, Stimulus } from "@hollow-purple/shared/evolution";
+import type { RedAttack, Stimulus } from "@antibody/shared/evolution";
 
 export class CandidateBuildError extends Error {
   constructor(message: string) { super(message); this.name = "CandidateBuildError"; }

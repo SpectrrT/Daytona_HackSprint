@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { afterEach, beforeEach, test } from "node:test";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
-import type { Candidate, EvolutionEvent, EvolutionRun } from "@hollow-purple/shared/evolution";
+import type { Candidate, EvolutionEvent, EvolutionRun } from "@antibody/shared/evolution";
 import { createServer } from "./server.js";
 
 /** The MCP server against a stubbed controller: the same run log the dashboard reads, rendered for Claude. */
