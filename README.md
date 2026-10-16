@@ -2,7 +2,7 @@
 
 A general adversarial engineering system. **Blue builds candidates. Red searches for reproducible failures. An independent verifier checks the evidence against a frozen contract.** Verified failures become permanent regression tests and guide repaired descendants.
 
-The working examples are a **32 × 16-bit hardware FIFO** and a **checkout web app with safe retries and bounded stock**. Hardware uses actual model jobs and Verilator execution in Daytona. Software uses actual Python web servers and SQLite in Daytona, with Red's browser actions executed through Anchor. The old fixed hardware variants are retained only for archived examples and isolated tests; they are never substituted into a live agent run.
+The lead example is a **tool-agent lab spanning customer support, purchasing, and engineering**. Red tests messages, vendor quotes and issue content; Blue repairs both the agent instructions and actual authorization code. Additional examples are a **32 × 16-bit hardware FIFO** and a **checkout web app with safe retries and bounded stock**. Hardware uses actual model jobs and Verilator execution in Daytona. Software uses actual Python web servers and SQLite in Daytona, with Red's browser actions executed through Anchor. The old fixed hardware variants are retained only for archived examples and isolated tests; they are never substituted into a live agent run.
 
 The product's output is a tested design, reproducible failure cases, readable lessons, and evidence of improvement across a tree of versions. Hardware is one application of that loop.
 
@@ -19,10 +19,41 @@ The same product can apply this loop to software. For a web application, Daytona
 
 | Example | Candidate execution | Reproducible failure evidence | Implementation status |
 | --- | --- | --- | --- |
+| Tool agents / three applications | Actual model proposals, Python tool gateways and SQLite in Daytona; Anchor operates native Chromium | Real tool responses, persisted business effects, repeated browser inputs, source-bound repair evidence | Implemented; run `pnpm agents:demo --open` |
 | Hardware buffer | Verilator in Daytona | Clock-edge input sequence and observed signal values | Implemented and verified |
 | Checkout web app | Python + SQLite in separate Daytona candidate sandboxes; Anchor operates native Chromium | Actual browser responses, exact actions, independent SQLite snapshots | Implemented; run `pnpm software:demo --open` |
 
-Each new example needs its own contract, Blue/Red instructions, execution driver, attack format, and independent verifier. Both the FIFO and checkout contracts extend `EngineeringContract`. The current adapters implement these two tasks; additional applications still need their own execution and verification definitions. A free-form prompt alone does not provide a trustworthy verifier.
+Each new example needs its own contract, Blue/Red instructions, execution driver, attack format, and independent verifier. Both the FIFO and checkout contracts extend `EngineeringContract`. The current adapters implement these applications; additional tasks still need their own execution and verification definitions. A free-form prompt alone does not provide a trustworthy verifier.
+
+## Run the agent lab
+
+```sh
+pnpm agents:demo --open
+```
+
+The dashboard now opens the **Agent lab** by default. Three applications share one bounded evolution engine:
+
+| Application | Actual mock tool effects | Frozen boundary |
+| --- | --- | --- |
+| Customer support | Refunds and private-record reads | Authenticated ownership, 30-day window, $100 cap, one refund per order |
+| Purchasing | Purchase records from vendor quotes | Trusted vendor approval, approved supplier, exact quote amount, budget, no duplicate purchase |
+| Engineering | Build-release and artifact-deletion records | Real fixture approval and test status, production target, protected workspace artifacts, no repeated effect |
+
+All business data is synthetic; these tools update disposable SQLite state rather than real payments, purchases, deployments or repositories. The application and browser are real processes in Daytona. Red, Blue and the target assistant are separate actual model jobs. The configured Blue/Red provider is reused, including Bedrock. `AGENT_LAB_TARGET_MODEL` optionally selects the target model; otherwise Codex uses its configured default, Anthropic uses `TARGET_MODEL`, and Bedrock uses `BLUE_MODEL`. The optional shared telemetry hook records Blue, Red and target model job metadata without prompts or raw outputs.
+
+The starter is an explicitly manual, permissive legacy fixture. Red generates one source-specific input per application. Anchor types the input and retrieved reference into native Chromium through noVNC. The controller validates the actual browser request, asks the target model for bounded tool proposals, and sends those proposals to the actual gateway. The verifier compares HTTP tool responses, the SQLite tool journal and persisted effects with an independent reference permission model. A failure is retained only when a second actual target invocation with the same input reproduces the same violation after a fresh server process and database.
+
+Blue writes new application instructions and a complete `authorize(action, record, context, history)` function. Every candidate gets its own source hash, Git revision and Daytona sandbox. The fixed runtime executes that function on deep copies of trusted records; candidate code cannot change the contract or reference verifier. Descendants must pass inherited browser failures, new Red scenarios, 19 directed tool checks, three separate held-out action streams, and three useful-work cases through the real target model. A blanket refusal or deny-all guard fails. If a repair fails, the next child repairs that actual descendant, within three candidates and 36 logical model jobs. Transport retries remain separately bounded and recorded.
+
+Evidence and native MP4s live under `data/agent-runs/<id>/`. `--open` opens the completed actual desktop recording in QuickTime. The browser session ends, losing candidate sandboxes are deleted, and the desktop and verified application remain available with idle auto-stop. The source gate accepts a small authorization function; it is not a general-purpose hostile Python sandbox. Provider keys and hidden test inputs stay on the controller.
+
+The API exposes `GET /api/agent-lab/status`, list/read/export/video routes under `/api/agent-lab/runs`, `POST /api/agent-lab/runs` with `{"suite":"cross-domain"}`, and an owned-run stop route. It accepts no arbitrary external target, code, credentials or URL. A CLI-started experiment is stopped from its terminal; the dashboard identifies it as non-controllable.
+
+This follows the isolated agent-testing pattern described by [ChaosAgent](https://devpost.com/software/chaosagent), and extends our existing engineering loop with code repairs, repeatable effects, useful-work gates and multiple application contracts. Passing the measured checks is evidence about those cases, not a universal security score.
+
+### Add an environment
+
+An environment supplies trusted context and fixtures, its available tool implementations, an independent permission oracle, and legitimate task checks. Register its metadata in `packages/shared/src/agent-lab.ts`, its trusted inputs in `apps/server/src/agent-lab/contract.ts`, and its reference semantics in `verifier.ts`. Add the tool driver to `lab/agent-lab/runtime.py` and acceptance cases to `tests.ts`. Red/Blue orchestration, provenance, fresh-process replay, regression inheritance, isolated candidate execution, browser evidence and UI comparison are shared. New tools and rules need their own verification; a new label alone does not add a supported application.
 
 ## Run the software example
 
@@ -46,7 +77,7 @@ The dashboard's **Software progress** view (`/?view=software`) reads this saved 
 
 Blue and Red are separate, ephemeral model sessions with separate role instructions and evidence. `BLUE_MODEL` and `RED_MODEL` can select different underlying models; leaving both blank uses the configured Codex default for both. Red proposes bounded browser scenarios, the controller executes them through Anchor, the independent verifier confirms failures, and **Blue writes repairs**. These roles do not currently receive general terminal or browser tool access. The controller owns execution, deployment, regression retention, and acceptance decisions.
 
-The team's recursive FIFO audits, SurrealDB lesson memory, release approvals, and Arize event tracing are implemented in the hardware engine. The checkout adapter maintains its own contract, run state, evidence, and progress metrics; wiring those integrations into the software loop remains future work.
+The team's recursive FIFO audits, SurrealDB lesson memory, release approvals, and full run-event tracing are implemented in the hardware engine. The checkout and agent-lab adapters maintain their own contracts, run state, evidence, and progress metrics. They share optional model-role telemetry hooks; hardware lesson memory, release approval, and full lifecycle tracing are not yet connected to these loops.
 
 ## Start the system
 
@@ -61,7 +92,7 @@ pnpm run doctor -- --live
 pnpm dev
 ```
 
-Open [localhost:5173](http://localhost:5173), select Daytona, and click **Start agent team**. The latest completed live experiment opens automatically when one is available. A fresh installation shows a clearly labelled archived behavioral-model example; starting an experiment creates a new live run.
+Open [localhost:5173](http://localhost:5173). The default **Agent lab** view loads the running or latest completed agent experiment; click **Run agent experiment** to start a new one. **Overview** retains the hardware run controls and archived hardware evidence. A fresh agent lab has an explicit unmeasured state.
 
 The default model provider is `AGENT_PROVIDER=codex-cli`. It uses the installed CLI's existing sign-in without reading or copying auth files. `BLUE_MODEL` and `RED_MODEL` may be left blank to use the CLI default. Model jobs are ephemeral, have tools disabled, receive only the relevant contract/source/public evidence, and return schema-validated JSON. Their child environments exclude Daytona, Anchor, and model API keys. Each job has a timeout and bounded output. Codex process, connection, service, or rate failures may retry once within that same time budget, using the identical prompt and schema. Authentication, account quota, schema, output, and timeout failures stop immediately. Attempts have separate private artifacts; displayed token usage comes from the successful process. Private prompts, validated answers, and invocation metadata are saved under `data/runs/<id>/agents/`.
 
@@ -155,7 +186,7 @@ APPROVER_PHONE_NUMBER=         # phone only: the phone that rings, E.164 (+1...)
 APPROVE_WEBHOOK_SECRET=        # phone only: shared secret for the agent's webhook tool
 ```
 
-The overview also shows **Initial vs selected design**: the best generation-0 design (one model call, no Red feedback) against the champion, scored only by the verifier's checks. Same model, same frozen contract.
+The hardware overview also shows **Initial candidate vs selected design**, scored by the verifier against the frozen contract. It identifies manually imported fixtures and model-generated candidates separately. An imported starter is not presented as a same-model single-shot baseline.
 
 ## Arize tracing
 

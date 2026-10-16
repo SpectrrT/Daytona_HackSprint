@@ -18,6 +18,7 @@
     "cleanup": "pnpm --filter @hollow-purple/server cleanup",
     "ablation": "pnpm --filter @hollow-purple/server exec tsx src/scripts/local.ts ablation",
     "metrics": "pnpm --filter @hollow-purple/server exec tsx src/scripts/local.ts metrics",
-    "charts": "pnpm --filter @hollow-purple/server exec tsx src/scripts/local.ts charts"
+    "charts": "pnpm --filter @hollow-purple/server exec tsx src/scripts/local.ts charts",
+    "agents:demo": "pnpm --filter @hollow-purple/server exec node --import tsx src/scripts/run-agent-lab.ts"
   }
 }

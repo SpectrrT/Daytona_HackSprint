@@ -11,7 +11,8 @@
     "./software": "./src/software.ts",
     "./charts": "./src/charts.ts",
     "./software-progress": "./src/software-progress.ts",
-    "./transcript": "./src/transcript.ts"
+    "./transcript": "./src/transcript.ts",
+    "./agent-lab": "./src/agent-lab.ts"
   },
   "scripts": {
     "typecheck": "tsc -p tsconfig.json"

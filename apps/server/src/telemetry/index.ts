@@ -48,12 +48,12 @@ export function agentAttributes(agent: Partial<AgentInvocation>): Attributes {
 }
 
 /** Application errors remain errors; telemetry cannot change a model or checker verdict. */
-export async function traced<T>(role: "blue" | "red" | "lesson_writer" | "verifier" | "run", runId: string, attrs: Attributes, task: () => Promise<T>, resultAttrs: (value: T) => Attributes = () => ({})): Promise<T> {
+export async function traced<T>(role: "blue" | "red" | "target" | "lesson_writer" | "verifier" | "run", runId: string, attrs: Attributes, task: () => Promise<T>, resultAttrs: (value: T) => Attributes = () => ({})): Promise<T> {
   if (!telemetryStatus().enabled || process.env.NODE_TEST_CONTEXT) return task();
   const startedAt = Date.now();
   const root = hash(`${runId}:root`, 16);
   const record: SpanRecord = { traceId: hash(runId, 32), spanId: role === "run" ? root : randomBytes(8).toString("hex"), parentSpanId: role === "run" ? undefined : root,
-    name: `hollow-purple.${role}`, startedAt, endedAt: startedAt, status: "ok", attributes: safeAttributes({ "hollow.run_id": runId, "hollow.role": role, "openinference.span.kind": ["blue", "red", "lesson_writer"].includes(role) ? "LLM" : "CHAIN", ...attrs }) };
+    name: `hollow-purple.${role}`, startedAt, endedAt: startedAt, status: "ok", attributes: safeAttributes({ "hollow.run_id": runId, "hollow.role": role, "openinference.span.kind": ["blue", "red", "target", "lesson_writer"].includes(role) ? "LLM" : "CHAIN", ...attrs }) };
   try {
     const result = await task(); record.attributes = safeAttributes({ ...record.attributes, ...resultAttrs(result) }); return result;
   } catch (error) { record.status = "error"; throw error; }
