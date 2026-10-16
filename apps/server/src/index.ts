@@ -11,7 +11,7 @@ import { supportsPrompt } from "./engine/contract.js";
 import { requireHardwareSnapshot } from "./daytona/client.js";
 import { runAnchorAudit } from "./browser/session.js";
 import { store as defaultStore, type RunStore } from "./store.js";
-import { approvalChannel, decide, pendingPhoneRun, ReleaseError, requestApproval, webhookAuthorized } from "./release/index.js";
+import { approvalChannel, availableChannels, decide, pendingPhoneRun, ReleaseError, requestApproval, voiceSession, webhookAuthorized } from "./release/index.js";
 import { arizeConfigured, startArizeTracing } from "./telemetry/arize.js";
 import type { EvolutionEvent } from "@hollow-purple/shared/evolution";
 
@@ -52,12 +52,13 @@ export function createApp(store: RunStore = defaultStore, engine = new Evolution
     agentModel: config.BLUE_MODEL ?? "Codex default", defaultProvider: "daytona",
     publicDashboardUrl: config.PUBLIC_DASHBOARD_URL,
     approvalChannel: approvalChannel(),
+    approvalChannels: availableChannels(),
     checks: [
       { name: "Local simulation", ok: true, detail: "Deterministic candidate models checked by an independent queue oracle; no cloud credentials required." },
       { name: "Daytona HDL simulation", ok: Boolean(config.DAYTONA_API_KEY), detail: config.DAYTONA_API_KEY ? "Configured. Candidates run Verilator inside separate Daytona sandboxes." : "Set DAYTONA_API_KEY to enable isolated Verilator runs." },
       { name: "Anchor Browser", ok: Boolean(config.ANCHOR_API_KEY && config.PUBLIC_DASHBOARD_URL), detail: "Cloud browser audits require ANCHOR_API_KEY and a publicly reachable PUBLIC_DASHBOARD_URL." },
       { name: "Arize tracing", ok: arizeConfigured(), detail: arizeConfigured() ? "Every run, candidate verdict, and Blue / Red model call is traced to Arize AX." : "Set ARIZE_SPACE_ID and ARIZE_API_KEY to trace runs and model calls in Arize AX." },
-      { name: "Release approval", ok: true, detail: approvalChannel() === "phone" ? "Champions are released only after the approver says yes on an ElevenLabs call." : "Champions are released only after a human approves in the dashboard. Set the ELEVENLABS_* variables to approve by phone." },
+      { name: "Release approval", ok: true, detail: approvalChannel() === "phone" ? "Champions are released only after the approver says yes on an ElevenLabs call." : approvalChannel() === "voice" ? "Champions are released only after the approver says yes to the ElevenLabs release agent, confirmed with ElevenLabs." : "Champions are released only after a human approves in the dashboard. Set ELEVENLABS_API_KEY and ELEVENLABS_AGENT_ID to approve by voice." },
       { name: "Blue and Red agents", ok: agentsReady(), detail: config.AGENT_PROVIDER === "codex-cli" ? "Separate, bounded Codex model jobs write RTL and adversarial stimuli. The controller verifies every result." : "Separate Anthropic model calls write RTL and adversarial stimuli. Explicit models and an API key are required." },
     ],
   }));
@@ -103,13 +104,18 @@ export function createApp(store: RunStore = defaultStore, engine = new Evolution
     } finally { audits.delete(id); }
   });
   // Release gate: a verified champion is released only after a human approves it.
-  const decisionSchema = z.object({ decision: z.enum(["approve", "decline"]), run_id: z.string().optional() });
-  app.post("/api/runs/:id/approval/request", async (c) => c.json(await requestApproval(store, c.req.param("id"))));
+  const decisionSchema = z.object({ decision: z.enum(["approve", "decline"]), run_id: z.string().optional(), conversation_id: z.string().max(200).optional() });
+  const requestSchema = z.object({ channel: z.enum(["voice", "phone", "dashboard"]).optional() });
+  app.post("/api/runs/:id/approval/request", async (c) => {
+    const parsed = requestSchema.safeParse(await c.req.json().catch(() => ({})));
+    return c.json(await requestApproval(store, c.req.param("id"), (parsed.success && parsed.data.channel) || approvalChannel()));
+  });
+  app.get("/api/runs/:id/voice-session", async (c) => c.json(await voiceSession(store, c.req.param("id"))));
   app.post("/api/runs/:id/approval", async (c) => {
     const parsed = decisionSchema.safeParse(await c.req.json().catch(() => undefined));
     if (!parsed.success) return c.json({ error: "Send {\"decision\": \"approve\" | \"decline\"}." }, 400);
-    const via = webhookAuthorized(c.req.header("x-approve-secret")) ? "phone" : "dashboard";
-    return c.json(await decide(store, c.req.param("id"), parsed.data.decision, via));
+    const via = webhookAuthorized(c.req.header("x-approve-secret")) ? "phone" : parsed.data.conversation_id ? "voice" : "dashboard";
+    return c.json(await decide(store, c.req.param("id"), parsed.data.decision, via, undefined, { conversationId: parsed.data.conversation_id }));
   });
   // The ElevenLabs voice agent's webhook tool: shared secret required, applies to the run awaiting a phone decision.
   app.post("/api/approval", async (c) => {

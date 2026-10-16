@@ -9,23 +9,26 @@ import type { RunStore } from "../store.js";
 /**
  * Release gate: a verified champion is released only after a human says yes.
  *
- * Phone channel: ElevenLabs places an outbound call; the voice agent's webhook tool posts the decision
- * to /api/approval with the shared secret. Dashboard channel (no ElevenLabs configured): the decision
- * comes from the Approve / Decline buttons. Only the requested channel can decide. On approval the
- * champion's exact RTL and a manifest (source hash, contract hash, regressions) are written to a release
- * bundle. On decline or a failed call, nothing is released.
+ * Voice channel (ElevenLabs agent configured): the approver talks to the ElevenLabs release agent in the dashboard.
+ * The agent calls its `record_decision` client tool; the dashboard posts that decision with the conversation id,
+ * and the controller confirms with ElevenLabs that the conversation was held with this agent before accepting it.
+ * Phone channel (Twilio number imported into ElevenLabs): an outbound call; the agent's webhook tool posts the
+ * decision to /api/approval with the shared secret. Dashboard channel: Approve / Decline buttons.
+ * Only the requested channel can decide. On approval the champion's exact RTL and a manifest (source hash, contract
+ * hash, regressions) are written to a release bundle. On decline or a failed call, nothing is released.
  */
 
 const optional = z.string().optional().transform((v) => (v && v.trim() ? v.trim() : undefined));
-const env = z
-  .object({
-    ELEVENLABS_API_KEY: optional,
-    ELEVENLABS_AGENT_ID: optional,
-    ELEVENLABS_PHONE_NUMBER_ID: optional,
-    APPROVER_PHONE_NUMBER: optional,
-    APPROVE_WEBHOOK_SECRET: optional,
-  })
-  .parse(process.env);
+const envSchema = z.object({
+  ELEVENLABS_API_KEY: optional,
+  ELEVENLABS_AGENT_ID: optional,
+  ELEVENLABS_PHONE_NUMBER_ID: optional,
+  APPROVER_PHONE_NUMBER: optional,
+  APPROVE_WEBHOOK_SECRET: optional,
+});
+/** Read on each call so tests and restarts see the current environment. */
+const env = () => envSchema.parse(process.env);
+const ELEVENLABS = "https://api.elevenlabs.io/v1";
 
 export class ReleaseError extends Error {
   constructor(message: string, readonly status: 403 | 404 | 409 | 502) {
@@ -34,16 +37,25 @@ export class ReleaseError extends Error {
   }
 }
 
-export function approvalChannel(): ApprovalChannel {
-  return env.ELEVENLABS_API_KEY && env.ELEVENLABS_AGENT_ID && env.ELEVENLABS_PHONE_NUMBER_ID && env.APPROVER_PHONE_NUMBER && env.APPROVE_WEBHOOK_SECRET
-    ? "phone"
-    : "dashboard";
+export function availableChannels(): ApprovalChannel[] {
+  const e = env();
+  const channels: ApprovalChannel[] = [];
+  if (e.ELEVENLABS_API_KEY && e.ELEVENLABS_AGENT_ID && e.ELEVENLABS_PHONE_NUMBER_ID && e.APPROVER_PHONE_NUMBER && e.APPROVE_WEBHOOK_SECRET) channels.push("phone");
+  if (e.ELEVENLABS_API_KEY && e.ELEVENLABS_AGENT_ID) channels.push("voice");
+  channels.push("dashboard");
+  return channels;
 }
 
-/** Constant-time check of the X-Approve-Secret header the voice agent's webhook tool sends. */
+/** The preferred channel: phone, then voice, then dashboard. */
+export function approvalChannel(): ApprovalChannel {
+  return availableChannels()[0]!;
+}
+
+/** Constant-time check of the X-Approve-Secret header the phone agent's webhook tool sends. */
 export function webhookAuthorized(header: string | undefined): boolean {
-  if (!env.APPROVE_WEBHOOK_SECRET || !header) return false;
-  const expected = Buffer.from(env.APPROVE_WEBHOOK_SECRET);
+  const secret = env().APPROVE_WEBHOOK_SECRET;
+  if (!secret || !header) return false;
+  const expected = Buffer.from(secret);
   const given = Buffer.from(header);
   return expected.length === given.length && timingSafeEqual(expected, given);
 }
@@ -62,13 +74,14 @@ export function approvalSummary(run: EvolutionRun): string {
 }
 
 async function placeCall(summary: string, runId: string): Promise<string | undefined> {
-  const response = await fetch("https://api.elevenlabs.io/v1/convai/twilio/outbound-call", {
+  const e = env();
+  const response = await fetch(`${ELEVENLABS}/convai/twilio/outbound-call`, {
     method: "POST",
-    headers: { "xi-api-key": env.ELEVENLABS_API_KEY!, "content-type": "application/json" },
+    headers: { "xi-api-key": e.ELEVENLABS_API_KEY!, "content-type": "application/json" },
     body: JSON.stringify({
-      agent_id: env.ELEVENLABS_AGENT_ID,
-      agent_phone_number_id: env.ELEVENLABS_PHONE_NUMBER_ID,
-      to_number: env.APPROVER_PHONE_NUMBER,
+      agent_id: e.ELEVENLABS_AGENT_ID,
+      agent_phone_number_id: e.ELEVENLABS_PHONE_NUMBER_ID,
+      to_number: e.APPROVER_PHONE_NUMBER,
       conversation_initiation_client_data: { dynamic_variables: { summary, run_id: runId } },
     }),
     signal: AbortSignal.timeout(15_000),
@@ -85,6 +98,7 @@ export async function requestApproval(store: RunStore, runId: string, channel: A
   if (run.approval?.status === "requested") return run; // already waiting: requesting again is a no-op
   if (run.approval?.status === "declined") throw new ReleaseError("The approver declined this champion. Start a new run to try again.", 409);
   const winner = champion(run);
+  if (!availableChannels().includes(channel)) throw new ReleaseError(`The ${channel} approval channel is not configured.`, 409);
 
   const state: ApprovalState = { status: "requested", channel, candidateId: winner.id, requestedAt: Date.now() };
   if (channel === "phone") {
@@ -101,10 +115,46 @@ export async function requestApproval(store: RunStore, runId: string, channel: A
     candidateId: winner.id,
     message: channel === "phone"
       ? "Calling the human approver. Nothing is released without a yes."
-      : "Waiting for a human approval in the dashboard. Nothing is released without a yes.",
+      : channel === "voice"
+        ? "Waiting for the approver to talk to the ElevenLabs release agent. Nothing is released without a yes."
+        : "Waiting for a human approval in the dashboard. Nothing is released without a yes.",
     payload: state,
   });
   return store.get(runId)!;
+}
+
+/** A signed ElevenLabs session for the voice channel. The API key never reaches the browser. */
+export async function voiceSession(store: RunStore, runId: string): Promise<{ signedUrl: string; summary: string; agentId: string }> {
+  const run = store.get(runId);
+  if (!run) throw new ReleaseError("Run not found.", 404);
+  if (run.approval?.status !== "requested" || run.approval.channel !== "voice") throw new ReleaseError("No voice approval is pending for this run.", 409);
+  const e = env();
+  const response = await fetch(`${ELEVENLABS}/convai/conversation/get-signed-url?agent_id=${encodeURIComponent(e.ELEVENLABS_AGENT_ID!)}`, {
+    headers: { "xi-api-key": e.ELEVENLABS_API_KEY! },
+    signal: AbortSignal.timeout(10_000),
+  });
+  const body = (await response.json().catch(() => ({}))) as { signed_url?: string };
+  if (!response.ok || !body.signed_url) throw new ReleaseError(`ElevenLabs did not start a session (${response.status}).`, 502);
+  return { signedUrl: body.signed_url, summary: approvalSummary(run), agentId: e.ELEVENLABS_AGENT_ID! };
+}
+
+/** Confirms with ElevenLabs that the conversation exists and was held with the release agent. */
+async function verifyVoiceConversation(conversationId: string): Promise<void> {
+  const e = env();
+  for (let attempt = 0; attempt < 4; attempt++) {
+    const response = await fetch(`${ELEVENLABS}/convai/conversations/${encodeURIComponent(conversationId)}`, {
+      headers: { "xi-api-key": e.ELEVENLABS_API_KEY! },
+      signal: AbortSignal.timeout(10_000),
+    }).catch(() => undefined);
+    if (response?.ok) {
+      const body = (await response.json().catch(() => ({}))) as { agent_id?: string };
+      if (body.agent_id !== e.ELEVENLABS_AGENT_ID) throw new ReleaseError("That conversation was not held with the release agent.", 403);
+      return;
+    }
+    if (response && response.status !== 404) break;
+    await new Promise((resolve) => setTimeout(resolve, 750));
+  }
+  throw new ReleaseError("Could not confirm the voice conversation with ElevenLabs.", 502);
 }
 
 export async function decide(
@@ -113,14 +163,24 @@ export async function decide(
   decision: "approve" | "decline",
   via: ApprovalChannel,
   dataDir: string = config.DATA_DIR,
+  evidence: { conversationId?: string } = {},
 ): Promise<EvolutionRun> {
   const run = store.get(runId);
   if (!run) throw new ReleaseError("Run not found.", 404);
   const pending = run.approval;
   if (!pending || pending.status !== "requested") throw new ReleaseError("No approval is pending for this run.", 409);
   if (pending.channel !== via) throw new ReleaseError(`This approval must come from the ${pending.channel}.`, 403);
+  if (via === "voice") {
+    if (!evidence.conversationId) throw new ReleaseError("A voice decision needs its ElevenLabs conversation id.", 403);
+    await verifyVoiceConversation(evidence.conversationId);
+  }
 
-  const decided: ApprovalState = { ...pending, status: decision === "approve" ? "approved" : "declined", decidedAt: Date.now() };
+  const decided: ApprovalState = {
+    ...pending,
+    status: decision === "approve" ? "approved" : "declined",
+    decidedAt: Date.now(),
+    ...(evidence.conversationId ? { conversationId: evidence.conversationId } : {}),
+  };
   await store.emit(runId, {
     type: "approval.decided",
     candidateId: pending.candidateId,

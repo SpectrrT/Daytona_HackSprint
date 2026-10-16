@@ -74,28 +74,34 @@ Anchor opens the actual Daytona-hosted dashboard, replays the failure, inspects 
 
 ## Release gate (human approval)
 
-A verified champion is not the end of a run: nothing is released until a person approves it. Once a run completes with a champion, **Request approval** in the overview starts the gate:
+A verified champion is not the end of a run: nothing is released until a person approves it. Once a run completes with a champion, the overview's **Release gate** panel starts the approval:
 
-- **Phone (ElevenLabs).** When the variables below are set, the controller places an outbound call through an ElevenLabs voice agent. The agent reads the summary, asks for a yes or no, and its webhook tool posts the decision to `POST /api/approval` with the `X-Approve-Secret` header. Only the phone can decide a phone approval.
-- **Dashboard.** With no ElevenLabs configuration, **Approve release** and **Decline** appear in the panel instead.
+- **Voice (ElevenLabs, default when configured).** **Approve by voice**, then **Talk to the release agent**: the approver speaks with an ElevenLabs agent in the dashboard. It reads the design summary, asks for a yes or no, and calls its `record_decision` client tool. The dashboard posts that decision with the conversation id, and the controller confirms with ElevenLabs that the conversation was held with the release agent before anything is released. The browser never sees the API key; it gets a signed session URL from `GET /api/runs/:id/voice-session`.
+- **Phone (optional).** With a Twilio number imported into ElevenLabs, the controller places an outbound call instead, and the agent's webhook tool posts the decision to `POST /api/approval` with the `X-Approve-Secret` header.
+- **Dashboard.** **Use dashboard** (or no ElevenLabs configuration) shows **Approve release** and **Decline** buttons.
 
-On approval, the champion's exact RTL and a manifest (source hash, contract hash, regression count, approval channel) are written to `data/runs/<id>/release/`, and a `design.released` event is recorded. On a decline or a failed call, nothing is released and the run can't be re-approved. Approval and release events are part of the run's append-only log, so they replay after a restart and appear in the evidence export.
+Only the requested channel can decide. On approval, the champion's exact RTL and a manifest (source hash, contract hash, regression count, approval channel) are written to `data/runs/<id>/release/`, and a `design.released` event is recorded. On a decline or a failed call, nothing is released and the run can't be re-approved. Approval and release events are part of the run's append-only log, so they replay after a restart and appear in the evidence export.
+
+Set up the voice agent once, then put its id in `.env`:
 
 ```sh
-ELEVENLABS_API_KEY=            # ElevenLabs API key
-ELEVENLABS_AGENT_ID=           # the approver voice agent
-ELEVENLABS_PHONE_NUMBER_ID=    # a Twilio number imported into ElevenLabs
-APPROVER_PHONE_NUMBER=         # the phone that rings, E.164 (+1...)
-APPROVE_WEBHOOK_SECRET=        # shared secret the agent's webhook tool sends
+pnpm --filter @hollow-purple/server exec node --import tsx src/scripts/create-approver-agent.ts
+# prints ELEVENLABS_AGENT_ID=agent_...
 ```
 
-Approver agent setup (ElevenLabs dashboard): the system prompt reads `{{summary}}` aloud, asks "Do you approve releasing this design? Please say yes or no," and calls a webhook tool `record_decision` (`POST https://<public controller URL>/api/approval`, header `X-Approve-Secret`, body `{"decision": "approve" | "decline"}`) with "decline" for anything but a clear yes. The controller must be reachable from the internet for the webhook, for example through `ngrok http 8787`.
+```sh
+ELEVENLABS_API_KEY=            # voice and phone
+ELEVENLABS_AGENT_ID=           # from create-approver-agent.ts
+ELEVENLABS_PHONE_NUMBER_ID=    # phone only: a Twilio number imported into ElevenLabs
+APPROVER_PHONE_NUMBER=         # phone only: the phone that rings, E.164 (+1...)
+APPROVE_WEBHOOK_SECRET=        # phone only: shared secret for the agent's webhook tool
+```
 
 The overview also shows **Single-shot vs evolved**: the best generation-0 design (one model call, no Red feedback) against the champion, scored only by the verifier's checks. Same model, same frozen contract.
 
 ## Arize tracing
 
-With `ARIZE_SPACE_ID` and `ARIZE_API_KEY` set, every run is traced to Arize AX as one trace built from its event log: a run span, one span per candidate carrying the verifier's verdict (status, checks passed, hidden checks, inherited regressions), and an LLM span for each Blue and Red model call (model, provider, token counts, attempts, rationale or attack hypotheses). Release-gate approvals and releases appear as spans in the same trace. Spans go over OTLP to `https://otlp.arize.com/v1/traces` (override with `ARIZE_OTLP_URL`); the project name defaults to `antibody` (`ARIZE_PROJECT_NAME`). Without the variables, tracing is off and nothing changes.
+With `ARIZE_SPACE_ID` and `ARIZE_API_KEY` set, every run is traced to Arize AX as one trace built from its event log: a run span, one span per candidate carrying the verifier's verdict (status, checks passed, hidden checks, inherited regressions), and an LLM span for each Blue and Red model call (model, provider, token counts, attempts, rationale or attack hypotheses). Release-gate approvals and releases appear as spans in the same trace. Spans go over OTLP to `https://otlp.arize.com/v1/traces` (override with `ARIZE_OTLP_URL`); the project name defaults to `antibody` (`ARIZE_PROJECT_NAME`). Without the variables, tracing is off and nothing changes. Check the connection with `pnpm --filter @hollow-purple/server exec node --import tsx src/scripts/verify-arize.ts`.
 
 ## Verify changes
 

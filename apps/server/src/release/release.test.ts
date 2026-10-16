@@ -6,7 +6,7 @@ import { test } from "node:test";
 import { BUFFER_PROMPT, type EvaluationResult, type FailureEvidence } from "@hollow-purple/shared/evolution";
 import { EvolutionEngine } from "../engine/index.js";
 import { RunStore } from "../store.js";
-import { decide, ReleaseError, requestApproval } from "./index.js";
+import { decide, ReleaseError, requestApproval, voiceSession } from "./index.js";
 
 const failure: FailureEvidence = {
   id: "regression-1", testId: "simultaneous", testName: "Simultaneous read and write", seed: 42, cycle: 2,
@@ -99,4 +99,39 @@ test("the release gate survives a restart: approval and release are replayed fro
     assert.equal(run.approval?.status, "approved");
     assert.equal(run.release?.candidateId, run.championId);
   } finally { await ctx.dispose(); }
+});
+
+test("voice approval needs a conversation ElevenLabs confirms was held with the release agent", async () => {
+  const saved = { key: process.env.ELEVENLABS_API_KEY, agent: process.env.ELEVENLABS_AGENT_ID, fetch: globalThis.fetch };
+  process.env.ELEVENLABS_API_KEY = "test-key";
+  process.env.ELEVENLABS_AGENT_ID = "agent_release";
+  const calls: string[] = [];
+  globalThis.fetch = (async (input: string | URL | Request) => {
+    const url = String(input);
+    calls.push(url);
+    if (url.includes("/convai/conversation/get-signed-url")) return new Response(JSON.stringify({ signed_url: "wss://example/signed" }), { status: 200 });
+    if (url.endsWith("/convai/conversations/conv_good")) return new Response(JSON.stringify({ agent_id: "agent_release" }), { status: 200 });
+    if (url.endsWith("/convai/conversations/conv_other")) return new Response(JSON.stringify({ agent_id: "agent_someone_else" }), { status: 200 });
+    return new Response("{}", { status: 500 });
+  }) as typeof fetch;
+  const ctx = await completedRun();
+  try {
+    await requestApproval(ctx.store, ctx.id, "voice");
+    const session = await voiceSession(ctx.store, ctx.id);
+    assert.equal(session.signedUrl, "wss://example/signed");
+    assert.match(session.summary, /Approve releasing it\?/);
+    await assert.rejects(decide(ctx.store, ctx.id, "approve", "voice", ctx.dir), /conversation id/);
+    await assert.rejects(decide(ctx.store, ctx.id, "approve", "voice", ctx.dir, { conversationId: "conv_other" }), /not held with the release agent/);
+    await assert.rejects(decide(ctx.store, ctx.id, "approve", "dashboard", ctx.dir), /must come from the voice/);
+    assert.equal(ctx.store.get(ctx.id)!.release, undefined);
+    const run = await decide(ctx.store, ctx.id, "approve", "voice", ctx.dir, { conversationId: "conv_good" });
+    assert.equal(run.approval?.status, "approved");
+    assert.equal(run.approval?.conversationId, "conv_good");
+    assert.equal(run.release?.approvedVia, "voice");
+  } finally {
+    globalThis.fetch = saved.fetch;
+    if (saved.key === undefined) delete process.env.ELEVENLABS_API_KEY; else process.env.ELEVENLABS_API_KEY = saved.key;
+    if (saved.agent === undefined) delete process.env.ELEVENLABS_AGENT_ID; else process.env.ELEVENLABS_AGENT_ID = saved.agent;
+    await ctx.dispose();
+  }
 });
