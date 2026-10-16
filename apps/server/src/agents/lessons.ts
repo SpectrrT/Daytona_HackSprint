@@ -4,7 +4,7 @@ import { join } from "node:path";
 import { z } from "zod";
 import { config } from "../config.js";
 import type { LessonWriter } from "../memory/graph.js";
-import { runCodexStructured } from "./codex.js";
+import { runCodexWithRetry } from "./retry.js";
 import { runAnthropicStructured } from "./llm.js";
 import { outputSchema } from "./schemas.js";
 
@@ -25,7 +25,7 @@ export const writeBlueLesson: LessonWriter = async (input) => {
   await mkdir(artifactPath, { recursive: true, mode: 0o700 });
   const call = { binary: config.CODEX_BIN, role: "blue" as const, artifactPath, prompt: buildLessonPrompt(input), schema: outputSchema(lessonAnswerSchema),
     timeoutMs: config.AGENT_TIMEOUT_SECONDS * 1000, model: config.BLUE_MODEL, signal: input.signal };
-  const result = await (config.AGENT_PROVIDER === "anthropic" ? runAnthropicStructured(call) : runCodexStructured(call));
+  const result = await (config.AGENT_PROVIDER === "anthropic" ? runAnthropicStructured(call) : runCodexWithRetry(call));
   const answer = lessonAnswerSchema.parse(result.answer);
   await writeFile(join(artifactPath, "answer.json"), JSON.stringify(answer), { mode: 0o600 });
   return { text: answer.text, agent: { role: "blue", provider: result.agent.provider, model: result.agent.model, durationMs: result.agent.durationMs } };
