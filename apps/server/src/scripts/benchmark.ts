@@ -6,7 +6,7 @@ import { join } from "node:path";
 import { BUFFER_PROMPT, type RedAttack } from "@hollow-purple/shared/evolution";
 import { searchRed } from "../agents/index.js";
 import { benchmarkFixtures, hash, type BenchmarkFixture } from "../benchmarks/fixtures.js";
-import { boundedMap, pairedTiming, summarize, type Measurement } from "../benchmarks/metrics.js";
+import { benchmarkCandidateId, boundedMap, pairedTiming, summarize, type Measurement } from "../benchmarks/metrics.js";
 import { config, REPO_ROOT } from "../config.js";
 import { daytona, requireHardwareSnapshot } from "../daytona/client.js";
 import { freezeContract } from "../engine/contract.js";
@@ -70,7 +70,7 @@ async function main() {
     try {
       // Provisioning truncates candidate IDs in sandbox names. Put the unique
       // fixture first so concurrent cases retain distinct names after truncation.
-      const result = await evaluateCandidate({ runId, candidateId: `${fixture.id}-${batch}`, variant: "generated", provider: "daytona", source: fixture.source, seed, regressions: [], attacks });
+      const result = await evaluateCandidate({ runId, candidateId: benchmarkCandidateId(fixture.id, batch), variant: "generated", provider: "daytona", source: fixture.source, seed, regressions: [], attacks });
       return { id: fixture.id, defective: fixture.defect !== null, wallMs: performance.now() - started, result, attackIds: attacks.map((attack) => attack.id) };
     } catch {
       return { id: fixture.id, defective: fixture.defect !== null, wallMs: performance.now() - started, error: "Evaluation did not complete. No bug catch or speedup credit. Check provider availability and cleanup in the Daytona dashboard.", attackIds: attacks.map((attack) => attack.id) };

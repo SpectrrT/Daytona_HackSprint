@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import type { EvaluationResult } from "@hollow-purple/shared/evolution";
 import { benchmarkFixtures } from "./fixtures.js";
-import { boundedMap, pairedTiming, summarize, type Measurement } from "./metrics.js";
+import { benchmarkCandidateId, boundedMap, pairedTiming, summarize, type Measurement } from "./metrics.js";
 import { validateRtl, validateSequence } from "../lab/validation.js";
 
 const report = (testId?: string): EvaluationResult => ({
@@ -17,6 +17,8 @@ test("fixed tests cannot be credited as authored discoveries; unresolved cases s
   const stats = summarize(rows, 3, 1);
   assert.equal(stats.plannedMutants, 3);
   assert.equal(stats.witnessedMutants, 1);
+  assert.equal(stats.mutantsFailingFixedPublicChecks, 2);
+  assert.equal(stats.authoredDiscoveriesBeyondFixedPublicChecks, 0);
   assert.equal(stats.mutantsMissedByAuthoredSequences, 1);
   assert.equal(stats.infrastructureErrors, 1);
   assert.equal(stats.controlsPassed, 1);
@@ -65,4 +67,10 @@ test("frozen suite has ten unique single-location mutants and one control with v
       assert.equal(witness.sequence[0]!.reset, true);
     }
   }
+});
+
+test("concurrent case and paired-arm names remain unique after provisioning truncates IDs", () => {
+  const names = ["calibration", "pair-0-first", "pair-0-second", "pair-1-first", "pair-1-second"].flatMap((batch) =>
+    benchmarkFixtures().map((fixture) => benchmarkCandidateId(fixture.id, batch).slice(0, 18)));
+  assert.equal(new Set(names).size, names.length);
 });

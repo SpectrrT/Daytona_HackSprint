@@ -10,12 +10,16 @@ export interface Measurement {
   model?: { provider: string; model: string; durationMs: number; attempts?: number };
 }
 const normalized = (id: string) => `agent-red-${id.replace(/^agent-red-/, "").toLowerCase()}`;
+export const benchmarkCandidateId = (fixtureId: string, batch: string) => `${fixtureId}-${batch}`;
 export function summarize(rows: Measurement[], expectedMutants: number, expectedControls: number) {
   const compiled = (row: Measurement) => !!row.result && !row.result.buildError && row.result.backend === "verilator";
   const witnessed = (row: Measurement) => compiled(row) && !!row.result!.failure?.reproduced &&
     row.result!.reproduced && row.attackIds.map(normalized).includes(row.result!.failure!.testId);
   const clean = (row: Measurement) => compiled(row) && !row.result!.failure && row.result!.checks.length > 0 && row.result!.checks.every((check) => check.passed);
   const controls = rows.filter((row) => !row.defective);
+  const fixedIds = new Set(["order", "simultaneous", "full-replace", "empty-concurrent", "reset-active", "red-seeded"]);
+  const fixedFailed = (row: Measurement) => compiled(row) && row.result!.checks.some((check) => fixedIds.has(check.id) && !check.passed);
+  const fixedPassed = (row: Measurement) => compiled(row) && [...fixedIds].every((id) => row.result!.checks.some((check) => check.id === id && check.passed));
   return {
     plannedMutants: expectedMutants,
     plannedControls: expectedControls,
@@ -23,6 +27,8 @@ export function summarize(rows: Measurement[], expectedMutants: number, expected
     infrastructureErrors: rows.filter((row) => !row.result).length,
     buildErrors: rows.filter((row) => !!row.result?.buildError).length,
     witnessedMutants: rows.filter((row) => row.defective && witnessed(row)).length,
+    mutantsFailingFixedPublicChecks: rows.filter((row) => row.defective && fixedFailed(row)).length,
+    authoredDiscoveriesBeyondFixedPublicChecks: rows.filter((row) => row.defective && witnessed(row) && fixedPassed(row)).length,
     mutantsMissedByAuthoredSequences: rows.filter((row) => row.defective && compiled(row) && !witnessed(row)).length,
     controlsPassed: controls.filter(clean).length,
     reproducedControlViolations: controls.filter(witnessed).length,

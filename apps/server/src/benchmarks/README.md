@@ -31,6 +31,8 @@ Red receives only the frozen contract, opaque case label, and actual RTL. It rec
 
 A catch requires a reproduced counterexample whose test ID belongs to that invocation's sequences. A fixed-suite failure earns no Red credit. The pipeline treats hypotheses as unverified until replay. Record planned bugs, completed cases, catches, misses, build failures, provider failures, actual model IDs and attempts.
 
+The summary also counts mutants failing the existing public checks and authored discoveries on mutants passing every fixed public check. If fixed checks and Red both expose all ten simple defects, this benchmark establishes fault-finding ability but no improvement over fixed tests. A stronger incremental-coverage experiment needs harder independently calibrated defects and an equal-cycle random-search baseline. Fixed-check failures in the mixed suite are oracle observations; only the first authored violation receives the evaluator's independent replay.
+
 Safe headline: **"Red sequences exposed X/10 seeded bugs; 0/1 clean designs received a reproduced violation."** Use the control claim only when its entire evaluation completes successfully. One control is insufficient to estimate a general false-positive rate. These simple mutants are a sanity benchmark, not representative field performance.
 
 The implementation reuses the main evaluator's namespace for extra sequences. During calibration, `agent-red-witness-*` test IDs still mean hand-authored controller witnesses. Only the separate Red mode's model-authored sequences count as actual discoveries.
