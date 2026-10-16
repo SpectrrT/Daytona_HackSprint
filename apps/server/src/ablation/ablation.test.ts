@@ -58,3 +58,10 @@ test("provider failures are missing, never zero accuracy or a substituted model"
  const c=await corpus();const trial=await runTrial({runId:"unit-failed",seed:1,mode:"flat",corpus:c,generations:2},{buildBlue:async()=>{throw new Error("Unit provider unavailable");},searchRed:async()=>{throw new Error("must not run");},evaluateCandidate:async()=>{throw new Error("must not run");}});
  assert.equal(trial.status,"missing");assert.equal(trial.evaluations.length,0);assert.match(formatMetrics(summarizeTrials([trial])),/A missing, B missing, C missing/);
 });
+
+test("an interrupted paid model call cannot make token totals look complete",()=>{
+ const agent={role:"blue" as const,provider:"bedrock" as const,model:"unit",startedAt:0,durationMs:1,inputTokens:10,outputTokens:10};
+ const evaluation={generation:0,result:result(),blue:agent,red:{...agent,role:"red" as const},retrieval:{ids:[],bytes:0,path:[]}};
+ const trials=[{mode:"none" as const,seed:1,status:"completed" as const,evaluations:[evaluation],generationsUntilAllGates:1,regressionsReintroduced:0,wallMs:10},{mode:"none" as const,seed:2,status:"missing" as const,evaluations:[],generationsUntilAllGates:null,regressionsReintroduced:0,wallMs:10}];
+ const summary=summarizeTrials(trials)[0]!;assert.equal(summary.acceptedDesigns,1);assert.equal(summary.totalModelTokens,null);assert.equal(summary.modelTokensPerAcceptedDesign,null);assert.equal(summary.missingTrials,1);
+});
