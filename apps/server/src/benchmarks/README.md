@@ -6,6 +6,16 @@ Measure three different claims separately: Red discovers faults, memory improves
 
 Its [committed result file](https://github.com/vishnudut/chaosagent/blob/main/chaos-results.json) records 17 tests, 15 passes, 2 failures and an 88 security score. Those are target-defense outcomes, not a planted-bug detection-rate denominator or a clean-control calibration. Do not claim ChaosAgent had no numeric results.
 
+## Measured on October 16, 2026
+
+| Experiment | Observed result | What it supports |
+| --- | --- | --- |
+| [Verifier calibration](results/2026-10-16-calibration.json) | 10/10 seeded faults reproduced; control passed; 0 build/provider errors | The grader recognizes these known faults |
+| [Actual Red discovery](results/2026-10-16-red.json) | 10/10 bugs exposed by model-authored sequences; 0/1 reproduced control violations; 44 sequences | Fault-finding on this simple seeded suite |
+| [Paired Daytona timing](results/2026-10-16-timing.json) | Four evaluations: 72.6 s / 33.3 s, then 62.9 s / 30.5 s (serial / two workers) | About 2.12x throughput using the ratio of median wall times |
+
+Timing medians were 67.7 s serial and 31.9 s parallel. Both pairs completed with matching hashes and verdicts. This is a two-pair, four-design sample on a shared account, not a prewarmed generation benchmark. The fixed public checks also fail all ten mutants, so these results do not establish incremental Red coverage, memory uplift, or superiority over another product. A memory ablation and an independently measured repair experiment remain separate work. The run-summary exporter below is ready for completed repair evidence.
+
 ## Executable now
 
 From `apps/server`, with the normal private `.env` and a writable `DATA_DIR`:
