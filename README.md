@@ -1,0 +1,101 @@
+# Hollow Purple
+
+A working adversarial hardware engineering lab. **Blue writes RTL; Red reads it and authors adversarial input sequences; an independent verifier decides whether the hardware satisfies a frozen contract.** Verified failures become permanent regression tests and guide repaired descendants.
+
+The supported design task is a synchronous **32 × 16-bit sensor FIFO**. New runs use actual model jobs and actual Verilator execution in Daytona. The old fixed variants are retained only for archived examples and isolated tests; they are never substituted into a live agent run.
+
+## Start the system
+
+Requires Node.js 22+, pnpm 10, Python 3.10+, and a signed-in Codex CLI.
+
+```sh
+pnpm install
+cp .env.example .env
+# Set DAYTONA_API_KEY in .env.
+codex login status
+pnpm run doctor -- --live
+pnpm dev
+```
+
+Open [localhost:5173](http://localhost:5173), select Daytona, and click **Start agent team**. The existing example is clearly labeled as an archived behavioral-model run; starting an experiment creates a new live run.
+
+The default model provider is `AGENT_PROVIDER=codex-cli`. It uses the installed CLI's existing sign-in without reading or copying auth files. `BLUE_MODEL` and `RED_MODEL` may be left blank to use the CLI default. Model jobs are ephemeral, have tools disabled, receive only the relevant contract/source/public evidence, and return schema-validated JSON. Their child environments exclude Daytona, Anchor, and model API keys. Each job has a timeout and bounded output. Private prompts, validated answers, and invocation metadata are saved under `data/runs/<id>/agents/`.
+
+An optional Anthropic provider is available with `AGENT_PROVIDER=anthropic`, `ANTHROPIC_API_KEY`, and explicit `BLUE_MODEL` / `RED_MODEL` values. The live verification workflow uses the configured provider; it never falls back to a template when a model fails.
+
+## Hardware execution
+
+For predictable candidate startup, create the prepared snapshot once:
+
+```sh
+pnpm snapshot
+# Set PROD_SNAPSHOT=hollow-purple-hardware-v1 in .env and restart the controller.
+```
+
+Each candidate receives its own private Daytona sandbox and Git revision. The controller validates a restricted synthesizable SystemVerilog subset, uploads the generated RTL plus a fixed observation driver, compiles it with Verilator, and records actual hardware outputs. A separate Python deque oracle runs on the controller; expected outputs and hidden test definitions are not provided to either agent. Compilation failures remain visible diagnostics and can guide Blue's next repair.
+
+The mandatory directed checks, inherited failure regressions, four newly authored Red attacks, and a separate held-out stream all gate acceptance. A model's opinion cannot select a champion. An earlier passing design must requalify if later candidates expose new regressions. The source hash, model invocation, attack hypotheses/inputs, check results, public raw observations, and counterexample traces are retained.
+
+Sandboxes are deleted and destruction awaited after evaluation unless `KEEP_FORKS=true`. The controller preserves evidence locally. Candidate and cycle budgets bound the experiment; each model call, compilation, and simulation also has a timeout.
+
+```sh
+pnpm cleanup                               # Dry run: list this app's sandboxes
+pnpm cleanup -- --delete --run=<run-id>     # Remove only a selected run's resources
+```
+
+## Anchor Browser verification
+
+Set `ANCHOR_API_KEY` in `.env`. Anchor runs a real cloud browser through Playwright CDP, inspects the dashboard, opens the frozen contract, checks its SHA-256 hash, returns to lineage, and checks for uncaught errors. Its session is closed after the audit. CDP credentials never reach the frontend or candidate sandboxes.
+
+For a local controller, publish a **read-only evidence snapshot** to Daytona rather than exposing the controller publicly:
+
+```sh
+pnpm build
+pnpm --filter @hollow-purple/server exec node --import tsx src/scripts/publish-evidence.ts <run-id>
+```
+
+The publisher uploads only the built dashboard, sanitized completed-run evidence, and a fixed read-only Python server. It creates a private Daytona sandbox with a signed preview URL. It never uploads `.env`, private agent prompts, auth files, or dependencies. All write requests are refused. Navigation, source inspection, trace replay, and evidence export remain available.
+
+Use the returned URL as `PUBLIC_DASHBOARD_URL` in `.env`, restart the local controller, then run the browser audit from **System**. The configured HTTPS origin is allowlisted; the API accepts no arbitrary target URL. A directly deployed dashboard can also be used.
+
+Preview metadata is stored at `data/runs/<id>/evidence-preview.json`. Signed links expire after six hours, and the preview sandbox auto-stops after 30 idle minutes. Use the scoped cleanup command when it is no longer needed. Browser checks verify the product; the independent hardware verifier controls design acceptance.
+
+## Verify changes
+
+```sh
+pnpm test          # Agent transport, engine/acceptance, RTL/attack validation, Python oracle
+pnpm build         # All TypeScript checks + production dashboard build
+pnpm smoke         # Starts a real model + Daytona experiment; requires live credentials
+```
+
+The smoke test checks provenance, generated RTL, all acceptance gates, regression reproduction, and evidence export. It does not manufacture a failure: a correct initial design may pass every attempted attack without needing a repair. A lack of counterexamples is reported as test coverage, not a proof of universal correctness.
+
+## Contract and APIs
+
+Reset is synchronous, active high, and takes priority over all requests. Reads use pre-edge occupancy. At empty, simultaneous read/write enqueues without bypass. At full, simultaneous read/write accepts both and preserves occupancy. Invalid reads hold `data_out` and clear `read_valid`; reset clears both. Flags and six-bit occupancy describe post-edge state.
+
+The public endpoints are `POST /api/runs` (live Daytona only), `GET /api/runs/:id`, `GET /api/runs/:id/events` (SSE), `POST /api/runs/:id/stop`, `GET /api/runs/:id/export`, and `POST /api/runs/:id/browser-audit`. Interrupted runs are marked stopped on restart. A stop cannot race with completion to revive a run.
+
+```text
+packages/shared/src/evolution.ts   Shared contract, agent provenance, attacks, runs, events
+apps/server/src/agents/           Blue/Red prompts, schemas, bounded Codex/Anthropic transports
+apps/server/src/engine/           Frozen contract, generation/repair/requalification loop
+apps/server/src/store.ts          Durable append-only events and replay
+apps/server/src/lab/              RTL gate, directed/hidden tests, Daytona simulation, oracle bridge
+apps/server/src/daytona/          Sandbox lifecycle and file/process adapter
+apps/server/src/browser/          Anchor session lifecycle and product audit
+apps/server/src/scripts/          Doctor, snapshot, live smoke, evidence publishing, cleanup
+apps/web/                        Lineage, agent/attack inspection, contract, waveform, source viewer
+lab/                             Python oracle, fixed Verilator driver, read-only preview server
+```
+
+The development controller has no user authentication; keep it private. Only the sanitized, read-only evidence server is published by the supplied helper. RTL filtering plus sandbox isolation is a restricted demo execution boundary, not a general guarantee for arbitrary hostile hardware descriptions. No formal or synthesis/timing result is claimed.
+
+## Primary references
+
+- [OpenAI: iterative repair loops with Codex](https://developers.openai.com/cookbook/examples/codex/build_iterative_repair_loops_with_codex) and [non-interactive execution](https://learn.chatgpt.com/docs/non-interactive-mode).
+- [Daytona TypeScript SDK](https://www.daytona.io/docs/en/typescript-sdk/) and [snapshots](https://www.daytona.io/docs/en/snapshots/).
+- [Anchor Browser sessions](https://docs.anchorbrowser.io/quickstart/create-session).
+- [Verilator overview](https://verilator.org/guide/latest/overview.html) and [command options](https://verilator.org/guide/latest/exe_verilator.html).
+- [cocotb](https://docs.cocotb.org/en/stable/) is a future Python testbench path; this implementation uses a fixed C++ observation driver with a Python oracle.
+- [SymbiYosys](https://symbiyosys.readthedocs.io/en/latest/) is an optional future formal gate. Any proof must name its exact properties, assumptions, solver, and scope.
