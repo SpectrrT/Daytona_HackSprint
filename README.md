@@ -1,8 +1,28 @@
 # Hollow Purple
 
-A working adversarial hardware engineering lab. **Blue writes RTL; Red reads it and authors adversarial input sequences; an independent verifier decides whether the hardware satisfies a frozen contract.** Verified failures become permanent regression tests and guide repaired descendants.
+A general adversarial engineering system. **Blue builds candidates. Red searches for reproducible failures. An independent verifier checks the evidence against a frozen contract.** Verified failures become permanent regression tests and guide repaired descendants.
 
-The supported design task is a synchronous **32 × 16-bit sensor FIFO**. New runs use actual model jobs and actual Verilator execution in Daytona. The old fixed variants are retained only for archived examples and isolated tests; they are never substituted into a live agent run.
+**The first working example is hardware:** a synchronous **32 × 16-bit sensor FIFO**. It makes ordering, concurrency, reset failures, and repairs easy to inspect. New runs use actual model jobs and actual Verilator execution in Daytona. The old fixed variants are retained only for archived examples and isolated tests; they are never substituted into a live agent run.
+
+The product's output is a tested design, reproducible failure cases, readable lessons, and evidence of improvement across a tree of versions. Hardware is one application of that loop.
+
+## One loop, different engineering examples
+
+1. Freeze a measurable contract: interface, behavior, constraints, and acceptance checks.
+2. Blue builds independent candidates in isolated Daytona sandboxes.
+3. Red inspects each candidate and produces concrete inputs or actions that might break it.
+4. An independent verifier replays those actions and compares actual behavior with the contract.
+5. Blue branches repairs from verified failures. Each child must pass inherited regressions and separate checks.
+6. Red adapts; the system preserves lineage, lessons, and evidence until the budget or acceptance threshold is reached.
+
+The same product can apply this loop to software. For a web application, Daytona runs the application and Anchor operates its real browser interface. Red submits browser actions or API requests; the verifier checks observable results and authoritative application state. A duplicate request or a broken checkout becomes an exact regression case for the next Blue repair.
+
+| Example | Candidate execution | Reproducible failure evidence | Implementation status |
+| --- | --- | --- | --- |
+| Hardware buffer | Verilator in Daytona | Clock-edge input sequence and observed signal values | Implemented and verified |
+| Web application or API | Running software in Daytona; Anchor for browser actions | Requests or browser actions, responses, and state changes | Extension design; execution adapter not yet implemented |
+
+Each new example needs its own contract, Blue/Red instructions, execution driver, attack format, and independent verifier. Shared contract fields live in `EngineeringContract`; the current FIFO contract extends them. The current agent instructions, input sequences, failure traces, and acceptance logic still specialize the working example to FIFO hardware. Supporting software requires implementing those parts for the new task; a free-form prompt alone does not provide a trustworthy verifier.
 
 ## Start the system
 

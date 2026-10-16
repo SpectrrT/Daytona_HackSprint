@@ -14,7 +14,7 @@ import { store as defaultStore, type RunStore } from "./store.js";
 import type { EvolutionEvent } from "@hollow-purple/shared/evolution";
 
 const createSchema = z.object({
-  prompt: z.string().trim().min(10).max(2000).refine(supportsPrompt, "This scaffold supports a 32-entry, 16-bit synchronous FIFO. Use the provided buffer prompt; other tasks need a dedicated contract and verifier."),
+  prompt: z.string().trim().min(10).max(2000).refine(supportsPrompt, "The current hardware example supports a 32-entry, 16-bit synchronous FIFO. Other engineering tasks need their own contract and verifier."),
   provider: z.literal("daytona").default("daytona"),
   maxCandidates: z.number().int().min(3).max(12).optional(),
   seed: z.number().int().min(0).max(0xffff_ffff).optional(),
