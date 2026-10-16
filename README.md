@@ -72,6 +72,27 @@ pnpm --filter @hollow-purple/server exec node --import tsx src/scripts/record-de
 
 Anchor opens the actual Daytona-hosted dashboard, replays the failure, inspects the original and repaired RTL, and shows both verified children. Browser frames are encoded locally into `data/runs/<id>/hollow-purple-daytona-walkthrough.mp4`. Captions explicitly identify the recording as a replay of completed execution and identify imported manual fixtures. The video contains no provider credentials or private model transcripts. Its Anchor session is closed after recording.
 
+## Release gate (human approval)
+
+A verified champion is not the end of a run: nothing is released until a person approves it. Once a run completes with a champion, **Request approval** in the overview starts the gate:
+
+- **Phone (ElevenLabs).** When the variables below are set, the controller places an outbound call through an ElevenLabs voice agent. The agent reads the summary, asks for a yes or no, and its webhook tool posts the decision to `POST /api/approval` with the `X-Approve-Secret` header. Only the phone can decide a phone approval.
+- **Dashboard.** With no ElevenLabs configuration, **Approve release** and **Decline** appear in the panel instead.
+
+On approval, the champion's exact RTL and a manifest (source hash, contract hash, regression count, approval channel) are written to `data/runs/<id>/release/`, and a `design.released` event is recorded. On a decline or a failed call, nothing is released and the run can't be re-approved. Approval and release events are part of the run's append-only log, so they replay after a restart and appear in the evidence export.
+
+```sh
+ELEVENLABS_API_KEY=            # ElevenLabs API key
+ELEVENLABS_AGENT_ID=           # the approver voice agent
+ELEVENLABS_PHONE_NUMBER_ID=    # a Twilio number imported into ElevenLabs
+APPROVER_PHONE_NUMBER=         # the phone that rings, E.164 (+1...)
+APPROVE_WEBHOOK_SECRET=        # shared secret the agent's webhook tool sends
+```
+
+Approver agent setup (ElevenLabs dashboard): the system prompt reads `{{summary}}` aloud, asks "Do you approve releasing this design? Please say yes or no," and calls a webhook tool `record_decision` (`POST https://<public controller URL>/api/approval`, header `X-Approve-Secret`, body `{"decision": "approve" | "decline"}`) with "decline" for anything but a clear yes. The controller must be reachable from the internet for the webhook, for example through `ngrok http 8787`.
+
+The overview also shows **Single-shot vs evolved**: the best generation-0 design (one model call, no Red feedback) against the champion, scored only by the verifier's checks. Same model, same frozen contract.
+
 ## Verify changes
 
 ```sh

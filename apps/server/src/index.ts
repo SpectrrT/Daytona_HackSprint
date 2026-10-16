@@ -11,6 +11,7 @@ import { supportsPrompt } from "./engine/contract.js";
 import { requireHardwareSnapshot } from "./daytona/client.js";
 import { runAnchorAudit } from "./browser/session.js";
 import { store as defaultStore, type RunStore } from "./store.js";
+import { approvalChannel, decide, pendingPhoneRun, ReleaseError, requestApproval, webhookAuthorized } from "./release/index.js";
 import type { EvolutionEvent } from "@hollow-purple/shared/evolution";
 
 const createSchema = z.object({
@@ -39,6 +40,7 @@ export function createApp(store: RunStore = defaultStore, engine = new Evolution
   app.onError((error, c) => {
     if (error instanceof ConfigError) return c.json({ error: error.message }, 503);
     if (error instanceof CapacityError) return c.json({ error: error.message }, 429);
+    if (error instanceof ReleaseError) return c.json({ error: error.message }, error.status);
     console.error("[api]", error.message);
     return c.json({ error: "The request failed. Check the server log and retained run evidence." }, 500);
   });
@@ -48,6 +50,7 @@ export function createApp(store: RunStore = defaultStore, engine = new Evolution
     agentsReady: agentsReady(), agentProvider: config.AGENT_PROVIDER,
     agentModel: config.BLUE_MODEL ?? "Codex default", defaultProvider: "daytona",
     publicDashboardUrl: config.PUBLIC_DASHBOARD_URL,
+    approvalChannel: approvalChannel(),
     checks: [
       { name: "Local simulation", ok: true, detail: "Deterministic candidate models checked by an independent queue oracle; no cloud credentials required." },
       { name: "Daytona HDL simulation", ok: Boolean(config.DAYTONA_API_KEY), detail: config.DAYTONA_API_KEY ? "Configured. Candidates run Verilator inside separate Daytona sandboxes." : "Set DAYTONA_API_KEY to enable isolated Verilator runs." },
@@ -95,6 +98,25 @@ export function createApp(store: RunStore = defaultStore, engine = new Evolution
       await store.emit(id, { type: "browser.audited", message: audit.summary, payload: audit });
       return c.json(audit);
     } finally { audits.delete(id); }
+  });
+  // Release gate: a verified champion is released only after a human approves it.
+  const decisionSchema = z.object({ decision: z.enum(["approve", "decline"]), run_id: z.string().optional() });
+  app.post("/api/runs/:id/approval/request", async (c) => c.json(await requestApproval(store, c.req.param("id"))));
+  app.post("/api/runs/:id/approval", async (c) => {
+    const parsed = decisionSchema.safeParse(await c.req.json().catch(() => undefined));
+    if (!parsed.success) return c.json({ error: "Send {\"decision\": \"approve\" | \"decline\"}." }, 400);
+    const via = webhookAuthorized(c.req.header("x-approve-secret")) ? "phone" : "dashboard";
+    return c.json(await decide(store, c.req.param("id"), parsed.data.decision, via));
+  });
+  // The ElevenLabs voice agent's webhook tool: shared secret required, applies to the run awaiting a phone decision.
+  app.post("/api/approval", async (c) => {
+    if (!webhookAuthorized(c.req.header("x-approve-secret"))) return c.json({ error: "Invalid approval secret." }, 403);
+    const parsed = decisionSchema.safeParse(await c.req.json().catch(() => undefined));
+    if (!parsed.success) return c.json({ error: "Send {\"decision\": \"approve\" | \"decline\"}." }, 400);
+    const id = parsed.data.run_id ?? pendingPhoneRun(store);
+    if (!id) return c.json({ error: "No run is waiting for a phone approval." }, 409);
+    const run = await decide(store, id, parsed.data.decision, "phone");
+    return c.json({ ok: true, status: run.approval?.status, released: Boolean(run.release) });
   });
   app.get("/api/runs/:id/events", (c) => {
     const id = c.req.param("id");

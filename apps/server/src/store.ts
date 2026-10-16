@@ -1,7 +1,7 @@
 import { mkdirSync } from "node:fs";
 import { appendFile, readFile, readdir, truncate } from "node:fs/promises";
 import { join } from "node:path";
-import type { BrowserAudit, Candidate, EvolutionEvent, EvolutionRun, FailureEvidence, RunSummary } from "@hollow-purple/shared/evolution";
+import type { ApprovalState, BrowserAudit, Candidate, EvolutionEvent, EvolutionRun, FailureEvidence, ReleaseRecord, RunSummary } from "@hollow-purple/shared/evolution";
 import { config } from "./config.js";
 import { assertFrozenContract } from "./engine/contract.js";
 
@@ -13,9 +13,10 @@ const terminal = new Set(["completed", "failed", "stopped"]);
 export class TerminalRunError extends Error {
   constructor() { super("Run has already reached a terminal state."); this.name = "TerminalRunError"; }
 }
-const allowedAfterTerminal = new Set(["browser.audited", "log"]);
+// The release gate runs after a run completes: approval and release are recorded on the finished run.
+const allowedAfterTerminal = new Set(["browser.audited", "approval.requested", "approval.decided", "design.released", "log"]);
 const validId = /^[a-zA-Z0-9_-]{1,100}$/;
-const eventTypes = new Set(["run.created", "contract.frozen", "run.started", "candidate.created", "candidate.updated", "failure.reproduced", "regression.added", "lesson.learned", "champion.selected", "run.completed", "run.stopped", "run.failed", "browser.audited", "log"]);
+const eventTypes = new Set(["run.created", "contract.frozen", "run.started", "candidate.created", "candidate.updated", "failure.reproduced", "regression.added", "lesson.learned", "champion.selected", "run.completed", "run.stopped", "run.failed", "browser.audited", "approval.requested", "approval.decided", "design.released", "log"]);
 
 /** Pure fold of the append-only log. Only a verified acceptance event selects a champion. */
 export function applyEvolutionEvent(run: EvolutionRun, event: EvolutionEvent): EvolutionRun {
@@ -47,6 +48,9 @@ export function applyEvolutionEvent(run: EvolutionRun, event: EvolutionEvent): E
     case "run.stopped": next.championId = undefined; next.status = "stopped"; next.finishedAt = event.ts; next.summary = event.message; break;
     case "run.failed": next.championId = undefined; next.status = "failed"; next.finishedAt = event.ts; next.error = event.message; break;
     case "browser.audited": next.browserAudit = event.payload as BrowserAudit; break;
+    case "approval.requested":
+    case "approval.decided": next.approval = event.payload as ApprovalState; break;
+    case "design.released": next.release = event.payload as ReleaseRecord; break;
     default: break;
   }
   return next;
