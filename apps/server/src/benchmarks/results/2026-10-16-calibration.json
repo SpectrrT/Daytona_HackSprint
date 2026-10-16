@@ -1,0 +1,151 @@
+{
+  "schemaVersion": 1,
+  "kind": "Live fixed-verifier mutation calibration, not Red discovery",
+  "date": "2026-10-16",
+  "runId": "bench-40569676-f5c1-485d-a907-1fae4728eaee",
+  "snapshot": "daytona-small",
+  "contractHash": "bb14530a116c8dbc42beb6b5cdc024cf1c4f895205c10f1559c151e368210ce6",
+  "seed": 20261016,
+  "batchWallMs": 176570.998417,
+  "summary": {
+    "plannedMutants": 10,
+    "plannedControls": 1,
+    "completedEvaluations": 11,
+    "infrastructureErrors": 0,
+    "buildErrors": 0,
+    "witnessedMutants": 10,
+    "mutantsMissedByAuthoredSequences": 0,
+    "controlsPassed": 1,
+    "reproducedControlViolations": 0,
+    "controlClaimAvailable": true,
+    "coverage": {
+      "authoredSequences": 14,
+      "simulatedCyclesIncludingReplay": 22006,
+      "reproducedCounterexamples": 10
+    }
+  },
+  "cases": [
+    {
+      "id": "case-00",
+      "defective": false,
+      "sourceHash": "bcf225c6a34a07292b408f064359b6795fb9656ba396c973c41d0d980c534f5b",
+      "backend": "verilator",
+      "wallMs": 12750.305499999999,
+      "failureTestId": null,
+      "reproduced": false,
+      "allChecksPassed": true
+    },
+    {
+      "id": "case-01",
+      "defective": true,
+      "sourceHash": "6f13c68afa653266ff8c30989d7bc1118e460d9a7d7a769a68e9ef4e7533ae3c",
+      "backend": "verilator",
+      "wallMs": 11863.184458,
+      "failureTestId": "agent-red-witness-case-01",
+      "reproduced": true,
+      "allChecksPassed": false
+    },
+    {
+      "id": "case-02",
+      "defective": true,
+      "sourceHash": "7918dd62cd3df5f93cdf3b51e34da3bc101d11d863de3779d01f9b2cba5a3c16",
+      "backend": "verilator",
+      "wallMs": 37274.000958000004,
+      "failureTestId": "agent-red-witness-case-02",
+      "reproduced": true,
+      "allChecksPassed": false
+    },
+    {
+      "id": "case-03",
+      "defective": true,
+      "sourceHash": "2e97e10a85db212045efba39bcea834473ae7eb012e396a08c1ebbc34a99b92a",
+      "backend": "verilator",
+      "wallMs": 12611.603750000002,
+      "failureTestId": "agent-red-witness-case-03",
+      "reproduced": true,
+      "allChecksPassed": false
+    },
+    {
+      "id": "case-04",
+      "defective": true,
+      "sourceHash": "fb6edd941bff1ade603353d96a105f4f3e914a4c9de3c747db6023da77899296",
+      "backend": "verilator",
+      "wallMs": 12203.017583000008,
+      "failureTestId": "agent-red-witness-case-04",
+      "reproduced": true,
+      "allChecksPassed": false
+    },
+    {
+      "id": "case-05",
+      "defective": true,
+      "sourceHash": "6f9b773a68298a79057fc1fd7f24d92d72b62d0530c0287310100f39bb1f3c1b",
+      "backend": "verilator",
+      "wallMs": 13414.348958000002,
+      "failureTestId": "agent-red-witness-case-05",
+      "reproduced": true,
+      "allChecksPassed": false
+    },
+    {
+      "id": "case-06",
+      "defective": true,
+      "sourceHash": "35a77b9ec7eb2b4f238736ad2430daf84ff5a16fff7812a6b19664999fae2c5d",
+      "backend": "verilator",
+      "wallMs": 17087.746708000006,
+      "failureTestId": "agent-red-witness-case-06",
+      "reproduced": true,
+      "allChecksPassed": false
+    },
+    {
+      "id": "case-07",
+      "defective": true,
+      "sourceHash": "6192df045406facbe4d9616c9a23a34242e8ef54ee4b82f5a08155e5c176459c",
+      "backend": "verilator",
+      "wallMs": 15306.46699999999,
+      "failureTestId": "agent-red-witness-case-07",
+      "reproduced": true,
+      "allChecksPassed": false
+    },
+    {
+      "id": "case-08",
+      "defective": true,
+      "sourceHash": "eb563014882a2b3a9c99321278044a54e08ecf0d078e911fb25721956cbd302f",
+      "backend": "verilator",
+      "wallMs": 16402.524292000016,
+      "failureTestId": "agent-red-witness-case-08",
+      "reproduced": true,
+      "allChecksPassed": false
+    },
+    {
+      "id": "case-09",
+      "defective": true,
+      "sourceHash": "fcc793fc10973dbeb1144336272822e35aeae571610dc3c5007b017ba86fba41",
+      "backend": "verilator",
+      "wallMs": 14297.378417,
+      "failureTestId": "agent-red-witness-case-09",
+      "reproduced": true,
+      "allChecksPassed": false
+    },
+    {
+      "id": "case-10",
+      "defective": true,
+      "sourceHash": "f263989bb998d0d4d279831673d1af530c8e3a5e5540c8b69d95f6b62d0d8a2a",
+      "backend": "verilator",
+      "wallMs": 13351.034583,
+      "failureTestId": "agent-red-witness-case-10",
+      "reproduced": true,
+      "allChecksPassed": false
+    }
+  ],
+  "rawArtifacts": {
+    "directory": "data/benchmarks/bench-40569676-f5c1-485d-a907-1fae4728eaee",
+    "calibrationSha256": "b38d2e428fbb8a29f4dc0053abe23da85e33d4ccf463f51a31224a1140729e4a"
+  },
+  "limitations": [
+    "Controller-authored witnesses, no Red-discovery credit.",
+    "One manually authored correct control and ten simple single-change mutants.",
+    "This initial serial run predates the final CLI commit and used a work-in-progress harness. Executed RTL hashes and retained oracle/replay evidence are recorded.",
+    "Private candidate sandboxes; no explicit outbound-network block.",
+    "Validation checks are not an untouched final exam.",
+    "No memory benefit, superiority over fixed tests, or parallel speedup has been established by this calibration."
+  ]
+}

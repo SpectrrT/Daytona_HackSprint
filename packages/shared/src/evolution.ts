@@ -108,7 +108,30 @@ export interface Candidate {
   sourceHash?: string;
   regressionCount?: number;
 }
-export type EvolutionEventType = "run.created" | "contract.frozen" | "run.started" | "candidate.created" | "candidate.updated" | "failure.reproduced" | "regression.added" | "lesson.learned" | "champion.selected" | "run.completed" | "run.stopped" | "run.failed" | "browser.audited" | "log";
+export type EvolutionEventType = "run.created" | "contract.frozen" | "run.started" | "candidate.created" | "candidate.updated" | "failure.reproduced" | "regression.added" | "lesson.learned" | "champion.selected" | "run.completed" | "run.stopped" | "run.failed" | "browser.audited" | "approval.requested" | "approval.decided" | "design.released" | "log";
+/** Release gate: a verified champion ships only after a human says yes: by voice or phone (ElevenLabs), or in the dashboard. */
+export type ApprovalChannel = "voice" | "phone" | "dashboard";
+export interface ApprovalState {
+  status: "requested" | "approved" | "declined" | "failed";
+  channel: ApprovalChannel;
+  candidateId: string;
+  requestedAt: number;
+  decidedAt?: number;
+  conversationId?: string;
+  detail?: string;
+}
+export interface ReleaseRecord {
+  candidateId: string;
+  label: string;
+  sourceHash: string;
+  contractHash: string;
+  regressions: number;
+  checks: number;
+  approvedVia: ApprovalChannel;
+  releasedAt: number;
+  /** Relative to the data directory. */
+  bundlePath: string;
+}
 export interface EvolutionEvent {
   seq: number;
   ts: number;
@@ -148,6 +171,8 @@ export interface EvolutionRun {
   verificationFixture?: boolean;
   /** Opt-in bounded repair chain with fresh Red audits after a passing design. */
   recursive?: { maxEvaluations: number; challengePasses: number };
+  approval?: ApprovalState;
+  release?: ReleaseRecord;
 }
 export interface RunSummary {
   id: string;
@@ -167,6 +192,8 @@ export interface EvolutionSystem {
   agentModel?: string;
   defaultProvider?: ExecutionProvider;
   readOnly?: boolean;
+  approvalChannel?: ApprovalChannel;
+  approvalChannels?: ApprovalChannel[];
 }
 export interface CreateRunRequest { prompt: string; provider: ExecutionProvider; maxCandidates?: number; seed?: number }
 export const BUFFER_PROMPT = "Design a hardware buffer for 32 sensor readings. Preserve their order, signal when full, support simultaneous reading and writing, and empty correctly on reset.";

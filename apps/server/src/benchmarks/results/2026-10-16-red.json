@@ -1,0 +1,283 @@
+{
+  "schemaVersion": 1,
+  "kind": "Actual Red discovery on independently calibrated manual FIFO mutants",
+  "date": "2026-10-16",
+  "runId": "bench-40569676-f5c1-485d-a907-1fae4728eaee",
+  "contractHash": "bb14530a116c8dbc42beb6b5cdc024cf1c4f895205c10f1559c151e368210ce6",
+  "snapshot": "daytona-small",
+  "seed": 20261016,
+  "summary": {
+    "plannedMutants": 10,
+    "plannedControls": 1,
+    "completedEvaluations": 11,
+    "infrastructureErrors": 0,
+    "buildErrors": 0,
+    "witnessedMutants": 10,
+    "mutantsFailingFixedPublicChecks": 10,
+    "authoredDiscoveriesBeyondFixedPublicChecks": 0,
+    "mutantsMissedByAuthoredSequences": 0,
+    "controlsPassed": 1,
+    "reproducedControlViolations": 0,
+    "controlClaimAvailable": true,
+    "coverage": {
+      "authoredSequences": 44,
+      "simulatedCyclesIncludingReplay": 23060,
+      "reproducedCounterexamples": 10
+    }
+  },
+  "cases": [
+    {
+      "id": "case-00",
+      "defective": false,
+      "sourceHash": "bcf225c6a34a07292b408f064359b6795fb9656ba396c973c41d0d980c534f5b",
+      "backend": "verilator",
+      "wallMs": 14965.484333,
+      "model": {
+        "provider": "codex-cli",
+        "model": "codex-default",
+        "durationMs": 57349,
+        "attempts": 1
+      },
+      "reproduced": false,
+      "authoredAttackIds": [
+        "full-alias-replacement",
+        "two-word-wrap-drain",
+        "reset-stale-memory-isolation",
+        "empty-singleton-valid-hold"
+      ],
+      "allChecksPassed": true
+    },
+    {
+      "id": "case-01",
+      "defective": true,
+      "sourceHash": "6f13c68afa653266ff8c30989d7bc1118e460d9a7d7a769a68e9ef4e7533ae3c",
+      "backend": "verilator",
+      "wallMs": 12085.919791999971,
+      "model": {
+        "provider": "codex-cli",
+        "model": "codex-default",
+        "durationMs": 64878,
+        "attempts": 1
+      },
+      "failureTestId": "agent-red-thirty-one-idle-and-refill",
+      "reproduced": true,
+      "authoredAttackIds": [
+        "thirty-one-idle-and-refill",
+        "full-replacement-and-rejected-writes",
+        "offset-wrap-drain-boundary",
+        "repeated-reset-empty-concurrent-refill"
+      ],
+      "allChecksPassed": false
+    },
+    {
+      "id": "case-02",
+      "defective": true,
+      "sourceHash": "7918dd62cd3df5f93cdf3b51e34da3bc101d11d863de3779d01f9b2cba5a3c16",
+      "backend": "verilator",
+      "wallMs": 13485.217875000031,
+      "model": {
+        "provider": "codex-cli",
+        "model": "codex-default",
+        "durationMs": 48057,
+        "attempts": 1
+      },
+      "failureTestId": "agent-red-empty-concurrent-and-held-output",
+      "reproduced": true,
+      "authoredAttackIds": [
+        "empty-concurrent-and-held-output",
+        "singleton-replacement-and-two-item-boundary",
+        "wrapped-full-replacement-to-empty",
+        "repeated-reset-with-active-requests"
+      ],
+      "allChecksPassed": false
+    },
+    {
+      "id": "case-03",
+      "defective": true,
+      "sourceHash": "2e97e10a85db212045efba39bcea834473ae7eb012e396a08c1ebbc34a99b92a",
+      "backend": "verilator",
+      "wallMs": 15308.575583999977,
+      "model": {
+        "provider": "codex-cli",
+        "model": "codex-default",
+        "durationMs": 65946,
+        "attempts": 1
+      },
+      "failureTestId": "agent-red-full-replacement-at-origin",
+      "reproduced": true,
+      "authoredAttackIds": [
+        "full-replacement-at-origin",
+        "empty-concurrent-then-wrapped-full",
+        "reset-recovery-full-stream",
+        "refill-replace-and-drain-to-empty"
+      ],
+      "allChecksPassed": false
+    },
+    {
+      "id": "case-04",
+      "defective": true,
+      "sourceHash": "fb6edd941bff1ade603353d96a105f4f3e914a4c9de3c747db6023da77899296",
+      "backend": "verilator",
+      "wallMs": 13585.133291999984,
+      "model": {
+        "provider": "codex-cli",
+        "model": "codex-default",
+        "durationMs": 46899,
+        "attempts": 1
+      },
+      "failureTestId": "agent-red-empty-double-request-after-reset",
+      "reproduced": true,
+      "authoredAttackIds": [
+        "empty-double-request-after-reset",
+        "empty-request-after-pointer-wrap",
+        "phantom-pop-skips-next-real-write",
+        "reset-stale-word-resurrection"
+      ],
+      "allChecksPassed": false
+    },
+    {
+      "id": "case-05",
+      "defective": true,
+      "sourceHash": "6f9b773a68298a79057fc1fd7f24d92d72b62d0530c0287310100f39bb1f3c1b",
+      "backend": "verilator",
+      "wallMs": 12776.83912499994,
+      "model": {
+        "provider": "codex-cli",
+        "model": "codex-default",
+        "durationMs": 43014,
+        "attempts": 1
+      },
+      "failureTestId": "agent-red-empty-reset-write-leak",
+      "reproduced": true,
+      "authoredAttackIds": [
+        "empty-reset-write-leak",
+        "reset-pop-held-output",
+        "full-reset-replacement",
+        "wrapped-empty-repeated-reset"
+      ],
+      "allChecksPassed": false
+    },
+    {
+      "id": "case-06",
+      "defective": true,
+      "sourceHash": "35a77b9ec7eb2b4f238736ad2430daf84ff5a16fff7812a6b19664999fae2c5d",
+      "backend": "verilator",
+      "wallMs": 14254.42508299998,
+      "model": {
+        "provider": "codex-cli",
+        "model": "codex-default",
+        "durationMs": 40377,
+        "attempts": 1
+      },
+      "failureTestId": "agent-red-reset-phantom-read",
+      "reproduced": true,
+      "authoredAttackIds": [
+        "reset-phantom-read",
+        "premature-full-replacement",
+        "repeated-reset-stale-resurrection",
+        "empty-concurrent-wrap-desynchronization"
+      ],
+      "allChecksPassed": false
+    },
+    {
+      "id": "case-07",
+      "defective": true,
+      "sourceHash": "6192df045406facbe4d9616c9a23a34242e8ef54ee4b82f5a08155e5c176459c",
+      "backend": "verilator",
+      "wallMs": 14494.180333000026,
+      "model": {
+        "provider": "codex-cli",
+        "model": "codex-default",
+        "durationMs": 46195,
+        "attempts": 1
+      },
+      "failureTestId": "agent-red-idle-clears-live-read",
+      "reproduced": true,
+      "authoredAttackIds": [
+        "idle-clears-live-read",
+        "full-replacement-rejected-write-hold",
+        "underflow-after-final-pop",
+        "reset-reuse-empty-concurrent-hold"
+      ],
+      "allChecksPassed": false
+    },
+    {
+      "id": "case-08",
+      "defective": true,
+      "sourceHash": "eb563014882a2b3a9c99321278044a54e08ecf0d078e911fb25721956cbd302f",
+      "backend": "verilator",
+      "wallMs": 12974.487208000035,
+      "model": {
+        "provider": "codex-cli",
+        "model": "codex-default",
+        "durationMs": 45426,
+        "attempts": 1
+      },
+      "failureTestId": "agent-red-drain-empty-concurrent-valid",
+      "reproduced": true,
+      "authoredAttackIds": [
+        "drain-empty-concurrent-valid",
+        "full-replacement-valid-gap",
+        "wrapped-stream-write-only-gap",
+        "reset-rearm-nonempty-idle"
+      ],
+      "allChecksPassed": false
+    },
+    {
+      "id": "case-09",
+      "defective": true,
+      "sourceHash": "fcc793fc10973dbeb1144336272822e35aeae571610dc3c5007b017ba86fba41",
+      "backend": "verilator",
+      "wallMs": 19403.49987499998,
+      "model": {
+        "provider": "codex-cli",
+        "model": "codex-default",
+        "durationMs": 68163,
+        "attempts": 1
+      },
+      "failureTestId": "agent-red-seventeenth-write-overwrites-oldest",
+      "reproduced": true,
+      "authoredAttackIds": [
+        "seventeenth-write-overwrites-oldest",
+        "full-replacement-after-rejected-write",
+        "reset-exposes-stale-even-address",
+        "single-item-stream-crosses-pointer-wrap"
+      ],
+      "allChecksPassed": false
+    },
+    {
+      "id": "case-10",
+      "defective": true,
+      "sourceHash": "f263989bb998d0d4d279831673d1af530c8e3a5e5540c8b69d95f6b62d0d8a2a",
+      "backend": "verilator",
+      "wallMs": 13202.493041999987,
+      "model": {
+        "provider": "codex-cli",
+        "model": "codex-default",
+        "durationMs": 60787,
+        "attempts": 1
+      },
+      "failureTestId": "agent-red-singleton-concurrent-count-drift",
+      "reproduced": true,
+      "authoredAttackIds": [
+        "singleton-concurrent-count-drift",
+        "full-replacement-over-capacity",
+        "reset-stale-word-phantom-read",
+        "wrapped-head-premature-write-rejection"
+      ],
+      "allChecksPassed": false
+    }
+  ],
+  "rawArtifacts": {
+    "directory": "data/benchmarks/bench-40569676-f5c1-485d-a907-1fae4728eaee",
+    "summarySha256": "c06ee5f936c140946026d7b785606529c7ac4afdadcbfebc8a1bc54c05a8e2d0"
+  },
+  "limitations": [
+    "Manually seeded simple single-change defects, not representative field performance.",
+    "One correct design is not a population false-positive estimate.",
+    "The fixed public checks also fail on all ten mutants, so this demonstrates no incremental coverage advantage over that baseline.",
+    "Red used the CLI configured default; this was not a pinned-model memory ablation.",
+    "This initial run used the precommit work-in-progress runner. Source hashes and retained replay evidence are recorded.",
+    "No memory benefit or repair outcome is measured by this experiment."
+  ]
+}
