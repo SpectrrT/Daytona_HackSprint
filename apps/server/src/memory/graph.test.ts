@@ -175,6 +175,10 @@ test("grounded lessons keep actual repair excerpts and reject invented citations
   assert.match(groundedLesson(input, answer), /Passing descendant excerpt:\nassign occupancy = corrected_count;/);
   assert.throws(() => groundedLesson(input, { ...answer, sourceLines: [999] }), /citations/);
   assert.throws(() => groundedLesson(input, { ...answer, repairLines: [] }), /citations/);
+  repair.source = "case ({take_write, take_read})\n2'b11: count <= count;\n2'b10: count <= count + 1;\n2'b01: count <= count - 1;\nendcase";
+  assert.match(groundedLesson(input, { ...answer, repairLines: [1, 5] }), /2'b11: count <= count;/);
+  repair.source = "// no executable statement\n// still a comment";
+  assert.throws(() => groundedLesson(input, { ...answer, repairLines: [1, 2] }), /executable/);
 });
 
 test("engine gives Blue and Red only validated graph lessons, and a sibling cannot validate a proposal", async () => {
