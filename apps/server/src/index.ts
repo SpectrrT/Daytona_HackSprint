@@ -12,6 +12,7 @@ import { requireHardwareSnapshot } from "./daytona/client.js";
 import { runAnchorAudit } from "./browser/session.js";
 import { store as defaultStore, type RunStore } from "./store.js";
 import { approvalChannel, decide, pendingPhoneRun, ReleaseError, requestApproval, webhookAuthorized } from "./release/index.js";
+import { arizeConfigured, startArizeTracing } from "./telemetry/arize.js";
 import type { EvolutionEvent } from "@hollow-purple/shared/evolution";
 
 const createSchema = z.object({
@@ -55,6 +56,8 @@ export function createApp(store: RunStore = defaultStore, engine = new Evolution
       { name: "Local simulation", ok: true, detail: "Deterministic candidate models checked by an independent queue oracle; no cloud credentials required." },
       { name: "Daytona HDL simulation", ok: Boolean(config.DAYTONA_API_KEY), detail: config.DAYTONA_API_KEY ? "Configured. Candidates run Verilator inside separate Daytona sandboxes." : "Set DAYTONA_API_KEY to enable isolated Verilator runs." },
       { name: "Anchor Browser", ok: Boolean(config.ANCHOR_API_KEY && config.PUBLIC_DASHBOARD_URL), detail: "Cloud browser audits require ANCHOR_API_KEY and a publicly reachable PUBLIC_DASHBOARD_URL." },
+      { name: "Arize tracing", ok: arizeConfigured(), detail: arizeConfigured() ? "Every run, candidate verdict, and Blue / Red model call is traced to Arize AX." : "Set ARIZE_SPACE_ID and ARIZE_API_KEY to trace runs and model calls in Arize AX." },
+      { name: "Release approval", ok: true, detail: approvalChannel() === "phone" ? "Champions are released only after the approver says yes on an ElevenLabs call." : "Champions are released only after a human approves in the dashboard. Set the ELEVENLABS_* variables to approve by phone." },
       { name: "Blue and Red agents", ok: agentsReady(), detail: config.AGENT_PROVIDER === "codex-cli" ? "Separate, bounded Codex model jobs write RTL and adversarial stimuli. The controller verifies every result." : "Separate Anthropic model calls write RTL and adversarial stimuli. Explicit models and an API key are required." },
     ],
   }));
@@ -159,6 +162,8 @@ export function createApp(store: RunStore = defaultStore, engine = new Evolution
 
 export async function startServer(): Promise<void> {
   await defaultStore.load();
+  const telemetry = startArizeTracing(defaultStore);
+  if (telemetry) console.log("Arize tracing enabled.");
   const engine = new EvolutionEngine(defaultStore);
   const server = serve({ fetch: createApp(defaultStore, engine).fetch, port: config.PORT, hostname: "0.0.0.0" });
   console.log(`Hollow Purple controller listening on http://localhost:${config.PORT}`);
@@ -167,6 +172,7 @@ export async function startServer(): Promise<void> {
     if (closing) return; closing = true;
     await engine.stopAll();
     await defaultStore.flush();
+    await telemetry?.shutdown();
     server.close();
   };
   process.once("SIGINT", () => { void shutdown(); });

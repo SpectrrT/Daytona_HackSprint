@@ -93,6 +93,10 @@ Approver agent setup (ElevenLabs dashboard): the system prompt reads `{{summary}
 
 The overview also shows **Single-shot vs evolved**: the best generation-0 design (one model call, no Red feedback) against the champion, scored only by the verifier's checks. Same model, same frozen contract.
 
+## Arize tracing
+
+With `ARIZE_SPACE_ID` and `ARIZE_API_KEY` set, every run is traced to Arize AX as one trace built from its event log: a run span, one span per candidate carrying the verifier's verdict (status, checks passed, hidden checks, inherited regressions), and an LLM span for each Blue and Red model call (model, provider, token counts, attempts, rationale or attack hypotheses). Release-gate approvals and releases appear as spans in the same trace. Spans go over OTLP to `https://otlp.arize.com/v1/traces` (override with `ARIZE_OTLP_URL`); the project name defaults to `antibody` (`ARIZE_PROJECT_NAME`). Without the variables, tracing is off and nothing changes.
+
 ## Verify changes
 
 ```sh

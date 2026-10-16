@@ -59,6 +59,8 @@ export function applyEvolutionEvent(run: EvolutionRun, event: EvolutionEvent): E
 /** Every event is durably appended before it changes state or reaches SSE subscribers. */
 export class RunStore {
   private readonly records = new Map<string, RunRecord>();
+  /** Every event of every run, after it is persisted (telemetry). Replayed history is not re-observed. */
+  private readonly observers = new Set<Listener>();
   private readonly dir: string;
   constructor(dataDir: string) {
     this.dir = join(dataDir, "runs");
@@ -122,6 +124,7 @@ export class RunStore {
       record.run = applyEvolutionEvent(record.run, event);
       emitted = event;
       for (const listener of record.listeners) { try { listener(structuredClone(event)); } catch { /* Disconnected clients cannot interrupt persistence. */ } }
+      for (const observer of this.observers) { try { observer(structuredClone(event)); } catch { /* Telemetry cannot interrupt persistence. */ } }
     });
     // Keep the queue usable after an error, while returning this failure to its caller.
     record.writes = operation.catch(() => {});
@@ -139,6 +142,10 @@ export class RunStore {
   subscribe(id: string, listener: Listener): () => void {
     const record = this.require(id); record.listeners.add(listener);
     return () => record.listeners.delete(listener);
+  }
+  observe(listener: Listener): () => void {
+    this.observers.add(listener);
+    return () => this.observers.delete(listener);
   }
   async flush(): Promise<void> { await Promise.all([...this.records.values()].map((record) => record.writes)); }
   private require(id: string): RunRecord {
