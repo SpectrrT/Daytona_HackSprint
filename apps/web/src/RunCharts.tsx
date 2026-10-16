@@ -27,8 +27,9 @@ function Plot({kind,rows}:{kind:number;rows:TimeseriesRow[]}) {
   const coord=(p:Point,fixed=false)=>`${x(p.generation)},${y(kind===0?p.fresh:kind===1?(fixed?p.fixed:p.found):100*p.passed/p.total)}`;
   const ylabel=kind===0?'New reproduced breaches':kind===1?'Verified exploit instances':kind===2?'Held-out pass (%)':'Repair generations';
   const generations=[...new Set(points.map(p=>p.x))].sort((a,b)=>a-b);
+  const ticks=[...new Set([0,.25,.5,.75,1].map(f=>kind===2?f*maxY:Math.round(f*maxY)))];
   return <article className="run-chart"><h3>{titles[kind]}</h3>{!available?<div className="chart-empty">no run yet</div>:<svg viewBox={`0 0 ${width} ${height}`} role="img" aria-label={`${titles[kind]}. ${ylabel}. Real verifier evidence.`}>
-    {[0,.25,.5,.75,1].map(f=><g key={f}><line x1={left} x2={width-right} y1={y(f*maxY)} y2={y(f*maxY)} stroke="#34313d"/><text x={left-8} y={y(f*maxY)+4} textAnchor="end">{Number((f*maxY).toFixed(2))}{kind===2?'%':''}</text></g>)}
+    {ticks.map(tick=><g key={tick}><line x1={left} x2={width-right} y1={y(tick)} y2={y(tick)} stroke="#34313d"/><text x={left-8} y={y(tick)+4} textAnchor="end">{Number(tick.toFixed(2))}{kind===2?'%':''}</text></g>)}
     {generations.map(g=><text key={g} x={x(g)} y={height-bottom+20} textAnchor="middle">{g}</text>)}
     <text x={width/2} y={height-8} textAnchor="middle">{kind===3?'Fixed exploit, discovery order within seed':'Generation'}</text><text transform={`translate(15 ${height/2}) rotate(-90)`} textAnchor="middle">{ylabel}</text>
     {groups.map((group,groupIndex)=>{const color=colors[group.arm]??colors.recorded;const ps=group.points.filter(p=>kind!==2||p.total>0);return <g key={group.arm}>

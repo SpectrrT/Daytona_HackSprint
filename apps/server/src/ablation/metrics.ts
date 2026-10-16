@@ -8,7 +8,7 @@ export function summarizeTrials(trials: Trial[]) {
     const accepted = completed.filter(t => t.generationsUntilAllGates !== null);
     const first = group.flatMap(t => t.evaluations.length ? [t.evaluations[0]!] : []);
     const calls = evaluated.flatMap(e => [e.blue, e.red]);
-    const tokensComplete = calls.length > 0 && calls.every(c => c.inputTokens !== undefined && c.outputTokens !== undefined);
+    const tokensComplete = group.every(trial => trial.status === "completed") && calls.length > 0 && calls.every(c => c.inputTokens !== undefined && c.outputTokens !== undefined);
     const tokens = tokensComplete ? calls.reduce((s, c) => s + c.inputTokens! + c.outputTokens!, 0) : null;
     return { mode, trials: group.length, completedTrials: completed.length, missingTrials: group.filter(t => t.status === "missing").length,
       heldOut: { passed: evaluated.filter(e => e.result.checks.some(c => c.id === "held-out" && c.hidden && c.passed)).length, evaluated: evaluated.filter(e => e.result.checks.some(c => c.id === "held-out" && c.hidden)).length },
