@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { readFile, readdir } from "node:fs/promises";
 import { join } from "node:path";
-import type { SoftwareRun } from "@hollow-purple/shared/software";
+import type { SoftwareRun, SoftwareRunSummary } from "@hollow-purple/shared/software";
 import { config } from "../config.js";
 import { runSoftwareExperiment, softwareDirectory } from "./engine.js";
 
@@ -23,7 +23,7 @@ export class SoftwareService {
       throw error;
     }
   }
-  async list() {
+  async list(): Promise<SoftwareRunSummary[]> {
     const root = join(config.DATA_DIR, "software-runs");
     const entries = await readdir(root, { withFileTypes: true }).catch(() => []);
     const runs = await Promise.all(entries.filter(entry => entry.isDirectory() && /^[a-zA-Z0-9_-]{1,100}$/.test(entry.name)).map(entry => this.get(entry.name)));
