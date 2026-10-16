@@ -3,6 +3,7 @@ import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js"
 import { z } from "zod";
 import { BUFFER_PROMPT, type ApprovalChannel, type EvolutionRun, type EvolutionSystem, type RunSummary } from "@hollow-purple/shared/evolution";
 import { activeWork, buildTranscript, formatTranscript, type Speaker } from "@hollow-purple/shared/transcript";
+import { registerAgentLabTools } from "./agent-lab.js";
 
 /**
  * Hollow Purple as a Claude tool. Claude starts an adversarial run, follows it live, reads what Blue and Red said,
@@ -19,7 +20,7 @@ export async function lab<T>(path: string, init?: RequestInit): Promise<T> {
   try {
     response = await fetch(`${LAB}${path}`, { ...init, headers: { "content-type": "application/json", ...init?.headers }, signal: AbortSignal.timeout(20_000) });
   } catch {
-    throw new Error(`The Hollow Purple controller is not reachable at ${LAB}. Start it with \`pnpm dev\` in the repository.`);
+    throw new Error(`The Hollow Purple controller is not reachable at ${LAB}. Start the terminal integration with \`pnpm claude\`, or start the controller with \`pnpm --filter @hollow-purple/server dev\` (\`pnpm dev\` also works).`);
   }
   const body = (await response.json().catch(() => ({}))) as { error?: string };
   if (!response.ok) throw new Error(body.error ?? `The controller returned HTTP ${response.status}.`);
@@ -62,15 +63,19 @@ export function summarize(run: EvolutionRun) {
 
 export function createServer(): McpServer {
   const server = new McpServer(
-    { name: "hollow-purple", version: "0.1.0" },
+    { name: "hollow-purple", version: "0.2.0" },
     {
       instructions: [
         "Hollow Purple hardens engineering work adversarially in Daytona sandboxes: Blue writes a design, Red reads it and writes attacks, and an independent verifier decides. Every reproduced failure becomes a permanent regression test that descendants must pass.",
-        "Typical flow: lab_status, then start_hardening_run, then watch_run repeatedly (pass back next_after_seq) until the run ends, then get_agent_transcript, get_failure_evidence and get_design_source.",
+        "For tool-using agents, prompt injection, purchasing, support or release controls: agent_lab_status → start_agent_hardening → watch_agent_run repeatedly, carrying next_after_event, until settled → get_agent_failures → get_agent_repair → get_agent_result. Stay in Claude's terminal; no website or dashboard is needed. The current agent suite uses three explicit frozen contracts, not an arbitrary external target.",
+        "A new run must actually be started when requested. Existing runs are archived evidence, never a substitute. Follow the run to its measured verdict even when model calls take several minutes. Report actual Red inputs, reproduced effects, Blue source edits and useful-work checks. Never claim universal security or attribute the manual starter to Blue.",
+        "For explicitly requested hardware/FIFO designs only: lab_status → start_hardening_run → watch_run repeatedly (pass back next_after_seq) → get_agent_transcript, get_failure_evidence and get_design_source.",
         "Runs spend real Daytona and model credits and take a few minutes per design. Only a human can approve a release: request_release_approval asks for it; nothing here can grant it.",
       ].join("\n"),
     },
   );
+
+  registerAgentLabTools(server, lab);
 
   server.registerTool("lab_status", {
     title: "Lab status",

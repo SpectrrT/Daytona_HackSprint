@@ -66,9 +66,10 @@ test("offers run tools, and none of them can approve a release", async () => {
   const client = await connect();
   const { tools } = await client.listTools();
   assert.deepEqual(tools.map((tool) => tool.name).sort(), [
-    "get_agent_transcript", "get_design_source", "get_failure_evidence", "get_run", "lab_status",
-    "list_runs", "request_release_approval", "start_hardening_run", "watch_run",
-  ]);
+    "agent_lab_status", "get_agent_failures", "get_agent_repair", "get_agent_result", "get_agent_transcript",
+    "get_design_source", "get_failure_evidence", "get_run", "lab_status", "list_agent_runs", "list_runs",
+    "request_release_approval", "start_agent_hardening", "start_hardening_run", "stop_agent_run", "watch_agent_run", "watch_run",
+  ].sort());
   await client.close();
 });
 
