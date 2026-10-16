@@ -45,7 +45,7 @@ export class AgentCallError extends Error {
   constructor(readonly reason: "timeout" | "aborted" | "output_limit" | "process_error" | "invalid_response", message: string, readonly failureCategory?: AgentFailureCategory) { super(message); this.name = "AgentCallError"; }
 }
 export interface CodexCall {
-  binary: string; role: "blue" | "red"; prompt: string; schema: Record<string, unknown>; artifactPath: string;
+  binary: string; role: AgentInvocation["role"]; prompt: string; schema: Record<string, unknown>; artifactPath: string;
   timeoutMs: number; model?: string; signal?: AbortSignal;
 }
 export interface AgentAnswer { answer: unknown; agent: AgentInvocation }

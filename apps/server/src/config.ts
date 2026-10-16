@@ -62,6 +62,7 @@ const schema = z.object({
   AGENT_EFFORT: effort.default("high"),
   /** Default model of the agent under test; each arena can override it. */
   TARGET_MODEL: z.string().default("claude-opus-5-5"),
+  AGENT_LAB_TARGET_MODEL: optionalString,
   TARGET_EFFORT: effort.default("medium"),
   TARGET_MAX_TURNS: z.coerce.number().int().min(3).default(25),
 

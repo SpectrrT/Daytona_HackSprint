@@ -163,7 +163,7 @@ const LABEL: Record<Speaker, string> = { blue: "BLUE", red: "RED", daytona: "DAY
 /** Plain-text rendering for terminals and MCP clients. */
 export function formatTranscript(lines: TranscriptLine[]): string {
   return lines.map((line) => {
-    const time = new Date(line.ts).toISOString().slice(11, 19);
+    const time = new Date(line.ts).toTimeString().slice(0, 8); // local, like the dashboard
     const head = `[${time}] ${LABEL[line.speaker].padEnd(8)}${line.candidateId ? ` ${line.candidateId}` : ""}${line.tone === "ok" ? " ✓" : line.tone === "fail" ? " ✗" : ""}`;
     const body = [`${head}  ${line.text}`];
     if (line.meta) body.push(`           (${line.meta})`);
