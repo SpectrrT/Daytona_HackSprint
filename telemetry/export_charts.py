@@ -1,5 +1,6 @@
 """Export exactly four charts from measured generation rows, without invented data."""
 import json
+import hashlib
 from pathlib import Path
 import sys
 
@@ -41,9 +42,10 @@ def export(path):
     titles = [("01-breach-curve", "New verified breaches", "Generation", "Reproduced breach instances"), ("02-found-vs-fixed", "Found versus fixed", "Generation", "Verified exploit instances"), ("03-heldout-accuracy", "Held-out accuracy", "Generation", "Passed / executed held-out checks (%)"), ("04-time-to-fix", "Time to fix", "Fixed exploit, in discovery order", "Repair generations")]
     paths = []
     for index, (stem, title, xlabel, ylabel) in enumerate(titles):
-        fig, ax = plt.subplots(figsize=(10, 5.2), constrained_layout=True)
+        fig, ax = plt.subplots(figsize=(10, 5.6))
+        fig.subplots_adjust(left=.1, right=.98, top=.89, bottom=.19)
         plotted = False
-        for arm, points in groups.items():
+        for group_index, (arm, points) in enumerate(groups.items()):
             label = LABELS.get(arm, arm)
             color = COLORS.get(arm, "#77c4bd")
             xs = [p["generation"] for p in points]
@@ -59,9 +61,9 @@ def export(path):
             elif index == 2:
                 scored = [p for p in points if p["total"]]
                 if scored:
-                    ax.plot([p["generation"] for p in scored], [100 * p["pass"] / p["total"] for p in scored], marker="o", label=label, color=color)
+                    ax.plot([p["generation"] for p in scored], [100 * p["pass"] / p["total"] for p in scored], marker="o", label=f"{label} ({scored[-1]['pass']}/{scored[-1]['total']})", color=color)
                     for p in scored:
-                        ax.annotate(f"{p['pass']}/{p['total']}", (p["generation"], 100 * p["pass"] / p["total"]), xytext=(0, 8), textcoords="offset points", ha="center", fontsize=9)
+                        ax.annotate(f"{p['pass']}/{p['total']}", (p["generation"], 100 * p["pass"] / p["total"]), xytext=(0, 8 + 12 * group_index), textcoords="offset points", ha="center", fontsize=9)
                     plotted = True
             else:
                 fixes = []
@@ -78,19 +80,21 @@ def export(path):
             ax.yaxis.set_major_locator(MaxNLocator(integer=True))
         ax.set_ylim(bottom=0)
         if index == 2:
-            ax.set_ylim(-2, 108)
+            ax.set_ylim(-2, 118)
         ax.grid(alpha=.18)
         if not plotted:
             ax.text(.5, .5, "no run yet", transform=ax.transAxes, ha="center", va="center", color="#777777")
         else:
             ax.legend(fontsize=9, loc="best")
-        fig.text(.01, .005, f"Run: {source.parent.name}. Real verifier evidence only. Missing generations are not invented.", fontsize=8, color="#666666")
+        fig.text(.1, .025, f"Run: {source.parent.name}. Real verifier evidence only. Missing generations are not invented.", fontsize=8, color="#666666")
         for extension in ("png", "svg"):
             target = directory / f"{stem}.{extension}"
             fig.savefig(target, dpi=180)
             paths.append(str(target))
         plt.close(fig)
-    return {"rows": len(rows), "charts": 4, "files": paths}
+    manifest = {"rows": len(rows), "charts": 4, "files": paths, "dataSha256": hashlib.sha256(source.read_bytes()).hexdigest(), "rendererSha256": hashlib.sha256(Path(__file__).read_bytes()).hexdigest(), "fileSha256": {Path(path).name: hashlib.sha256(Path(path).read_bytes()).hexdigest() for path in paths}}
+    (directory / "manifest.json").write_text(json.dumps(manifest, indent=2))
+    return manifest
 
 
 if __name__ == "__main__":

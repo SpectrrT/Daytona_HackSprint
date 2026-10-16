@@ -218,3 +218,19 @@ The development controller has no user authentication; keep it private. Only the
 - [Verilator overview](https://verilator.org/guide/latest/overview.html) and [command options](https://verilator.org/guide/latest/exe_verilator.html).
 - [cocotb](https://docs.cocotb.org/en/stable/) is a future Python testbench path; this implementation uses a fixed C++ observation driver with a Python oracle.
 - [SymbiYosys](https://symbiyosys.readthedocs.io/en/latest/) is an optional future formal gate. Any proof must name its exact properties, assumptions, solver, and scope.
+
+## Controlled memory evidence and four shared charts
+
+`pnpm ablation --seeds 3` runs Claude alone, raw failure retrieval, and validated
+lesson-graph retrieval from one frozen development corpus. `pnpm metrics <run-id>`
+prints counts; `pnpm charts <run-id>` exports four PNG/SVG charts. The dashboard
+streams measured generation rows over SSE for FIFO and the software pack.
+No memory advantage is claimed unless the actual held-out results support it.
+See [the study protocol](apps/server/src/ablation/README.md) and
+[the chart data contract](apps/server/src/charts/README.md). Bedrock uses temporary
+workshop credentials outside `.env`; Arize role spans and deterministic experiments
+retain remote readback receipts. No model grades its own hardware output.
+
+## Shared graph memory
+
+Optional SurrealDB Agent Memory integration stores source-bound failures and Blue-written lessons on a run-scoped attack-family graph. A lesson remains proposed until a descendant passes the complete acceptance and regression gate. Only validated parent-family lessons are retrieved for later Blue and Red calls. Read the [memory module guide](apps/server/src/memory/README.md) for configuration, read-only APIs, validation limits and the live graph write/read check. The current controller-owned family hierarchy is not a claim of implemented Red branch mutation.
