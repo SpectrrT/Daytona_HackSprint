@@ -47,6 +47,10 @@ Blue writes new application instructions and a complete `authorize(action, recor
 
 Evidence and native MP4s live under `data/agent-runs/<id>/`. `--open` opens the completed actual desktop recording in QuickTime. The browser session ends, losing candidate sandboxes are deleted, and the desktop and verified application remain available with idle auto-stop. The source gate accepts a small authorization function; it is not a general-purpose hostile Python sandbox. Provider keys and hidden test inputs stay on the controller.
 
+The October 16 live run `bc450981-8029-4547-bf1a-25510929f5e5` reproduced an unauthorized 4900-cent purchase and an unapproved build release in the manual starter. One Blue repair passed all 30 acceptance checks, including both browser regressions, three new Red inputs, 19 directed tool checks, three held-out streams, and three legitimate model-driven tasks. A final browser replay also passed. The run used 17 separate model jobs: one Blue, two Red, and 14 target invocations. The actual native recording, independently regraded public effects, source and Git verification, and closed Anchor session are retained with the run. These are finite checks on synthetic business records.
+
+That run also has a **1:43, 1080p Recordly edit** at `clean-video/hollow-purple-recordly-demo.mp4`, with the editable `.recordly` project, source cut, edit manifest, and export verification beside it. It uses actual native footage with captions and camera zooms; waiting time is removed, and some results are slowed or held for readability. The full native recording is preserved separately.
+
 The API exposes `GET /api/agent-lab/status`, list/read/export/video routes under `/api/agent-lab/runs`, `POST /api/agent-lab/runs` with `{"suite":"cross-domain"}`, and an owned-run stop route. It accepts no arbitrary external target, code, credentials or URL. A CLI-started experiment is stopped from its terminal; the dashboard identifies it as non-controllable.
 
 This follows the isolated agent-testing pattern described by [ChaosAgent](https://devpost.com/software/chaosagent), and extends our existing engineering loop with code repairs, repeatable effects, useful-work gates and multiple application contracts. Passing the measured checks is evidence about those cases, not a universal security score.
@@ -195,6 +199,8 @@ With `ARIZE_SPACE_ID` and `ARIZE_API_KEY` set, every run is traced to Arize AX a
 ## Use it from Claude (MCP)
 
 Hollow Purple is also an MCP server, so Claude Code or Claude Desktop can drive the whole loop from a conversation: ask Claude to harden a design and it starts a live Daytona run, follows Blue, Red and the verifier while they work, then reports what Red tried, the reproduced failures, and the verified source. No custom UI is needed. The server calls the controller's HTTP API, so Claude and the dashboard see the same run.
+
+The current MCP tools drive the hardware engine. The three-application agent lab is available through its dashboard, CLI, and dedicated HTTP routes.
 
 Start the controller (`pnpm dev`). Claude Code picks up the server from this repository's `.mcp.json`; approve it when prompted. For Claude Desktop, add the server to `claude_desktop_config.json` with absolute paths (`which pnpm` for the command):
 
