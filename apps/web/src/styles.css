@@ -21,3 +21,37 @@
 @media(max-width:740px){.archive-banner{padding:11px 12px;gap:8px;align-items:flex-start;flex-wrap:wrap;margin-bottom:16px}.archive-banner>div{flex-basis:calc(100% - 35px)}.archive-banner>button{margin-left:25px;font-size:10px}.archive-banner strong{font-size:11px}.archive-banner span{font-size:10px}.provider-select select{width:100px;font-size:11px}.red-attacks{margin-left:13px;margin-right:13px}.red-attacks-title h3{font-size:11px}.red-attacks-title>span{font-size:9px}.red-attack-item summary>strong{font-size:11px}.red-attack-item summary>span{font-size:9px}}
 .source-hash{display:flex;gap:12px;padding:9px 21px;background:#f8fbf2;border-bottom:1px solid #e7efdb;font-family:'IBM Plex Mono',monospace;font-size:9px;line-height:1.8;color:#829371;overflow-wrap:anywhere}.source-hash>span{color:#a3b58f;white-space:nowrap}.source-hash>code{font:inherit;color:#6e845b;overflow-wrap:anywhere}
 .snapshot-banner{display:flex;align-items:center;gap:10px;background:#efedf6;border:1px solid #ded7ec;border-radius:5px;padding:12px 15px;margin:-3px 0 20px;color:#8b78a2}.snapshot-banner>div{display:flex;flex-direction:column;gap:4px}.snapshot-banner strong{font-size:11px;color:#755d8f;font-weight:550}.snapshot-banner span{font-size:10px;color:#92829f;line-height:1.7}
+
+/* Release gate and single-shot vs evolved (ReleaseGate.tsx) */
+.release-grid{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);gap:14px;margin-top:14px}
+.release-steps{list-style:none;margin:0;padding:6px 17px 14px;display:grid;gap:2px}
+.release-step{display:grid;grid-template-columns:26px 1fr;gap:12px;padding:10px 0;border-bottom:1px solid #eeefe8}
+.release-step:last-child{border-bottom:0}
+.release-step strong{font-size:11px;font-weight:600;color:#4b5840}
+.release-detail{margin-top:3px;font-size:10.5px;line-height:1.55;color:#7c8274}
+.release-icon{display:grid;place-items:center;width:26px;height:26px;border-radius:50%;background:#f1f2ec;color:#9aa192}
+.release-step.done .release-icon{background:#e9f0e4;color:#5f7a52}
+.release-step.active .release-icon{background:#e8edf8;color:#4c6bb5}
+.release-step.blocked .release-icon{background:#f5ece6;color:#aa624a}
+.release-actions{display:flex;gap:8px;margin-top:9px}
+.release-actions .button{width:auto;margin:0}
+.release-request{display:flex;gap:8px}
+.release-request .button{width:auto;margin:0}
+.voice-approval{margin-top:2px}
+.voice-status{display:inline-flex;align-items:center;gap:7px;font-size:10px;color:#6b7363;margin-left:4px}
+.voice-transcript{list-style:none;margin:10px 0 0;padding:9px 11px;border-radius:4px;background:#f6f6f1;border:1px solid #ecede6;display:grid;gap:5px}
+.voice-transcript li{font-size:10.5px;line-height:1.5;color:#5d6555}
+.voice-transcript b{display:inline-block;min-width:44px;font-weight:600;color:#4b5840}
+.mono-inline{font-family:'IBM Plex Mono',ui-monospace,monospace;font-size:9.5px;color:#5e6656}
+.compare-body{padding:14px 17px 16px;display:grid;gap:14px}
+.compare-row{display:grid;gap:6px}
+.compare-row small{font-size:9.5px;color:#9fa795}
+.compare-head{display:flex;justify-content:space-between;align-items:center;font-size:11px;color:#4b5840}
+.compare-head span{display:inline-flex;align-items:center;gap:7px}
+.compare-head b{font-size:15px;font-weight:600;color:#272c2a}
+.compare-track{height:8px;border-radius:3px;background:#f1f2ec;overflow:hidden}
+.compare-fill{height:100%;border-radius:3px}
+.compare-fill.red{background:#bb7157}
+.compare-fill.purple{background:#8672b2}
+.compare-note{display:flex;gap:6px;align-items:center;margin:0;font-size:9.5px;color:#9fa795}
+@media (max-width:1100px){.release-grid{grid-template-columns:1fr}}
