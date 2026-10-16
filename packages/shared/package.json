@@ -9,7 +9,8 @@
     ".": "./src/index.ts",
     "./evolution": "./src/evolution.ts",
     "./software": "./src/software.ts",
-    "./software-progress": "./src/software-progress.ts"
+    "./software-progress": "./src/software-progress.ts",
+    "./transcript": "./src/transcript.ts"
   },
   "scripts": {
     "typecheck": "tsc -p tsconfig.json"
