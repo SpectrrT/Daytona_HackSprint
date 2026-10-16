@@ -12,7 +12,7 @@ import { BasicTracerProvider, SimpleSpanProcessor, type SpanExporter } from "@op
 const space = process.env.ARIZE_SPACE_ID;
 const key = process.env.ARIZE_API_KEY;
 if (!space || !key) throw new Error("Set ARIZE_SPACE_ID and ARIZE_API_KEY in .env first.");
-const project = process.env.ARIZE_PROJECT_NAME || "antibody";
+const project = process.env.ARIZE_PROJECT_NAME || "hollow-purple";
 const url = process.env.ARIZE_OTLP_URL || "https://otlp.arize.com/v1/traces";
 
 const otlp = new OTLPTraceExporter({ url, headers: { space_id: space, api_key: key } });
@@ -22,10 +22,10 @@ const probe: SpanExporter = {
   shutdown: () => otlp.shutdown(),
 };
 const provider = new BasicTracerProvider({
-  resource: resourceFromAttributes({ "service.name": "antibody-lab", "openinference.project.name": project, model_id: project }),
+  resource: resourceFromAttributes({ "service.name": "hollow-purple-lab", "openinference.project.name": project, model_id: project }),
   spanProcessors: [new SimpleSpanProcessor(probe)],
 });
-const span = provider.getTracer("antibody-lab").startSpan("arize connectivity check", {
+const span = provider.getTracer("hollow-purple-lab").startSpan("arize connectivity check", {
   attributes: { "openinference.span.kind": "CHAIN", "input.value": "ping", "output.value": "pong" },
 });
 span.end();

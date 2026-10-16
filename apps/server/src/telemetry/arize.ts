@@ -20,7 +20,7 @@ const env = z
   .object({
     ARIZE_SPACE_ID: optional,
     ARIZE_API_KEY: optional,
-    ARIZE_PROJECT_NAME: z.string().default("antibody"),
+    ARIZE_PROJECT_NAME: z.string().default("hollow-purple"),
     ARIZE_OTLP_URL: z.string().default("https://otlp.arize.com/v1/traces"),
   })
   .parse(process.env);
@@ -178,10 +178,10 @@ export function startArizeTracing(store: RunStore, exporter?: SpanExporter): Tel
     ? new SimpleSpanProcessor(exporter)
     : new BatchSpanProcessor(new OTLPTraceExporter({ url: env.ARIZE_OTLP_URL, headers: { space_id: env.ARIZE_SPACE_ID!, api_key: env.ARIZE_API_KEY! } }));
   const provider = new BasicTracerProvider({
-    resource: resourceFromAttributes({ "service.name": "antibody-lab", "openinference.project.name": env.ARIZE_PROJECT_NAME, model_id: env.ARIZE_PROJECT_NAME }),
+    resource: resourceFromAttributes({ "service.name": "hollow-purple-lab", "openinference.project.name": env.ARIZE_PROJECT_NAME, model_id: env.ARIZE_PROJECT_NAME }),
     spanProcessors: [processor],
   });
-  const tracer = new RunTracer(provider.getTracer("antibody-lab"));
+  const tracer = new RunTracer(provider.getTracer("hollow-purple-lab"));
   const stop = store.observe((event) => {
     try { tracer.handle(event); } catch (error) { console.warn("[arize]", error instanceof Error ? error.message : error); }
   });
