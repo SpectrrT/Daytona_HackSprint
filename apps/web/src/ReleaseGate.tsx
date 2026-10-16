@@ -135,7 +135,7 @@ function Step({ state, icon, title, children }: { state: StepState; icon: React.
   return <li className={`release-step ${state}`}><span className="release-icon">{state === 'done' ? <Check size={14}/> : state === 'blocked' ? <X size={14}/> : icon}</span><div><strong>{title}</strong><div className="release-detail">{children}</div></div></li>;
 }
 
-/** The controlled comparison: the same model's single-shot designs against the design that survived Red. */
+/** Descriptive comparison; an imported fixture is never attributed to a model. */
 export function BaselineComparison({ run }: { run: EvolutionRun }) {
   const first = run.candidates.filter(c => c.generation === 0);
   if (!first.length) return null;
@@ -143,19 +143,20 @@ export function BaselineComparison({ run }: { run: EvolutionRun }) {
   const evolved = champion ?? [...run.candidates].sort((a, b) => b.score - a.score)[0]!;
   const bestFirst = Math.max(...first.map(c => c.score));
   const acceptedFirst = first.filter(c => c.status === 'verified').length;
+  const initialLabel = run.verificationFixture ? 'Imported starter' : first.every(c => c.agent) ? 'Initial model designs' : 'Archived designs';
   const rows = [
-    { label: 'Single-shot designs', detail: `generation 0 · ${first.length} designs · ${acceptedFirst} accepted`, score: bestFirst, tone: 'red' },
-    { label: champion ? 'Evolved champion' : 'Best design so far', detail: `generation ${evolved.generation} · ${run.regressions.length} regression tests inherited`, score: evolved.score, tone: 'purple' },
+    { label: initialLabel, detail: run.verificationFixture ? 'generation 0 · manual fault fixture' : `generation 0 · ${first.length} designs · ${acceptedFirst} accepted`, score: bestFirst, tone: 'red' },
+    { label: champion ? 'Selected design' : 'Best design so far', detail: `generation ${evolved.generation} · ${run.regressions.length} regression tests inherited · ${evolved.checks.filter(check => check.passed).length}/${evolved.checks.length} checks passed`, score: evolved.score, tone: 'purple' },
   ];
   return <section className="panel compare-panel" data-testid="baseline-comparison">
-    <div className="panel-heading"><div className="panel-title"><TrendingUp size={16}/><h2>Single-shot vs evolved</h2><span className="panel-meta">Same model, same frozen contract</span></div></div>
+    <div className="panel-heading"><div className="panel-title"><TrendingUp size={16}/><h2>Initial vs selected design</h2><span className="panel-meta">Same frozen contract</span></div></div>
     <div className="compare-body">
       {rows.map(row => <div className="compare-row" key={row.label}>
         <div className="compare-head"><span><span className={`tiny-dot ${row.tone}`}/>{row.label}</span><b>{Math.round(row.score)}%</b></div>
         <div className="compare-track"><div className={`compare-fill ${row.tone}`} style={{ width: `${Math.max(2, row.score)}%` }}/></div>
         <small>{row.detail}</small>
       </div>)}
-      <p className="compare-note"><FlaskConical size={12}/>Best share of checks passed. Only the verifier's checks count; no model grades itself.</p>
+      <p className="compare-note"><FlaskConical size={12}/>Best share of each version's recorded checks passed. Suites can grow as regressions are added; this is a descriptive comparison.</p>
     </div>
   </section>;
 }

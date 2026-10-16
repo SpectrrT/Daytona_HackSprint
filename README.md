@@ -46,6 +46,8 @@ The dashboard's **Software progress** view (`/?view=software`) reads this saved 
 
 Blue and Red are separate, ephemeral model sessions with separate role instructions and evidence. `BLUE_MODEL` and `RED_MODEL` can select different underlying models; leaving both blank uses the configured Codex default for both. Red proposes bounded browser scenarios, the controller executes them through Anchor, the independent verifier confirms failures, and **Blue writes repairs**. These roles do not currently receive general terminal or browser tool access. The controller owns execution, deployment, regression retention, and acceptance decisions.
 
+The team's recursive FIFO audits, SurrealDB lesson memory, release approvals, and Arize event tracing are implemented in the hardware engine. The checkout adapter maintains its own contract, run state, evidence, and progress metrics; wiring those integrations into the software loop remains future work.
+
 ## Start the system
 
 Requires Node.js 22+, pnpm 10, Python 3.10+, and a signed-in Codex CLI.
