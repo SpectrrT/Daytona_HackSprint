@@ -10,6 +10,7 @@ import { LabBrowser } from "./browser.js";
 import { assertContract, candidateHash, labContract } from "./contract.js";
 import { gateTests, hiddenGateTests, UTILITY_ATTACKS } from "./tests.js";
 import { verifyLab } from "./verifier.js";
+import { roleWorkspaceService } from "./role-workspace-service.js";
 
 export function labDirectory(id: string) { if (!/^[a-zA-Z0-9_-]{1,100}$/.test(id)) throw new Error("Invalid agent run ID."); return join(config.DATA_DIR, "agent-runs", id); }
 export async function runAgentLab(options: { id?: string; signal?: AbortSignal; onEvent?: (message: string) => void; prompt?: string } = {}): Promise<LabRun> {
@@ -17,7 +18,7 @@ export async function runAgentLab(options: { id?: string; signal?: AbortSignal; 
   const id = options.id ?? randomUUID(), directory = labDirectory(id); await mkdir(directory, { recursive: true, mode: 0o700 });
   const run: LabRun = { id, status: "running", createdAt: Date.now(), prompt: options.prompt, contract: labContract(), candidates: [], failures: [], lessons: [], events: [], budget: { maxCandidates: 3, maxModelCalls: 36, usedModelCalls: 0, usedBrowserActions: 0 } };
   const save = async () => { await writeFile(join(directory, "run.json.tmp"), JSON.stringify(run, null, 2), { mode: 0o600 }); await rename(join(directory, "run.json.tmp"), join(directory, "run.json")); };
-  const emit = async (message: string, candidateId?: string) => { const event = { at: Date.now(), message, candidateId }; run.events.push(event); await appendFile(join(directory, "events.ndjson"), JSON.stringify(event) + "\n", { mode: 0o600 }); await save(); options.onEvent?.(message); };
+  const emit = async (message: string, candidateId?: string) => { const event = { at: Date.now(), message, candidateId }; run.events.push(event); await appendFile(join(directory, "events.ndjson"), JSON.stringify(event) + "\n", { mode: 0o600 }); await save(); roleWorkspaceService.observe(run); options.onEvent?.(message); };
   const context = (candidateId: string): AgentContext => ({ runId: id, candidateId, contract: run.contract, goal: run.prompt, signal: options.signal, consume: () => { options.signal?.throwIfAborted(); if (run.budget.usedModelCalls >= run.budget.maxModelCalls) throw new Error("The fixed model-job budget was exhausted."); run.budget.usedModelCalls++; } });
   const consumeBrowser = () => { options.signal?.throwIfAborted(); if (run.budget.usedBrowserActions >= 140) throw new Error("The fixed browser action budget was exhausted."); run.budget.usedBrowserActions++; };
   let desktop: DaytonaAgentAdapter | undefined, browser: LabBrowser | undefined, recordingId: string | undefined, provisionalId: string | undefined;
@@ -132,6 +133,7 @@ export async function runAgentLab(options: { id?: string; signal?: AbortSignal; 
     for (const [candidateId, adapter] of adapters) if (candidateId !== "c1" && candidateId !== run.championId) await adapter.destroy().catch(() => {});
     if (run.status !== "completed") await desktop?.computer.sandbox.stop().catch(() => {});
     await save();
+    roleWorkspaceService.observe(run);
   }
   return run;
 }

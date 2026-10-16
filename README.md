@@ -128,6 +128,20 @@ pnpm dev
 
 Open [localhost:5173](http://localhost:5173) for the optional web interface. **Runs** has one **Start run** action, a live Test → Repair → Verify flow, and a before/after result. Application tabs switch the evidence being inspected. Activity, code, checks and requirements are disclosed on demand. Hardware and checkout examples are available under **Examples**, and provider configuration is in **Settings**.
 
+The run workspace shows compact **Blue**, **Red**, and **Target** native Daytona desktops together. Click a preview to expand it; close or Escape returns to the grid. Sandbox tabs, expansion, and Examples navigation keep the same iframe and connection mounted. The one-line prompt submits with Enter and grows with Shift+Enter. A page reload, selecting another run, a confirmed sandbox stop, or an expired viewer link requires a new connection.
+
+Blue and Red have distinct private VMs and files, in addition to the target and candidate applications. Model inference stays on the controller. Blue's VM validates and commits the actual returned guard; Red's VM validates and commits its actual returned attack inputs. Their native terminals show public source, findings, validation receipts, and recorded events. Hidden inputs and provider credentials remain on the controller. These workspaces do not turn model sessions into unrestricted shell agents.
+
+`pnpm dev` starts the model API on 8787, the workspace companion on 8788, and Vite on 5173. The companion lets native viewers and role workspaces update without restarting an active model run. A run-scoped lease prevents duplicate provisioning. Native viewers use a scoped HTTP/WebSocket proxy with Daytona's documented warning-bypass header; preview capabilities expire and cannot select arbitrary targets. Daytona capacity failures remain visible and do not change application verdicts.
+
+To add the separate role desktops to a retained run without rerunning its models:
+
+```sh
+pnpm --filter @antibody/server exec node --import tsx src/scripts/attach-role-workspaces.ts <run-id>
+```
+
+This reads the saved outputs, validates them in the two new VMs, and preserves the run's original status and evidence. It is not a new acceptance run. Failed setup metadata is archived before replacement, and a replacement is allowed only after the failed resources are confirmed absent.
+
 The default model provider is `AGENT_PROVIDER=codex-cli`. It uses the installed CLI's existing sign-in without reading or copying auth files. `BLUE_MODEL` and `RED_MODEL` may be left blank to use the CLI default. Model jobs are ephemeral, have tools disabled, receive only the relevant contract/source/public evidence, and return schema-validated JSON. Their child environments exclude Daytona, Anchor, and model API keys. Each job has a timeout and bounded output. Codex process, connection, service, or rate failures may retry once within that same time budget, using the identical prompt and schema. Authentication, account quota, schema, output, and timeout failures stop immediately. Attempts have separate private artifacts; displayed token usage comes from the successful process. Private prompts, validated answers, and invocation metadata are saved under `data/runs/<id>/agents/`.
 
 An optional Anthropic provider is available with `AGENT_PROVIDER=anthropic`, `ANTHROPIC_API_KEY`, and explicit `BLUE_MODEL` / `RED_MODEL` values. The live verification workflow uses the configured provider; it never falls back to a template when a model fails.

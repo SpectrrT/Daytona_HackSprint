@@ -53,3 +53,97 @@ test('a preview is refused when the running source no longer matches the recorde
   const access = new LabSandboxAccess(async id => ({ ...sandbox(id), process: { executeCommand: async () => ({ exitCode: 0, result: JSON.stringify({ sourceHash: 'changed-source' }) }) } }) as never);
   await assert.rejects(access.preview(changedRun, 'desktop'), /source differs/);
 });
+
+const roleRun: LabRun = {
+  ...run,
+  candidates: run.candidates.map(candidate => ({ ...candidate, sourceHash: `recorded-${candidate.id}` })),
+  roleWorkspaces: [{ role: 'blue', sandboxId: 'blue-id', ready: true }, { role: 'red', sandboxId: 'red-id', ready: true }],
+};
+const roleSandbox = (role: 'blue' | 'red', state = 'started') => ({ ...sandbox(`${role}-id`, state), labels: { app: 'antibody', run: run.id, purpose: 'role-workspace', role } });
+
+test('separate role references preserve the target desktop and the verified candidate', () => {
+  const references = sandboxReferences(roleRun);
+  assert.deepEqual(references.map(item => [item.key, item.id, item.role, item.kind, item.candidateId]), [
+    ['blue', 'blue-id', 'blue', 'desktop', undefined],
+    ['red', 'red-id', 'red', 'desktop', undefined],
+    ['desktop', 'desktop-id', 'target', 'desktop', 'c1'],
+    ['c2', 'repair-id', undefined, 'app', 'c2'],
+  ]);
+  assert.equal(new Set(references.map(item => item.id)).size, references.length);
+  assert.equal(references.find(item => item.key === 'c2')?.title, 'Verified repair');
+  const malformed = { ...roleRun, roleWorkspaces: [
+    { role: 'blue', sandboxId: 'blue-id', ready: true },
+    { role: 'red', sandboxId: 'blue-id', ready: true },
+    { role: 'red', sandboxId: '../other-run', ready: true },
+  ] } as LabRun;
+  assert.deepEqual(sandboxReferences(malformed).map(item => item.key), ['blue', 'desktop', 'c2']);
+});
+
+test('role desktops are not advertised as open until their workspace preparation finishes', async () => {
+  const starting = { ...roleRun, roleWorkspaces: roleRun.roleWorkspaces!.map(item => ({ ...item, ready: item.role !== 'blue' })) };
+  const access = new LabSandboxAccess(async id => (id === 'blue-id' ? roleSandbox('blue') : id === 'red-id' ? roleSandbox('red') : sandbox(id)) as never);
+  const result = await access.list(starting);
+  assert.deepEqual(result.sandboxes.filter(item => item.role === 'blue' || item.role === 'red').map(item => [item.key, item.state, item.canOpen]), [['blue', 'starting', false], ['red', 'started', true]]);
+  assert.ok(!JSON.stringify(result).includes('token'));
+});
+
+test('role previews reject mismatched role or purpose before starting or signing any resource', async () => {
+  for (const labels of [
+    { app: 'antibody', run: run.id, purpose: 'role-workspace', role: 'red' },
+    { app: 'antibody', run: run.id, purpose: 'agent-lab', role: 'blue' },
+    { app: 'antibody', run: run.id, purpose: 'role-workspace' },
+  ]) {
+    let mutations = 0, signatures = 0;
+    const access = new LabSandboxAccess(async () => ({
+      ...roleSandbox('blue', 'stopped'), labels,
+      start: async () => { mutations++; },
+      computerUse: { start: async () => { mutations++; } },
+      getSignedPreviewUrl: async () => { signatures++; return { url: 'https://preview.example/' }; },
+    }) as never);
+    await assert.rejects(access.preview(roleRun, 'blue', true), /requested agent role/);
+    assert.equal(mutations, 0);
+    assert.equal(signatures, 0);
+  }
+});
+
+test('live Blue and Red previews sign different desktops without invoking candidate health or application commands', async () => {
+  const signed: [string, number][] = []; let commands = 0;
+  const access = new LabSandboxAccess(async id => ({
+    ...roleSandbox(id === 'blue-id' ? 'blue' : 'red'),
+    process: { executeCommand: async () => { commands++; throw new Error('Role preview must not touch the candidate application.'); } },
+    getSignedPreviewUrl: async (port: number) => { signed.push([id, port]); return { url: `https://${id}.preview.example/?token=private` }; },
+  }) as never);
+  const [blue, red] = await Promise.all([access.preview(roleRun, 'blue'), access.preview(roleRun, 'red')]);
+  assert.deepEqual(new Set(signed.map(([id]) => id)), new Set(['blue-id', 'red-id']));
+  assert.ok(signed.every(([, port]) => port === 6080));
+  assert.equal(blue.sandboxId, 'blue-id'); assert.equal(red.sandboxId, 'red-id');
+  assert.notEqual(blue.url, red.url);
+  assert.equal(new URL(blue.url).pathname, '/vnc.html');
+  assert.equal(new URL(red.url).searchParams.get('view_only'), 'true');
+  assert.equal(commands, 0);
+});
+
+test('resuming a role desktop reopens display.py without restoring or modifying the target application', async () => {
+  const commands: { command: string; cwd: string | undefined }[] = []; const ports: number[] = [];
+  let starts = 0, displays = 0, uploads = 0;
+  const before = structuredClone(roleRun);
+  const access = new LabSandboxAccess(async () => ({
+    ...roleSandbox('blue', 'stopped'),
+    start: async () => { starts++; },
+    computerUse: { start: async () => { displays++; } },
+    process: { executeCommand: async (command: string, cwd?: string) => { commands.push({ command, cwd }); return { exitCode: 0, result: '' }; } },
+    fs: { uploadFile: async () => { uploads++; throw new Error('Role resume must not rewrite files.'); } },
+    getSignedPreviewUrl: async (port: number) => { ports.push(port); return { url: 'https://blue.preview.example/?token=private' }; },
+  }) as never);
+  await assert.rejects(access.preview(roleRun, 'blue'), /Resume sandbox/);
+  assert.equal(starts, 0);
+  const [first, second] = await Promise.all([access.preview(roleRun, 'blue', true), access.preview(roleRun, 'blue', true)]);
+  assert.deepEqual(first, second); assert.equal(starts, 1); assert.equal(displays, 1);
+  assert.equal(commands.length, 1);
+  assert.match(commands[0]!.command, /python3 display\.py/);
+  assert.equal(commands[0]!.cwd, '/home/daytona/role-workspace');
+  assert.doesNotMatch(commands[0]!.command, /runtime\.py|target\.json|guard\.py|sqlite|healthz|reset|git\b/);
+  assert.equal(uploads, 0); assert.deepEqual(ports, [6080]);
+  assert.match(first.note!, /Model inference is managed by the controller/);
+  assert.deepEqual(roleRun, before);
+});

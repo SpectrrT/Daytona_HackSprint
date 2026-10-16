@@ -10,7 +10,7 @@
     "demo": "node scripts/demo.mjs",
     "claude": "node scripts/claude.mjs",
     "terminal:record": "pnpm --filter @antibody/server exec tsx src/scripts/record-claude-terminal.ts",
-    "dev": "pnpm --parallel --filter @antibody/server --filter @antibody/web dev",
+    "dev": "node scripts/dev.mjs",
     "build": "pnpm typecheck && pnpm --filter @antibody/web build",
     "typecheck": "pnpm -r typecheck",
     "test": "pnpm --filter @antibody/server test && pnpm --filter @antibody/mcp test && python3 -m unittest discover -s lab -p 'test_*.py' -v",
@@ -23,6 +23,7 @@
     "metrics": "pnpm --filter @antibody/server exec tsx src/scripts/local.ts metrics",
     "charts": "pnpm --filter @antibody/server exec tsx src/scripts/local.ts charts",
     "agents:demo": "pnpm --filter @antibody/server exec node --import tsx src/scripts/run-agent-lab.ts",
-    "retry-benchmark": "pnpm --filter @antibody/server exec tsx src/scripts/local.ts retry-benchmark"
+    "retry-benchmark": "pnpm --filter @antibody/server exec tsx src/scripts/local.ts retry-benchmark",
+    "workspaces:serve": "pnpm --filter @antibody/server exec node --import tsx src/scripts/role-workspace-server.ts"
   }
 }

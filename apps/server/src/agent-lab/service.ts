@@ -5,6 +5,7 @@ import type { LabRun, LabRunSummary } from "@antibody/shared/agent-lab";
 import { config } from "../config.js";
 import { labDirectory, runAgentLab } from "./engine.js";
 import { LabSandboxAccess } from "./sandboxes.js";
+import { readRoleWorkspaceState } from "./role-workspace-service.js";
 export class AgentLabService {
   readonly sandboxAccess = new LabSandboxAccess();
   private readonly active = new Map<string, { controller: AbortController; task: Promise<LabRun> }>();
@@ -15,7 +16,11 @@ export class AgentLabService {
     this.active.set(id, { controller, task }); void task.catch(() => {}).finally(() => this.active.delete(id)); return id;
   }
   async get(id: string): Promise<LabRun | { id: string; status: "queued" } | undefined> {
-    try { return { ...JSON.parse(await readFile(join(labDirectory(id), "run.json"), "utf8")) as LabRun, controllable: this.active.has(id) }; }
+    try {
+      const run = JSON.parse(await readFile(join(labDirectory(id), "run.json"), "utf8")) as LabRun;
+      const roles = await readRoleWorkspaceState(id);
+      return { ...run, ...(roles ? { roleWorkspaces: roles.workspaces, roleWorkspaceError: roles.error } : {}), controllable: this.active.has(id) };
+    }
     catch (error) { if (error instanceof Error && "code" in error && error.code === "ENOENT") return this.active.has(id) ? { id, status: "queued" } : undefined; throw error; }
   }
   async list(): Promise<LabRunSummary[]> {

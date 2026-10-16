@@ -29,14 +29,18 @@ export interface LabRun {
   desktopUrl?: string; desktopSandboxId?: string; videoPath?: string; error?: string;
   controllable?: boolean;
   prompt?: string;
+  roleWorkspaces?: LabRoleWorkspace[];
+  roleWorkspaceError?: string;
 }
 export interface LabRunSummary { id: string; status: LabRun["status"]; createdAt: number; championId?: string }
 
 export interface LabSandbox {
   key: string; id: string; candidateId?: string; title: string; kind: "desktop" | "app";
   state: string; detail?: string; canOpen: boolean; canResume: boolean;
+  role?: "blue" | "red" | "target";
 }
-export interface LabSandboxList { checkedAt: number; sandboxes: LabSandbox[] }
+export interface LabRoleWorkspace { role: "blue" | "red"; sandboxId: string; ready: boolean; error?: string }
+export interface LabSandboxList { checkedAt: number; sandboxes: LabSandbox[]; error?: string }
 export interface LabPreview { url: string; expiresAt: number; sandboxId: string; kind: LabSandbox["kind"]; note?: string }
 export interface LabConnection {
   id: "daytona" | "anchor" | "agents"; name: string;
