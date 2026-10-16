@@ -12,13 +12,15 @@ export const pause = (ms: number) => new Promise(resolve => setTimeout(resolve, 
 export interface LabJob { id: string; input: { domain: AgentEnvironment; message: string; knowledge: string }; result: { proposal: LabProposal; tools: unknown[] } | null }
 export class DaytonaAgentAdapter {
   private constructor(readonly computer: Computer, readonly candidate: LabCandidate, readonly appUrl: string, readonly runtimeHash: string) {}
-  static async provision(runId: string, candidate: LabCandidate, desktopId?: string, options: { headless?: boolean } = {}): Promise<DaytonaAgentAdapter> {
+  static async provision(runId: string, candidate: LabCandidate, desktopId?: string, options: { headless?: boolean; onEvent?: (message: string) => Promise<void> } = {}): Promise<DaytonaAgentAdapter> {
     const small = !!desktopId || options.headless;
+    await options.onEvent?.(`Daytona: requesting a private ${small ? "daytona-small" : "daytona-medium"} sandbox for ${candidate.id}${desktopId ? `, linked to ${desktopId}` : ""}.`);
     const sandbox = await daytona().create({ name: `agents-${runId.slice(0, 12)}-${candidate.id}`.toLowerCase(), snapshot: small ? "daytona-small" : "daytona-medium", public: false,
       envVars: small ? {} : { VNC_RESOLUTION: "1600x1000" }, labels: { app: "hollow-purple", purpose: "agent-lab", run: runId, candidate: candidate.id }, autoStopInterval: 30, autoDeleteInterval: desktopId ? 0 : -1, ...(desktopId ? { linkedSandbox: desktopId } : {}) }, { timeout: 180 });
     candidate.sandboxId = sandbox.id;
     const computer = new Computer(sandbox);
     try {
+      await options.onEvent?.(`Daytona: sandbox ${sandbox.id} is started. Uploading the candidate source and fixed Python runtime.`);
       const files: Record<string, string> = {};
       for (const name of ["runtime.py", "validate.py", "index.html"]) files[name] = await readFile(join(REPO_ROOT, "lab/agent-lab", name), "utf8");
       files["fixtures.json"] = JSON.stringify({ contexts: CONTEXTS, records: RECORDS });
@@ -29,9 +31,12 @@ export class DaytonaAgentAdapter {
       const build = await computer.exec("python3 validate.py guard.py && python3 runtime.py validate && python3 -m py_compile guard.py runtime.py && git init -q && git add guard.py candidate.json runtime.py validate.py fixtures.json index.html && git -c core.hooksPath=/dev/null -c commit.gpgSign=false -c user.name=Lab -c user.email=lab@local commit --allow-empty -qm 'Agent candidate' && git rev-parse HEAD", { cwd: APP_DIR, timeoutSec: 30 });
       if (build.exitCode !== 0) throw new Error(`Agent candidate did not build: ${build.output.slice(-1600)}`);
       candidate.commit = build.output.trim().split(/\r?\n/).at(-1);
+      await options.onEvent?.(`Daytona: ${candidate.id} compiled and validated; Git revision ${candidate.commit}.`);
       const preview = await sandbox.getSignedPreviewUrl(8000, 21600); candidate.appUrl = preview.url;
       const runtimeHash = hash(["runtime.py", "fixtures.json", "validate.py", "index.html"].map(name => files[name]!).join("\0"));
-      const adapter = new DaytonaAgentAdapter(computer, candidate, preview.url, runtimeHash); await adapter.reset(); return adapter;
+      const adapter = new DaytonaAgentAdapter(computer, candidate, preview.url, runtimeHash); await adapter.reset();
+      await options.onEvent?.(`Daytona: the actual Python server is healthy on port 8000 in ${sandbox.id}; source SHA-256 ${candidate.sourceHash}.`);
+      return adapter;
     } catch (error) { await sandbox.delete(60, true).catch(() => {}); throw error; }
   }
   async checked(command: string, cwd = APP_DIR, timeoutSec = 30): Promise<string> {
