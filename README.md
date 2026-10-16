@@ -34,6 +34,8 @@ pnpm snapshot
 
 Each candidate receives its own private Daytona sandbox and Git revision. The controller validates a restricted synthesizable SystemVerilog subset, uploads the generated RTL plus a fixed observation driver, compiles it with Verilator, and records actual hardware outputs. A separate Python deque oracle runs on the controller; expected outputs and hidden test definitions are not provided to either agent. Compilation failures remain visible diagnostics and can guide Blue's next repair.
 
+Keys without snapshot-create permission can use `PROD_SNAPSHOT=daytona-medium`. The lab installs Verilator, g++, make, and git inside each candidate sandbox when needed. This takes longer than a prepared snapshot. Run creation checks that the configured snapshot is accessible and active before starting paid model calls.
+
 The mandatory directed checks, inherited failure regressions, four newly authored Red attacks, and a separate held-out stream all gate acceptance. A model's opinion cannot select a champion. An earlier passing design must requalify if later candidates expose new regressions. The source hash, model invocation, attack hypotheses/inputs, check results, public raw observations, and counterexample traces are retained.
 
 Sandboxes are deleted and destruction awaited after evaluation unless `KEEP_FORKS=true`. The controller preserves evidence locally. Candidate and cycle budgets bound the experiment; each model call, compilation, and simulation also has a timeout.
@@ -69,6 +71,8 @@ pnpm smoke         # Starts a real model + Daytona experiment; requires live cre
 ```
 
 The smoke test checks provenance, generated RTL, all acceptance gates, regression reproduction, and evidence export. It does not manufacture a failure: a correct initial design may pass every attempted attack without needing a repair. A lack of counterexamples is reported as test coverage, not a proof of universal correctness.
+
+To exercise the repair path with an explicitly labelled manual fault fixture, run `pnpm --filter @hollow-purple/server exec node --import tsx src/scripts/verify-live-repair.ts`. A real Red agent must expose a reproducible failure before two model-written Blue children are tested in Daytona. Imported source is never attributed to Blue.
 
 ## Contract and APIs
 

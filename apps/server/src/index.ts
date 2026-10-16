@@ -8,6 +8,7 @@ import { z } from "zod";
 import { config, ConfigError } from "./config.js";
 import { CapacityError, EvolutionEngine } from "./engine/index.js";
 import { supportsPrompt } from "./engine/contract.js";
+import { requireHardwareSnapshot } from "./daytona/client.js";
 import { runAnchorAudit } from "./browser/session.js";
 import { store as defaultStore, type RunStore } from "./store.js";
 import type { EvolutionEvent } from "@hollow-purple/shared/evolution";
@@ -61,6 +62,7 @@ export function createApp(store: RunStore = defaultStore, engine = new Evolution
     if (!parsed.success) return c.json({ error: "Invalid run request.", issues: parsed.error.issues.map((issue) => ({ path: issue.path.join("."), message: issue.message })) }, 400);
     if (!config.DAYTONA_API_KEY) return c.json({ error: "Set DAYTONA_API_KEY to execute model-generated RTL in Daytona." }, 503);
     if (!agentsReady()) return c.json({ error: "The live agent runtime is unavailable. Sign in with Codex CLI, or configure AGENT_PROVIDER=anthropic with explicit Blue/Red models and ANTHROPIC_API_KEY." }, 503);
+    await requireHardwareSnapshot();
     return c.json({ id: await engine.start(parsed.data) }, 201);
   });
   app.get("/api/runs/:id", (c) => {

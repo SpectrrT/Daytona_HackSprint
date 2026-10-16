@@ -7,9 +7,11 @@ import { config, REPO_ROOT } from "../config.js";
 import { EvolutionEngine } from "../engine/index.js";
 import { passesAcceptance } from "../arena/tools.js";
 import { RunStore } from "../store.js";
+import { requireHardwareSnapshot } from "../daytona/client.js";
 
 // Deliberately do not load the journal: another controller may own active runs.
 // This process creates a fresh UUID and only writes its own run's event log.
+await requireHardwareSnapshot();
 const store = new RunStore(config.DATA_DIR);
 const engine = new EvolutionEngine(store);
 const fixturePath = join(REPO_ROOT, "lab", "fixtures", "count-race.sv");
