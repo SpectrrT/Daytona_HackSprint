@@ -7,6 +7,7 @@
     "node": ">=22"
   },
   "scripts": {
+    "claude": "node scripts/claude.mjs",
     "dev": "pnpm --parallel --filter @hollow-purple/server --filter @hollow-purple/web dev",
     "build": "pnpm typecheck && pnpm --filter @hollow-purple/web build",
     "typecheck": "pnpm -r typecheck",

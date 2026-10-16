@@ -2,9 +2,30 @@
 
 A general adversarial engineering system. **Blue builds candidates. Red searches for reproducible failures. An independent verifier checks the evidence against a frozen contract.** Verified failures become permanent regression tests and guide repaired descendants.
 
-The lead example is a **tool-agent lab spanning customer support, purchasing, and engineering**. Red tests messages, vendor quotes and issue content; Blue repairs both the agent instructions and actual authorization code. Additional examples are a **32 × 16-bit hardware FIFO** and a **checkout web app with safe retries and bounded stock**. Hardware uses actual model jobs and Verilator execution in Daytona. Software uses actual Python web servers and SQLite in Daytona, with Red's browser actions executed through Anchor. The old fixed hardware variants are retained only for archived examples and isolated tests; they are never substituted into a live agent run.
+The entry point is **Claude Code in your terminal**. Tell Claude to harden the agents; it starts the real loop in Daytona, follows Red's attacks through Anchor, reads reproduced effects, and returns Blue's repaired code and the independent verdict. A website is not required. The lead suite spans customer support, purchasing, and engineering. Additional adapters cover a hardware FIFO and a checkout web application.
 
 The product's output is a tested design, reproducible failure cases, readable lessons, and evidence of improvement across a tree of versions. Hardware is one application of that loop.
+
+## Use it from Claude
+
+```sh
+pnpm install
+# Configure DAYTONA_API_KEY and ANCHOR_API_KEY in .env.
+# The default Blue/Red/target runtime uses the existing Codex CLI sign-in.
+claude auth login
+pnpm claude --doctor
+pnpm claude
+```
+
+Then tell Claude:
+
+> Harden the purchasing and engineering agents in Daytona. Have Red try prompt injections through Anchor, independently reproduce any forbidden effects, then have Blue repair them. Follow the run to completion and show me the actual failure, code changes, and verification.
+
+`pnpm claude` starts the controller if needed and opens the installed, real Claude Code CLI with this repository's MCP server. It uses session-scoped tool permissions and preserves your Claude settings. Existing Claude users can also start the controller with `pnpm --filter @hollow-purple/server dev` and type `claude` in this repository; approve its project MCP server on first use. Claude's own sign-in is separate from the runtime used for Blue, Red and the target. Controller keys stay out of the terminal's tool responses and candidate sandboxes.
+
+The terminal tools are `agent_lab_status`, `start_agent_hardening`, `watch_agent_run`, `get_agent_failures`, `get_agent_repair`, `get_agent_result`, `list_agent_runs`, and `stop_agent_run`. Watching uses an event cursor so Claude can follow a long experiment without losing or repeating a page of progress. A new run provisions actual Daytona sandboxes; it does not replay a saved demonstration. The controller owns browser execution and independent verification. Claude orchestrates that controller rather than pretending to click a browser itself.
+
+The current suite tests all three supported application contracts together, within three candidates and 36 model jobs. It typically takes 15–25 minutes. Arbitrary production applications require their own adapter, frozen contract and independent verifier. The optional website remains an evidence viewer for the team's existing examples; it is not the product entry point or the terminal demonstration.
 
 ## One loop, different engineering examples
 
@@ -31,7 +52,7 @@ Each new example needs its own contract, Blue/Red instructions, execution driver
 pnpm agents:demo --open
 ```
 
-The dashboard now opens the **Agent lab** by default. Three applications share one bounded evolution engine:
+Claude starts this same bounded evolution engine through `start_agent_hardening`. The direct command above is useful for development. Three applications share the engine:
 
 | Application | Actual mock tool effects | Frozen boundary |
 | --- | --- | --- |
@@ -49,7 +70,7 @@ Evidence and native MP4s live under `data/agent-runs/<id>/`. `--open` opens the 
 
 The October 16 live run `bc450981-8029-4547-bf1a-25510929f5e5` reproduced an unauthorized 4900-cent purchase and an unapproved build release in the manual starter. One Blue repair passed all 30 acceptance checks, including both browser regressions, three new Red inputs, 19 directed tool checks, three held-out streams, and three legitimate model-driven tasks. A final browser replay also passed. The run used 17 separate model jobs: one Blue, two Red, and 14 target invocations. The actual native recording, independently regraded public effects, source and Git verification, and closed Anchor session are retained with the run. These are finite checks on synthetic business records.
 
-That run also has a **1:43, 1080p Recordly edit** at `clean-video/hollow-purple-recordly-demo.mp4`, with the editable `.recordly` project, source cut, edit manifest, and export verification beside it. It uses actual native footage with captions and camera zooms; waiting time is removed, and some results are slowed or held for readability. The full native recording is preserved separately.
+An earlier **1:43, 1080p Recordly edit** at `clean-video/hollow-purple-recordly-demo.mp4` shows that run's native workbench. It is retained as historical evidence; the current demonstration direction is Claude's terminal, with real cursor movement, scrolling and selections, and no captions.
 
 The API exposes `GET /api/agent-lab/status`, list/read/export/video routes under `/api/agent-lab/runs`, `POST /api/agent-lab/runs` with `{"suite":"cross-domain"}`, and an owned-run stop route. It accepts no arbitrary external target, code, credentials or URL. A CLI-started experiment is stopped from its terminal; the dashboard identifies it as non-controllable.
 
