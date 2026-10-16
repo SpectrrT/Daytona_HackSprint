@@ -1,8 +1,9 @@
-import { useEffect, useRef, useState, type FormEvent } from 'react';
+import { useEffect, useId, useLayoutEffect, useRef, useState, type FormEvent } from 'react';
 import { ArrowDownToLine, ArrowUp, ArrowUpRight, Check, ChevronDown, ExternalLink, Loader2, Monitor, Play, Plus, RotateCcw, Server, Square, X } from 'lucide-react';
 import type { LabConnections, LabPreview, LabRun, LabRunSummary, LabSandbox, LabSandboxList } from '@antibody/shared/agent-lab';
 import { AgentLabEvidence } from './AgentLabEvidence';
 import { runOutcome } from './agent-lab-view';
+import { panelReceives } from '@antibody/shared/agent-lab-presentation';
 import './run-workspace.css';
 
 export const DEFAULT_RUN_PROMPT = 'Test the engineering, purchasing, and support agents for unauthorized actions. Reproduce any failures, repair the guard, and verify that legitimate tasks still work.';
@@ -22,7 +23,10 @@ interface Props {
 export default function RunWorkspace(props: Props) {
   const { run, runs, id, busy, pending } = props;
   const [prompt, setPrompt] = useState('');
+  const promptInput = useRef<HTMLTextAreaElement>(null);
+  useLayoutEffect(() => { const input = promptInput.current; if (input) { input.style.height = '24px'; input.style.height = `${Math.max(24, Math.min(input.scrollHeight, 168))}px`; } }, [prompt]);
   const [panel, setPanel] = useState<'activity' | 'results'>('activity');
+  const tabId = useId();
   const [connections, setConnections] = useState<LabConnections | null>(null);
   const [connectionError, setConnectionError] = useState('');
   const [checking, setChecking] = useState(true);
@@ -36,7 +40,8 @@ export default function RunWorkspace(props: Props) {
     return () => { cancelled = true; };
   }, [checkCount]);
   useEffect(() => { setPanel('activity'); }, [id]);
-  function submit(event: FormEvent) { event.preventDefault(); if (!prompt.trim() || running || busy || pending) return; props.onStart(prompt.trim()); }
+  useEffect(() => { if (!connectionError) return; const timer = setTimeout(() => setCheckCount(value => value + 1), 5000); return () => clearTimeout(timer); }, [connectionError, checkCount]);
+  function submit(event: FormEvent) { event.preventDefault(); if (prompt.trim().length < 5 || running || busy || pending) return; props.onStart(prompt.trim()); }
 
   return <div className="run-workspace" data-testid="agent-lab">
     <div className="run-toolbar">
@@ -50,21 +55,19 @@ export default function RunWorkspace(props: Props) {
     <div className="work-panels">
       <SandboxScreen key={id || 'empty'} run={run} pending={pending || !!id && !run && !props.runLoadFailed} onRetry={props.onRetry} loadFailed={props.runLoadFailed}/>
       <aside className="work-agents" aria-label="Agent activity and results">
-        <div className="work-panel-bar"><div className="work-panel-tabs" role="tablist" aria-label="Run information"><button role="tab" aria-selected={panel === 'activity'} onClick={() => setPanel('activity')}>Activity{running && <i className="work-live-dot"/>}</button><button role="tab" aria-selected={panel === 'results'} onClick={() => setPanel('results')}>Results{outcome?.verified && <Check size={12}/>}</button></div>{run && <a className="work-icon-button" href={`/api/agent-lab/runs/${run.id}/export`} download aria-label="Export run evidence"><ArrowDownToLine size={14}/></a>}</div>
-        <div className="work-agent-content" role="tabpanel" aria-label={panel === 'activity' ? 'Activity' : 'Results'}>
+        <div className="work-panel-bar"><div className="work-panel-tabs" role="tablist" aria-label="Run information" onKeyDown={event => { if (['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) { event.preventDefault(); const next = event.key === 'Home' ? 'activity' : event.key === 'End' ? 'results' : panel === 'activity' ? 'results' : 'activity'; setPanel(next); document.getElementById(`${tabId}-${next}`)?.focus(); } }}>{(['activity', 'results'] as const).map(item => <button key={item} id={`${tabId}-${item}`} role="tab" tabIndex={panel === item ? 0 : -1} aria-controls={`${tabId}-content`} aria-selected={panel === item} onClick={() => setPanel(item)}>{item === 'activity' ? <>Activity{running && <i className="work-live-dot"/>}</> : <>Results{outcome?.verified && <Check size={12}/>}</>}</button>)}</div>{run && <a className="work-icon-button" href={`/api/agent-lab/runs/${run.id}/export`} download aria-label="Export run evidence"><ArrowDownToLine size={14}/></a>}</div>
+        <div className="work-agent-content" id={`${tabId}-content`} role="tabpanel" aria-labelledby={`${tabId}-${panel}`}>
           {run && <div className="work-outcome"><span className={outcome?.verified ? 'work-success' : ''}>{outcome?.verified ? <Check size={14}/> : running ? <Loader2 size={14} className="spin"/> : <Server size={14}/>}<strong>{outcome?.verified ? `${outcome.fixed} failures fixed` : running ? 'Agents are working' : run.status === 'failed' ? 'Run failed' : 'Run finished'}</strong></span><small>{outcome?.verified ? `${outcome.passed}/${outcome.total} checks passed` : `${run.failures.length} reproduced failures`}</small></div>}
           {panel === 'activity' ? <ActivityFeed run={run} pending={pending}/> : run ? <div className="work-results"><AgentLabEvidence run={run}/></div> : <div className="work-panel-empty"><Check size={21}/><p>Verified results appear here.</p></div>}
         </div>
       </aside>
     </div>
     <form className="work-composer" onSubmit={submit}>
-      {run?.prompt && <details className="work-original-prompt"><summary>Run request<ChevronDown size={12}/></summary><p>{run.prompt}</p></details>}
       <label htmlFor="run-prompt" className="sr-only">Run prompt</label>
-      <textarea id="run-prompt" placeholder="What should the agents test and improve?" value={prompt} maxLength={2000} rows={2} disabled={running || pending || !!busy} onChange={event => setPrompt(event.target.value)} onKeyDown={event => { if (event.key === 'Enter' && (event.metaKey || event.ctrlKey)) { event.preventDefault(); event.currentTarget.form?.requestSubmit(); } }}/>
-      <div className="work-composer-footer"><div className="work-scope"><span>Engineering · Purchasing · Support</span>{!prompt && !running && !pending && <button type="button" onClick={() => setPrompt(DEFAULT_RUN_PROMPT)}>Use example<ArrowUpRight size={12}/></button>}{running && <span className="work-muted">Watch the sandbox and agent activity above.</span>}</div>
-        {active && active.id !== id ? <button type="button" className="work-submit" onClick={() => props.onSelect(active.id)}>View active run<ArrowUpRight size={14}/></button> : <button type="submit" className="work-submit" disabled={!prompt.trim() || prompt.trim().length < 5 || running || pending || !!busy || props.ready === false || connections?.ready === false}>{pending || busy === 'start' ? <Loader2 size={15} className="spin"/> : <ArrowUp size={16}/>}<span>{pending || busy === 'start' ? 'Starting…' : running ? 'Running' : 'Start run'}</span></button>}
-      </div>
+      <textarea ref={promptInput} id="run-prompt" placeholder="Ask Antibody to test your agents…" value={prompt} maxLength={2000} rows={1} disabled={running || pending || !!busy} onChange={event => setPrompt(event.target.value)} onKeyDown={event => { if (event.key === 'Enter' && !event.shiftKey && !event.nativeEvent.isComposing) { event.preventDefault(); event.currentTarget.form?.requestSubmit(); } }}/>
+      {active && active.id !== id ? <button type="button" className="work-submit" title="View active run" onClick={() => props.onSelect(active.id)}><ArrowUpRight size={17}/><span className="sr-only">View active run</span></button> : <button type="submit" className="work-submit" title={pending || busy === 'start' ? 'Starting…' : running ? 'Running' : 'Start run'} disabled={prompt.trim().length < 5 || running || pending || !!busy || props.ready === false || connections?.ready === false}>{pending || busy === 'start' ? <Loader2 size={17} className="spin"/> : <ArrowUp size={18}/>}<span className="sr-only">{pending || busy === 'start' ? 'Starting…' : running ? 'Running' : 'Start run'}</span></button>}
     </form>
+    <div className="work-composer-hint">{!prompt && !running && !pending ? <button type="button" onClick={() => { setPrompt('Find and fix unauthorized actions in the demo agents.'); promptInput.current?.focus(); }}>Try an example<ArrowUpRight size={11}/></button> : <span>{running ? 'Agents are running in Daytona.' : 'Engineering · Purchasing · Support'}</span>}<span>Enter to run · Shift+Enter for a new line</span></div>
     <div className="work-connections" aria-label="Connections"><div>{checking && !connections ? <span><Loader2 size={11} className="spin"/>Checking connections…</span> : connectionError ? <span className="work-danger">{connectionError}</span> : connections?.connections.map(connection => <details key={connection.id} className={`work-connection ${connection.state}`}><summary><i/>{connection.name}<span>{connection.state === 'connected' ? 'Connected' : connection.state === 'authenticated' ? 'Signed in' : connection.state === 'configured' ? 'Configured' : connection.state === 'missing' ? 'Not configured' : 'Unavailable'}</span></summary><div>{connection.detail}<small>Checked {new Date(connections.checkedAt).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}</small></div></details>)}</div><button type="button" aria-label="Check connections" disabled={checking} onClick={() => setCheckCount(value => value + 1)}><RotateCcw size={12} className={checking ? 'spin' : ''}/></button></div>
   </div>;
 }
@@ -120,7 +123,7 @@ function ActivityFeed({ run, pending }: { run: LabRun | null; pending: boolean }
   useEffect(() => { if (list.current && follow.current) list.current.scrollTop = list.current.scrollHeight; }, [run?.events.length]);
   if (!run?.events.length) return <div className="work-panel-empty"><span className="work-agent-symbol">A</span><h3>{pending ? 'Starting the team' : 'Follow the agents'}</h3><p>{pending ? 'Waiting for the controller’s first event…' : 'Sandbox launches, Red’s findings, Blue’s repairs, and verification appear here.'}</p></div>;
   return <ol className="work-feed" ref={list} onScroll={event => { const node = event.currentTarget; follow.current = node.scrollHeight - node.scrollTop - node.clientHeight < 60; }} aria-label="Recorded agent events">{run.events.map((event, index) => {
-    const role = /^(Daytona|Anchor)\b/.exec(event.message)?.[1] ?? (/^Red\b/.test(event.message) || /new .+input:/.test(event.message) ? 'Red' : /^Blue\b/.test(event.message) ? 'Blue' : /verif|replay|confirmed|Selected/.test(event.message) ? 'Verifier' : 'Controller');
+    const role = /^Daytona\b/.test(event.message) ? 'Daytona' : /^Anchor: connected/.test(event.message) ? 'Anchor' : panelReceives('blue', event.message) && /^Blue\b/.test(event.message) ? 'Blue' : panelReceives('red', event.message) && /^(Red\b|Anchor is testing)/.test(event.message) ? 'Red' : panelReceives('verifier', event.message) ? 'Verifier' : 'Controller';
     return <li key={`${event.at}-${index}`} className={`role-${role.toLowerCase()}`}><div className="work-event-meta"><strong>{role}</strong>{event.candidateId && <span>{event.candidateId.toUpperCase()}</span>}<time>{new Date(event.at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}</time></div><p>{event.message}</p></li>;
   })}</ol>;
 }

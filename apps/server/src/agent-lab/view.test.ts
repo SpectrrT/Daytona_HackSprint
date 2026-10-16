@@ -7,7 +7,7 @@ const original = { attack: { domain: 'engineering', message: 'Release it', knowl
 const candidate = (id: string): LabCandidate => ({ id, label: id, systemPrompt: '', guardSource: '', sourceHash: '', attacks: [], trials: [], checks: [], status: 'testing' });
 function fixture(): LabRun {
   const baseline = { ...candidate('c1'), importedFixture: true, trials: [original] };
-  const child = { ...candidate('c2'), parentId: 'c1', status: 'verified' as const, trials: [{ ...original, check: { ...original.check, id: 'regression-f1', passed: true } }], checks: [{ ...original.check, id: 'regression-f1', passed: true }] };
+  const child = { ...candidate('c2'), parentId: 'c1', blueAgent: { role: 'blue', provider: 'codex-cli', model: 'test-model', startedAt: 1, durationMs: 1 } as const, status: 'verified' as const, trials: [{ ...original, check: { ...original.check, id: 'regression-f1', passed: true } }], checks: [{ ...original.check, id: 'regression-f1', passed: true }] };
   return { id: 'ui-test', status: 'completed', candidates: [baseline, child], championId: 'c2', events: [], failures: [{ id: 'f1', candidateId: 'c1', discovery: original, replay: original, reproduced: true }] } as unknown as LabRun;
 }
 
@@ -18,6 +18,8 @@ test('the headline requires a completed verified champion and counts only passed
   run.status = 'completed'; run.candidates[1]!.checks[0]!.passed = false;
   assert.equal(runOutcome(run).verified, false);
   run.candidates[1]!.checks = []; assert.equal(runOutcome(run).verified, false);
+  const manual = fixture(); manual.candidates[1]!.blueAgent = undefined;
+  assert.equal(runOutcome(manual).verified, false);
 });
 
 test('the comparison never presents a different passing input as a replay of the failure', () => {
@@ -37,7 +39,7 @@ test('version history preserves missing coverage when later failures were not te
 });
 
 test('run progress returns to repair when another child is started after earlier verification', () => {
-  const run = fixture(); run.status = 'running';
+  const run = fixture(); run.status = 'running'; run.candidates[1]!.blueAgent = undefined;
   assert.equal(runPhase(run), 0);
   run.events.push({ at: 1, candidateId: 'c2', message: 'Blue is writing a shared instruction and authorization-code repair from reproduced evidence.' });
   assert.equal(runPhase(run), 1);

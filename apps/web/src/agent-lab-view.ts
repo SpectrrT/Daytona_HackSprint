@@ -1,4 +1,5 @@
 import type { AgentEnvironment, LabRun } from '@antibody/shared/agent-lab';
+import { demoVerdict } from '@antibody/shared/agent-lab-presentation';
 
 /** Compare only the identical retained input. A different passing attack is not a repair replay. */
 export function compareDomain(run: LabRun, domain: AgentEnvironment) {
@@ -21,8 +22,8 @@ export function regressionProgress(run: LabRun) {
 
 export function runOutcome(run: LabRun) {
   const champion = run.candidates.find(candidate => candidate.id === run.championId);
-  const verified = run.status === 'completed' && !!champion && champion.status === 'verified' && champion.checks.length > 0 && champion.checks.every(check => check.passed);
-  const fixed = verified ? run.failures.filter(failure => champion.checks.some(check => check.id === `regression-${failure.id}` && check.passed)).length : 0;
+  const verified = demoVerdict(run).status === 'success';
+  const fixed = verified && champion ? run.failures.filter(failure => champion.checks.some(check => check.id === `regression-${failure.id}` && check.passed)).length : 0;
   return { verified, fixed, passed: champion?.checks.filter(check => check.passed).length ?? 0, total: champion?.checks.length ?? 0 };
 }
 
