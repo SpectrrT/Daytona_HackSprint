@@ -16,11 +16,12 @@ export function codexChildEnv(environment: NodeJS.ProcessEnv = process.env): Nod
   return allowed;
 }
 
-export type AgentFailureCategory = "usage_limit" | "authentication" | "rate_limit" | "network" | "service" | "invalid_schema" | "unknown";
+export type AgentFailureCategory = "usage_limit" | "authentication" | "rate_limit" | "network" | "service" | "invalid_schema" | "content_policy" | "unknown";
 
 /** Diagnostic input stays in memory. The only output is a fixed allowlisted category. */
 export function classifyCodexFailure(diagnostic: string): AgentFailureCategory {
   const value = diagnostic.slice(0, 16_384).toLowerCase();
+  if (/content (?:was |has been )?flagged|flagged for (?:possible )?cybersecurity|content[_ -]?policy|cyber permissive safeguards/.test(value)) return "content_policy";
   if (/usage[_ -]?limit|insufficient[_ -]?quota|quota (?:exceeded|exhausted)|out of credits|credit balance|billing[_ -]?hard[_ -]?limit/.test(value)) return "usage_limit";
   if (/unauthori[sz]ed|authentication|invalid[_ -]?(?:api[_ -]?key|token)|token[_ -](?:has[_ -])?expired|expired[_ -](?:access[_ -])?token|login required|sign[ -]?in required|http[^\n]{0,12}401\b|status[^\n]{0,12}401\b/.test(value)) return "authentication";
   if (/rate[_ -]?limit|too many requests|http[^\n]{0,12}429\b|status[^\n]{0,12}429\b/.test(value)) return "rate_limit";
@@ -30,6 +31,7 @@ export function classifyCodexFailure(diagnostic: string): AgentFailureCategory {
   return "unknown";
 }
 const FAILURE_MESSAGES: Record<AgentFailureCategory, string> = {
+  content_policy: "The model service declined this request under its content policy.",
   usage_limit: "Codex account usage limit reached.",
   authentication: "Codex authentication failed.",
   rate_limit: "Codex request rate limit reached.",
