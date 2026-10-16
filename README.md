@@ -17,7 +17,7 @@ pnpm run doctor -- --live
 pnpm dev
 ```
 
-Open [localhost:5173](http://localhost:5173), select Daytona, and click **Start agent team**. The existing example is clearly labeled as an archived behavioral-model run; starting an experiment creates a new live run.
+Open [localhost:5173](http://localhost:5173), select Daytona, and click **Start agent team**. The latest completed live experiment opens automatically when one is available. A fresh installation shows a clearly labelled archived behavioral-model example; starting an experiment creates a new live run.
 
 The default model provider is `AGENT_PROVIDER=codex-cli`. It uses the installed CLI's existing sign-in without reading or copying auth files. `BLUE_MODEL` and `RED_MODEL` may be left blank to use the CLI default. Model jobs are ephemeral, have tools disabled, receive only the relevant contract/source/public evidence, and return schema-validated JSON. Their child environments exclude Daytona, Anchor, and model API keys. Each job has a timeout and bounded output. Codex process, connection, service, or rate failures may retry once within that same time budget, using the identical prompt and schema. Authentication, account quota, schema, output, and timeout failures stop immediately. Attempts have separate private artifacts; displayed token usage comes from the successful process. Private prompts, validated answers, and invocation metadata are saved under `data/runs/<id>/agents/`.
 

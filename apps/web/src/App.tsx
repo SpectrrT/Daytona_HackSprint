@@ -50,9 +50,16 @@ export default function App() {
   const generations = run ? new Set(run.candidates.map(c => c.generation)).size : 0;
 
   async function refreshHistory() { try { setHistory(await api<RunSummary[]>('/api/runs')); } catch { /* A run remains usable if history is unavailable. */ } }
+  async function initialRun() {
+    const requested = new URLSearchParams(window.location.search).get('run');
+    if (requested) return api<EvolutionRun>(`/api/runs/${encodeURIComponent(requested)}`);
+    const saved = await api<RunSummary[]>('/api/runs').catch(() => []);
+    const verified = saved.find(item => item.provider === 'daytona' && item.status === 'completed' && item.championId);
+    return api<EvolutionRun>(verified ? `/api/runs/${encodeURIComponent(verified.id)}` : '/api/demo');
+  }
   async function loadInitial() {
     setLoading(true); setError('');
-    const results = await Promise.allSettled([api<EvolutionSystem>('/api/system'), api<EvolutionRun>(new URLSearchParams(window.location.search).get('run') ? `/api/runs/${encodeURIComponent(new URLSearchParams(window.location.search).get('run')!)}` : '/api/demo')]);
+    const results = await Promise.allSettled([api<EvolutionSystem>('/api/system'), initialRun()]);
     if (results[0].status === 'fulfilled') { setSystem(results[0].value); if (results[0].value.defaultProvider === 'daytona' || results[0].value.providers.daytona) setProvider('daytona'); }
     if (results[1].status === 'fulfilled') { const next = results[1].value; setRun(next); setPrompt(next.prompt); if (results[0].status === 'fulfilled' && results[0].value.readOnly) { setBudget(next.budget.maxCandidates); setProvider(next.provider); } runId.current = next.id; setSelectedId(next.candidates.find(c => c.failure)?.id ?? next.candidates[0]?.id ?? ''); }
     else setError(results[1].reason instanceof Error ? results[1].reason.message : 'The lab controller is unavailable. Start the server, then reconnect.');
