@@ -1,3 +1,4 @@
+import { rowsFromSoftwareRun, writeTimeseries } from "../charts/series.js";
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
 import { appendFile, mkdir, readFile, rename, writeFile } from "node:fs/promises";
@@ -40,6 +41,7 @@ export async function runSoftwareExperiment(options: SoftwareRunOptions = {}): P
     const event = { at: Date.now(), message, candidateId }; run.events.push(event);
     await appendFile(join(directory, "events.ndjson"), JSON.stringify(event) + "\n", { mode: 0o600 });
     await save(); options.onEvent?.(message);
+    void writeTimeseries(run.id, rowsFromSoftwareRun(run)).catch(() => {});
   };
   const consume = (actions: number, requests: number) => {
     options.signal?.throwIfAborted();

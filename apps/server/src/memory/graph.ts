@@ -28,7 +28,7 @@ export const nodeSchema = z.object({
   supportingFailureIds: z.array(z.string().max(200)).max(1).optional(),
   text: z.string().min(20).max(2000).optional(), status: z.enum(["proposed", "validated"]).optional(),
   validatedBy: safe.optional(), validationSourceHash: hash.optional(),
-  writer: z.object({ role: z.literal("blue"), provider: z.enum(["codex-cli", "anthropic"]), model: z.string().max(120), durationMs: z.number().nonnegative() }).strict().optional(),
+  writer: z.object({ role: z.literal("blue"), provider: z.enum(["codex-cli", "anthropic", "bedrock"]), model: z.string().max(120), durationMs: z.number().nonnegative() }).strict().optional(),
 }).strict().superRefine((value, context) => {
   const require = (condition: unknown, message: string) => { if (!condition) context.addIssue({ code: "custom", message }); };
   require(value.id.startsWith(`hp:${value.runId}:${value.kind}:`), "Graph identity does not match its run and kind.");

@@ -39,6 +39,11 @@ const schema = z.object({
   SURREAL_CONTEXT_ID: optionalString,
   SURREAL_API_KEY: optionalString,
 
+  ARIZE_ENABLED: bool.default(false),
+  ARIZE_API_KEY: optionalString,
+  ARIZE_SPACE_ID: optionalString,
+  ARIZE_PYTHON: optionalString,
+
   // ---- Claude ----
   ANTHROPIC_API_KEY: optionalString,
   /** Not read from ANTHROPIC_BASE_URL so a shell's value does not leak in. */
@@ -46,13 +51,18 @@ const schema = z.object({
   /** Red (Chaos Agent), Blue (MAH0RAGA) and the grader. */
   RED_MODEL: optionalString,
   BLUE_MODEL: optionalString,
-  AGENT_PROVIDER: z.enum(["codex-cli", "anthropic"]).default("codex-cli"),
+  AGENT_PROVIDER: z.enum(["codex-cli", "anthropic", "bedrock"]).default("codex-cli"),
+  MEMORY_MODE: z.enum(["none", "flat", "graph"]).default("graph"),
+  BEDROCK_REGION: z.string().default("us-west-2"),
+  BEDROCK_CREDENTIALS_FILE: optionalString,
+  AGENT_MAX_TOKENS: z.coerce.number().int().min(1024).max(16384).default(16384),
   CODEX_BIN: z.string().default("codex"),
   AGENT_TIMEOUT_SECONDS: z.coerce.number().int().min(30).max(1200).default(240),
   GRADER_MODEL: z.string().default("claude-opus-5-5"),
   AGENT_EFFORT: effort.default("high"),
   /** Default model of the agent under test; each arena can override it. */
   TARGET_MODEL: z.string().default("claude-opus-5-5"),
+  AGENT_LAB_TARGET_MODEL: optionalString,
   TARGET_EFFORT: effort.default("medium"),
   TARGET_MAX_TURNS: z.coerce.number().int().min(3).default(25),
 

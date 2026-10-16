@@ -1,3 +1,5 @@
+import { readTimeseries, rowsFromHardwareRun, writeTimeseries } from "./charts/series.js";
+import { readAblationSummary } from "./ablation/read.js";
 import { pathToFileURL } from "node:url";
 import { spawnSync } from "node:child_process";
 import { serve } from "@hono/node-server";
@@ -12,6 +14,7 @@ import { requireHardwareSnapshot } from "./daytona/client.js";
 import { runAnchorAudit } from "./browser/session.js";
 import { store as defaultStore, type RunStore } from "./store.js";
 import { configuredMemory } from "./memory/index.js";
+import { telemetryStatus, flushTelemetry } from "./telemetry/index.js";
 import { approvalChannel, availableChannels, decide, pendingPhoneRun, ReleaseError, requestApproval, voiceSession, webhookAuthorized } from "./release/index.js";
 import { arizeConfigured, startArizeTracing } from "./telemetry/arize.js";
 import type { EvolutionEvent } from "@hollow-purple/shared/evolution";
@@ -31,6 +34,7 @@ const createSchema = z.object({
 
 let agentCheck: { ts: number; ready: boolean } | undefined;
 function agentsReady(): boolean {
+  if (config.AGENT_PROVIDER === "bedrock") return !!(config.BEDROCK_CREDENTIALS_FILE && config.BLUE_MODEL && config.RED_MODEL);
   if (config.AGENT_PROVIDER === "anthropic") return Boolean(config.ANTHROPIC_API_KEY && config.BLUE_MODEL && config.RED_MODEL);
   if (agentCheck && Date.now() - agentCheck.ts < 30_000) return agentCheck.ready;
   const check = spawnSync(config.CODEX_BIN, ["login", "status"], {
@@ -51,6 +55,24 @@ export function createApp(store: RunStore = defaultStore, engine = new Evolution
     if (error instanceof ReleaseError) return c.json({ error: error.message }, error.status);
     console.error("[api]", error.message);
     return c.json({ error: "The request failed. Check the server log and retained run evidence." }, 500);
+  });
+  app.get("/api/ablation/latest", async c => {
+    try { return c.json(await readAblationSummary()); }
+    catch { return c.json({ status: "missing", summary: [] }); }
+  });
+  app.get("/api/charts/:id/events", c => {
+    const id=c.req.param("id");
+    if(!/^[a-zA-Z0-9_-]{1,100}$/.test(id))return c.json({error:"Invalid run ID."},400);
+    return streamSSE(c,async stream=>{
+      let ended=false;let revision="";let wake:(()=>void)|undefined;
+      stream.onAbort(()=>{ended=true;wake?.();});
+      while(!ended){
+        const rows=await readTimeseries(id).catch(()=>[]);
+        const next=JSON.stringify(rows);
+        if(next!==revision){await stream.writeSSE({event:"timeseries",data:next});revision=next;}
+        await new Promise<void>(resolve=>{const timer=setTimeout(resolve,1000);wake=()=>{clearTimeout(timer);resolve();};if(ended)wake();});
+      }
+    });
   });
   app.get("/api/health", (c) => c.json({ status: "ok" }));
   app.get("/api/agent-lab/status", c => c.json({ ready: Boolean(config.DAYTONA_API_KEY && config.ANCHOR_API_KEY && agentsReady()), environments: AGENT_ENVIRONMENTS }));
@@ -81,6 +103,7 @@ export function createApp(store: RunStore = defaultStore, engine = new Evolution
     if (!await agentLab.get(id)) return c.json({ error: "Agent experiment not found." }, 404);
     try { await agentLab.stop(id); return c.json(await agentLab.get(id)); } catch (error) { return c.json({ error: error instanceof Error ? error.message : "Could not stop the experiment." }, 409); }
   });
+  app.get("/api/telemetry/status", (c) => c.json(telemetryStatus()));
   app.get("/api/software/runs", async c => c.json(await software.list()));
   app.post("/api/software/runs", async c => {
     const body = z.object({ example: z.literal("checkout") }).strict().safeParse(await c.req.json().catch(() => undefined));
@@ -106,6 +129,7 @@ export function createApp(store: RunStore = defaultStore, engine = new Evolution
     if (!await software.get(id)) return c.json({ error: "Software run not found." }, 404);
     await software.stop(id); return c.json(await software.get(id));
   });
+
   app.get("/api/system", (c) => c.json({
     providers: { daytona: Boolean(config.DAYTONA_API_KEY), anchor: Boolean(config.ANCHOR_API_KEY && config.PUBLIC_DASHBOARD_URL), model: agentsReady() },
     agentsReady: agentsReady(), agentProvider: config.AGENT_PROVIDER,
@@ -242,6 +266,11 @@ export async function startServer(): Promise<void> {
   const telemetry = startArizeTracing(defaultStore);
   if (telemetry) console.log("Arize tracing enabled.");
   const engine = new EvolutionEngine(defaultStore, undefined, undefined, configuredMemory());
+  defaultStore.observe(event=>{
+    if(["candidate.updated","run.completed","run.failed","run.stopped"].includes(event.type)){
+      const run=defaultStore.get(event.runId);if(run)void writeTimeseries(run.id,rowsFromHardwareRun(run)).catch(()=>{});
+    }
+  });
   const software = new SoftwareService();
   const agentLab = new AgentLabService();
   const server = serve({ fetch: createApp(defaultStore, engine, software, agentLab).fetch, port: config.PORT, hostname: "0.0.0.0" });
@@ -253,6 +282,7 @@ export async function startServer(): Promise<void> {
     await software.stopAll();
     await agentLab.stopAll();
     await defaultStore.flush();
+    await flushTelemetry();
     await telemetry?.shutdown();
     server.close();
   };

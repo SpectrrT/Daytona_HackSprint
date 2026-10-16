@@ -69,7 +69,7 @@ export interface EvaluationResult {
 }
 export interface AgentInvocation {
   role: "blue" | "red" | "target";
-  provider: "codex-cli" | "anthropic";
+  provider: "codex-cli" | "anthropic" | "bedrock";
   model: string;
   startedAt: number;
   durationMs: number;
@@ -187,7 +187,7 @@ export interface EvolutionSystem {
   providers: { daytona: boolean; anchor: boolean; model: boolean };
   publicDashboardUrl?: string;
   checks?: { name: string; ok: boolean; detail: string }[];
-  agentProvider?: "codex-cli" | "anthropic";
+  agentProvider?: "codex-cli" | "anthropic" | "bedrock";
   agentsReady?: boolean;
   agentModel?: string;
   defaultProvider?: ExecutionProvider;

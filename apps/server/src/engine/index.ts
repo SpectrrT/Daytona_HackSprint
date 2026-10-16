@@ -8,8 +8,10 @@ import { MAX_EVALUATION_CYCLES, candidateSource, evaluateCandidate } from "../la
 import { type InitialRun, RunStore, TerminalRunError } from "../store.js";
 import { assertFrozenContract, freezeContract } from "./contract.js";
 import { buildBlue, searchRed } from "../agents/index.js";
+import { AgentCallError } from "../agents/codex.js";
 import { validateRtl } from "../lab/validation.js";
 import type { LessonMemory } from "../memory/graph.js";
+import { traced } from "../telemetry/index.js";
 
 export interface EvaluationRequest {
   runId: string; candidateId: string; variant: CandidateVariant; provider: "local" | "daytona";
@@ -126,6 +128,12 @@ export class EvolutionEngine {
   }
 
   private async run(id: string, seed: number, signal: AbortSignal, verification?: RepairVerificationInput): Promise<void> {
+    return traced("run", id, {}, () => this.runUntraced(id, seed, signal, verification), () => {
+      const run = this.store.get(id)!;
+      return { "hollow.run_status": run.status, "hollow.regressions": run.regressions.length, "hollow.cycles": run.budget.usedCycles };
+    });
+  }
+  private async runUntraced(id: string, seed: number, signal: AbortSignal, verification?: RepairVerificationInput): Promise<void> {
     try {
       throwIfStopped(signal);
       if (this.store.get(id)!.recursive) { await this.runRecursive(id, seed, signal, verification!); return; }
@@ -280,19 +288,52 @@ export class EvolutionEngine {
     }
   }
 
+  /**
+   * A declined or timed-out model call for one design rejects that design instead of failing the run: a design
+   * Red could not challenge is never accepted, and the remaining designs continue to be built and attacked.
+   */
+  private async rejectUnchallenged(id: string, candidate: Candidate, role: "blue" | "red", error: AgentCallError): Promise<void> {
+    const why = error.failureCategory === "content_policy" ? "the model provider declined the request under its content policy" : "the model call exceeded its time budget";
+    const rejected: Candidate = {
+      ...candidate,
+      status: "rejected",
+      ...(role === "red" ? { redRationale: `Red could not challenge this design: ${why}. An unchallenged design is never accepted.` } : { rationale: `Blue produced no design: ${why}.` }),
+    };
+    await this.store.emit(id, {
+      type: "candidate.updated",
+      candidateId: candidate.id,
+      message: role === "red"
+        ? `Red could not challenge ${candidate.label}: ${why}. The design is rejected rather than accepted unchallenged; the run continues.`
+        : `Blue could not write ${candidate.id}: ${why}. The run continues with the remaining budget.`,
+      payload: rejected,
+    });
+  }
+
   private async generateAndEvaluate(id: string, generation: number, branch: number, parent: Candidate | undefined, seed: number, signal: AbortSignal): Promise<void> {
     throwIfStopped(signal);
     const run = this.store.get(id)!;
     assertFrozenContract(run.contract);
     const candidateId = `c${run.candidates.length + 1}`;
-    let candidate: Candidate = { id: candidateId, parentId: parent?.id, generation, label: `Blue agent · design ${candidateId}`, variant: "generated", status: "building", source: "", checks: [], score: 0, lessons: this.memory ? (await this.memory.retrieve(run, undefined, signal)).map((lesson) => lesson.text!) : [...new Set(run.candidates.flatMap((c) => c.lessons))], cycles: 0, createdAt: Date.now() };
+    let candidate: Candidate = { id: candidateId, parentId: parent?.id, generation, label: `Blue agent · design ${candidateId}`, variant: "generated", status: "building", source: "", checks: [], score: 0, lessons: config.MEMORY_MODE === "none" || config.MEMORY_MODE === "flat" ? [] : this.memory ? (await this.memory.retrieve(run, undefined, signal)).map((lesson) => lesson.text!) : [...new Set(run.candidates.flatMap((c) => c.lessons))], cycles: 0, createdAt: Date.now() };
     await this.store.emit(id, { type: "candidate.created", candidateId, message: parent ? `Blue is writing repaired child ${candidateId} from ${parent.id}.` : `Blue is writing independent design ${candidateId} from the frozen contract.`, payload: candidate });
-    const proposal = await this.agents.buildBlue({ runId: id, candidateId, contract: run.contract, parent, lessons: candidate.lessons, failures: run.regressions, generation, branch, signal });
+    let proposal: Awaited<ReturnType<AgentTeam["buildBlue"]>>;
+    try {
+      proposal = await this.agents.buildBlue({ runId: id, candidateId, contract: run.contract, parent, lessons: candidate.lessons, failures: run.regressions, generation, branch, signal });
+    } catch (error) {
+      if (!recoverableAgentFailure(error)) throw error;
+      await this.rejectUnchallenged(id, candidate, "blue", error);
+      return;
+    }
     throwIfStopped(signal);
     assertFrozenContract(this.store.get(id)!.contract);
     candidate = { ...candidate, label: proposal.label, source: proposal.source, rationale: proposal.rationale, agent: proposal.agent, sourceHash: createHash("sha256").update(proposal.source).digest("hex") };
     await this.store.emit(id, { type: "candidate.updated", candidateId, message: `Blue returned ${proposal.source.length.toLocaleString()} characters of new RTL in ${(proposal.agent.durationMs / 1000).toFixed(1)}s. ${proposal.rationale}`, payload: candidate });
-    await this.challengeGenerated(id, candidate, seed, signal);
+    try {
+      await this.challengeGenerated(id, candidate, seed, signal);
+    } catch (error) {
+      if (!recoverableAgentFailure(error)) throw error;
+      await this.rejectUnchallenged(id, candidate, "red", error);
+    }
   }
 
   private async challengeGenerated(id: string, candidate: Candidate, seed: number, signal: AbortSignal, round = 0, executionId?: string, adaptive = false): Promise<void> {
@@ -324,7 +365,7 @@ export class EvolutionEngine {
     const accepted = passesAcceptance(result, run.regressions.length, attackIds);
     const reproduced = Boolean(result.failure?.reproduced && result.reproduced);
     const failure = result.failure ? { ...result.failure, reproduced } : undefined;
-    const lesson = !this.memory && reproduced && failure ? lessonFor(failure) : result.buildError ? `Build rejected by the independent lab: ${result.buildError.slice(0, 1800)}` : undefined;
+    const lesson = config.MEMORY_MODE === "graph" && !this.memory && reproduced && failure ? lessonFor(failure) : result.buildError ? `Build rejected by the independent lab: ${result.buildError.slice(0, 1800)}` : undefined;
     candidate = { ...candidate, status: accepted ? "verified" : reproduced || result.buildError ? "failed" : "rejected", checks: result.checks, failure, buildError: result.buildError, score: scoreEvaluation(result), backend: result.backend, sandboxId: result.sandboxId, artifactPath: result.artifactPath, cycles: candidate.cycles + result.cycles, regressionCount: run.regressions.length, lessons: lesson ? [...new Set([...candidate.lessons, lesson])] : candidate.lessons };
     await this.store.emit(id, { type: "candidate.updated", candidateId: candidate.id, message: accepted ? `${candidate.label} passed all hardware, Red-agent and current regression gates.` : result.buildError ? `${candidate.label} failed to build: ${result.buildError}` : `${candidate.label} failed acceptance; no model's self-assessment is used as a verdict.`, payload: candidate });
     if (failure && reproduced) {
@@ -386,4 +427,8 @@ export class EvolutionEngine {
       await this.store.emit(id, { type: "log", candidateId, message: "Discrepancy was not independently reproduced. It is not promoted to a trusted regression." });
     }
   }
+}
+
+function recoverableAgentFailure(error: unknown): error is AgentCallError {
+  return error instanceof AgentCallError && (error.reason === "timeout" || error.failureCategory === "content_policy");
 }

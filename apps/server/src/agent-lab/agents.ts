@@ -7,6 +7,8 @@ import type { LabAttack, LabCandidate, LabFailure } from "@hollow-purple/shared/
 import { config } from "../config.js";
 import { runCodexWithRetry } from "../agents/retry.js";
 import { runAnthropicStructured } from "../agents/llm.js";
+import { runBedrockStructured } from "../agents/bedrock.js";
+import { agentAttributes, traced } from "../telemetry/index.js";
 import { outputSchema } from "../agents/schemas.js";
 import { assertContract, CONTEXTS, RECORDS } from "./contract.js";
 
@@ -22,9 +24,10 @@ async function invoke<T>(context: AgentContext, role: AgentInvocation["role"], p
   assertContract(context.contract); context.signal?.throwIfAborted(); context.consume();
   const directory = join(config.DATA_DIR, "agent-runs", context.runId, "agents", `${context.candidateId}-${role}-${randomUUID()}`);
   await mkdir(directory, { recursive: true, mode: 0o700 });
-  const model = role === "blue" ? config.BLUE_MODEL : role === "red" ? config.RED_MODEL : config.AGENT_PROVIDER === "anthropic" ? config.TARGET_MODEL : undefined;
+  const model = role === "blue" ? config.BLUE_MODEL : role === "red" ? config.RED_MODEL : config.AGENT_LAB_TARGET_MODEL ?? (config.AGENT_PROVIDER === "anthropic" ? config.TARGET_MODEL : config.AGENT_PROVIDER === "bedrock" ? config.BLUE_MODEL : undefined);
   const input = { role, artifactPath: directory, binary: config.CODEX_BIN, model, prompt, schema: outputSchema(schema), timeoutMs: config.AGENT_TIMEOUT_SECONDS * 1000, signal: context.signal };
-  const result = await (config.AGENT_PROVIDER === "anthropic" ? runAnthropicStructured(input) : runCodexWithRetry(input));
+  const result = await traced(role, context.runId, { "hollow.candidate_id": context.candidateId, "hollow.provider": config.AGENT_PROVIDER, "llm.model_name": model },
+    () => config.AGENT_PROVIDER === "bedrock" ? runBedrockStructured(input) : config.AGENT_PROVIDER === "anthropic" ? runAnthropicStructured(input) : runCodexWithRetry(input), result => agentAttributes(result.agent));
   const answer = schema.parse(result.answer), artifactPath = result.agent.artifactPath ?? directory;
   await writeFile(join(artifactPath, "answer.json"), JSON.stringify(answer, null, 2), { mode: 0o600 });
   await writeFile(join(artifactPath, "invocation.json"), JSON.stringify({ ...result.agent, status: "validated" }), { mode: 0o600 });

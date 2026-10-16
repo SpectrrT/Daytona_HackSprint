@@ -39,7 +39,7 @@ The dashboard now opens the **Agent lab** by default. Three applications share o
 | Purchasing | Purchase records from vendor quotes | Trusted vendor approval, approved supplier, exact quote amount, budget, no duplicate purchase |
 | Engineering | Build-release and artifact-deletion records | Real fixture approval and test status, production target, protected workspace artifacts, no repeated effect |
 
-All business data is synthetic; these tools update disposable SQLite state rather than real payments, purchases, deployments or repositories. The application and browser are real processes in Daytona. Red, Blue and the target assistant are separate actual model jobs. The configured Blue/Red provider is reused; the Codex target uses its configured default, while the Anthropic target uses `TARGET_MODEL`.
+All business data is synthetic; these tools update disposable SQLite state rather than real payments, purchases, deployments or repositories. The application and browser are real processes in Daytona. Red, Blue and the target assistant are separate actual model jobs. The configured Blue/Red provider is reused, including Bedrock. `AGENT_LAB_TARGET_MODEL` optionally selects the target model; otherwise Codex uses its configured default, Anthropic uses `TARGET_MODEL`, and Bedrock uses `BLUE_MODEL`. The optional shared telemetry hook records Blue, Red and target model job metadata without prompts or raw outputs.
 
 The starter is an explicitly manual, permissive legacy fixture. Red generates one source-specific input per application. Anchor types the input and retrieved reference into native Chromium through noVNC. The controller validates the actual browser request, asks the target model for bounded tool proposals, and sends those proposals to the actual gateway. The verifier compares HTTP tool responses, the SQLite tool journal and persisted effects with an independent reference permission model. A failure is retained only when a second actual target invocation with the same input reproduces the same violation after a fresh server process and database.
 
@@ -77,7 +77,7 @@ The dashboard's **Software progress** view (`/?view=software`) reads this saved 
 
 Blue and Red are separate, ephemeral model sessions with separate role instructions and evidence. `BLUE_MODEL` and `RED_MODEL` can select different underlying models; leaving both blank uses the configured Codex default for both. Red proposes bounded browser scenarios, the controller executes them through Anchor, the independent verifier confirms failures, and **Blue writes repairs**. These roles do not currently receive general terminal or browser tool access. The controller owns execution, deployment, regression retention, and acceptance decisions.
 
-The team's recursive FIFO audits, SurrealDB lesson memory, release approvals, and Arize event tracing are implemented in the hardware engine. The checkout and agent-lab adapters maintain their own contracts, run state, evidence, and progress metrics; wiring those integrations into these loops remains future work.
+The team's recursive FIFO audits, SurrealDB lesson memory, release approvals, and full run-event tracing are implemented in the hardware engine. The checkout and agent-lab adapters maintain their own contracts, run state, evidence, and progress metrics. They share optional model-role telemetry hooks; hardware lesson memory, release approval, and full lifecycle tracing are not yet connected to these loops.
 
 ## Start the system
 
@@ -92,7 +92,7 @@ pnpm run doctor -- --live
 pnpm dev
 ```
 
-Open [localhost:5173](http://localhost:5173), select Daytona, and click **Start agent team**. The latest completed live experiment opens automatically when one is available. A fresh installation shows a clearly labelled archived behavioral-model example; starting an experiment creates a new live run.
+Open [localhost:5173](http://localhost:5173). The default **Agent lab** view loads the running or latest completed agent experiment; click **Run agent experiment** to start a new one. **Overview** retains the hardware run controls and archived hardware evidence. A fresh agent lab has an explicit unmeasured state.
 
 The default model provider is `AGENT_PROVIDER=codex-cli`. It uses the installed CLI's existing sign-in without reading or copying auth files. `BLUE_MODEL` and `RED_MODEL` may be left blank to use the CLI default. Model jobs are ephemeral, have tools disabled, receive only the relevant contract/source/public evidence, and return schema-validated JSON. Their child environments exclude Daytona, Anchor, and model API keys. Each job has a timeout and bounded output. Codex process, connection, service, or rate failures may retry once within that same time budget, using the identical prompt and schema. Authentication, account quota, schema, output, and timeout failures stop immediately. Attempts have separate private artifacts; displayed token usage comes from the successful process. Private prompts, validated answers, and invocation metadata are saved under `data/runs/<id>/agents/`.
 
@@ -186,11 +186,46 @@ APPROVER_PHONE_NUMBER=         # phone only: the phone that rings, E.164 (+1...)
 APPROVE_WEBHOOK_SECRET=        # phone only: shared secret for the agent's webhook tool
 ```
 
-The overview also shows **Single-shot vs evolved**: the best generation-0 design (one model call, no Red feedback) against the champion, scored only by the verifier's checks. Same model, same frozen contract.
+The hardware overview also shows **Initial candidate vs selected design**, scored by the verifier against the frozen contract. It identifies manually imported fixtures and model-generated candidates separately. An imported starter is not presented as a same-model single-shot baseline.
 
 ## Arize tracing
 
 With `ARIZE_SPACE_ID` and `ARIZE_API_KEY` set, every run is traced to Arize AX as one trace built from its event log: a run span, one span per candidate carrying the verifier's verdict (status, checks passed, hidden checks, inherited regressions), and an LLM span for each Blue and Red model call (model, provider, token counts, attempts, rationale or attack hypotheses). Release-gate approvals and releases appear as spans in the same trace. Spans go over OTLP to `https://otlp.arize.com/v1/traces` (override with `ARIZE_OTLP_URL`); the project name defaults to `hollow-purple` (`ARIZE_PROJECT_NAME`). Without the variables, tracing is off and nothing changes. Check the connection with `pnpm --filter @hollow-purple/server exec node --import tsx src/scripts/verify-arize.ts`.
+
+## Use it from Claude (MCP)
+
+Hollow Purple is also an MCP server, so Claude Code or Claude Desktop can drive the whole loop from a conversation: ask Claude to harden a design and it starts a live Daytona run, follows Blue, Red and the verifier while they work, then reports what Red tried, the reproduced failures, and the verified source. No custom UI is needed. The server calls the controller's HTTP API, so Claude and the dashboard see the same run.
+
+Start the controller (`pnpm dev`). Claude Code picks up the server from this repository's `.mcp.json`; approve it when prompted. For Claude Desktop, add the server to `claude_desktop_config.json` with absolute paths (`which pnpm` for the command):
+
+```json
+{
+  "mcpServers": {
+    "hollow-purple": {
+      "command": "/absolute/path/to/pnpm",
+      "args": ["--silent", "--dir", "/absolute/path/to/repo/apps/mcp", "start"],
+      "env": { "HOLLOW_PURPLE_URL": "http://localhost:8787" }
+    }
+  }
+}
+```
+
+| Tool | What it does |
+| --- | --- |
+| `lab_status` | Which providers are ready: Daytona, the Blue/Red agents, Arize, approval channels |
+| `start_hardening_run` | Starts a live Daytona run with a budget of 3–12 designs, an optional seed and prompt. Spends credits |
+| `watch_run` | Waits up to `wait_seconds` for new activity and returns what each agent said after `after_seq`, plus who is working now |
+| `get_run`, `list_runs` | Status, each design's verdict, the champion, regressions, approval and release |
+| `get_agent_transcript` | The full conversation, filtered by design (`c2`) or speaker (`red`) |
+| `get_failure_evidence` | Reproduced failures: clock cycle, expected and actual values, the exact input sequence |
+| `get_design_source` | A design's RTL and SHA-256 (default: the champion) |
+| `request_release_approval` | Asks a person to approve the champion by voice or in the dashboard |
+
+No tool can approve a release. `request_release_approval` only opens the release gate; the decision still comes from a person. Try: *"Harden the sensor FIFO with a 3-design budget, tell me what Red tried against each design, then ask me to approve the champion."* To check the server by hand against a running controller, run `pnpm --dir apps/mcp exec node --import tsx src/handshake.ts "$PWD" <run-id>` from the repository root.
+
+## Agent console
+
+The dashboard's **Agents** view (`/?run=<id>&view=agents`) shows a run as a live console. It includes Blue's rationale for each design, Red's hypotheses and every attack it wrote, each Daytona compile and replay, the verifier's verdicts, lessons learned, and the human approval. Pick a design in the roster or the lineage graph to see only its agents, or filter by speaker. While an agent works, the console shows who it is and how long it has been running. These lines are the agents' recorded outputs; models' private reasoning is never stored. The console and the MCP tools render the same transcript, built from the run's event log by `packages/shared/src/transcript.ts`.
 
 ## Verify changes
 
@@ -208,7 +243,7 @@ A passing repair receives two additional Red searches using prior attacks as con
 Configured graph memory records proposed lessons and validates them against source-bound passing descendants. The runner saves `fullrun.json` and `memory.json` under its own run directory, then leaves the local dashboard available for inspection. Re-audits retain separate sandbox artifact directories and do not count as new generations. The verifier and frozen requirements remain outside the Blue/Red editing surface.
 
 ```sh
-pnpm test          # Agent transport, engine/acceptance, RTL/attack validation, Python oracle
+pnpm test          # Agent transport, engine/acceptance, RTL/attack validation, MCP tools, Python oracle
 pnpm build         # All TypeScript checks + production dashboard build
 pnpm smoke         # Starts a real model + Daytona experiment; requires live credentials
 ```
@@ -225,6 +260,7 @@ The public endpoints are `POST /api/runs` (live Daytona only), `GET /api/runs/:i
 
 ```text
 packages/shared/src/evolution.ts   Shared contract, agent provenance, attacks, runs, events
+packages/shared/src/transcript.ts  Agent transcript shared by the console and the MCP server
 apps/server/src/agents/           Blue/Red prompts, schemas, bounded Codex/Anthropic transports
 apps/server/src/engine/           Frozen contract, generation/repair/requalification loop
 apps/server/src/store.ts          Durable append-only events and replay
@@ -234,6 +270,7 @@ apps/server/src/daytona/          Sandbox lifecycle and file/process adapter
 apps/server/src/browser/          Anchor session lifecycle and product audit
 apps/server/src/scripts/          Doctor, snapshot, live smoke, evidence publishing, cleanup
 apps/web/                        Lineage, agent/attack inspection, contract, waveform, source viewer
+apps/mcp/                        MCP server: start, follow and read runs from Claude
 lab/                             Python oracle, fixed Verilator driver, read-only preview server
 lab/software/                    Fixed storefront/runtime, source gate, private CDP relay, explicit faulty checkout fixture
 ```
@@ -249,3 +286,19 @@ The development controller has no user authentication; keep it private. Only the
 - [Verilator overview](https://verilator.org/guide/latest/overview.html) and [command options](https://verilator.org/guide/latest/exe_verilator.html).
 - [cocotb](https://docs.cocotb.org/en/stable/) is a future Python testbench path; this implementation uses a fixed C++ observation driver with a Python oracle.
 - [SymbiYosys](https://symbiyosys.readthedocs.io/en/latest/) is an optional future formal gate. Any proof must name its exact properties, assumptions, solver, and scope.
+
+## Controlled memory evidence and four shared charts
+
+`pnpm ablation --seeds 3` runs Claude alone, raw failure retrieval, and validated
+lesson-graph retrieval from one frozen development corpus. `pnpm metrics <run-id>`
+prints counts; `pnpm charts <run-id>` exports four PNG/SVG charts. The dashboard
+streams measured generation rows over SSE for FIFO and the software pack.
+No memory advantage is claimed unless the actual held-out results support it.
+See [the study protocol](apps/server/src/ablation/README.md) and
+[the chart data contract](apps/server/src/charts/README.md). Bedrock uses temporary
+workshop credentials outside `.env`; Arize role spans and deterministic experiments
+retain remote readback receipts. No model grades its own hardware output.
+
+## Shared graph memory
+
+Optional SurrealDB Agent Memory integration stores source-bound failures and Blue-written lessons on a run-scoped attack-family graph. A lesson remains proposed until a descendant passes the complete acceptance and regression gate. Only validated parent-family lessons are retrieved for later Blue and Red calls. Read the [memory module guide](apps/server/src/memory/README.md) for configuration, read-only APIs, validation limits and the live graph write/read check. The current controller-owned family hierarchy is not a claim of implemented Red branch mutation.

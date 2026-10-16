@@ -40,6 +40,9 @@ const unsubscribe = store.subscribe(id, (event) => {
 const run = await engine.wait(id);
 await store.flush(); unsubscribe();
 await save("fullrun.json", run);
-if (memory) await save("memory.json", await memory.snapshot(run));
+if (memory) {
+  try { await save("memory.json", await memory.snapshot(run)); }
+  catch { await save("memory-export-error.json", { exported: false, error: "Graph snapshot export failed. Inspect the configured provider; no graph result was substituted." }); }
+}
 await writeFile(join(config.DATA_DIR, "recursive-demo.json"), JSON.stringify({ id, dashboard: `http://localhost:5173/?run=${id}`, controllerPort: config.PORT, status: run.status, championId: run.championId, summary: run.summary, fullRunPath: join(directory, "fullrun.json") }, null, 2), { mode: 0o600 });
 console.log(JSON.stringify({ id, status: run.status, championId: run.championId, candidates: run.candidates.length, maximumGeneration: Math.max(...run.candidates.map((candidate) => candidate.generation)), regressions: run.regressions.length, cycles: run.budget.usedCycles, server: "Kept open for local inspection." }));
