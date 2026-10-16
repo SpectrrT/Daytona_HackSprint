@@ -82,6 +82,10 @@ Use the returned URL as `PUBLIC_DASHBOARD_URL` in `.env`, restart the local cont
 
 Preview metadata is stored at `data/runs/<id>/evidence-preview.json`. Signed links expire after six hours, and the preview sandbox auto-stops after 30 idle minutes. Use the scoped cleanup command when it is no longer needed. Browser checks verify the product; the independent hardware verifier controls design acceptance.
 
+## Shared graph memory
+
+Optional SurrealDB Agent Memory integration stores source-bound failures and Blue-written lessons on a run-scoped attack-family graph. A lesson remains proposed until a descendant passes the complete acceptance and regression gate. Only validated parent-family lessons are retrieved for later Blue and Red calls. Read the [memory module guide](apps/server/src/memory/README.md) for configuration, read-only APIs, validation limits and the live graph write/read check. The current controller-owned family hierarchy is not a claim of implemented Red branch mutation.
+
 ## Record the actual Daytona sandbox
 
 Record the native Linux desktop while it opens Chromium, inspects RTL, compiles with Verilator, reproduces Red's failure, requests a new Blue model repair, applies it, and rebuilds and reruns the public regression suite:
@@ -103,6 +107,19 @@ pnpm --filter @hollow-purple/server exec node --import tsx src/scripts/record-de
 That helper requires ffmpeg and a published evidence URL. It records the dashboard through Anchor, saving `data/runs/<id>/hollow-purple-daytona-walkthrough.mp4`. It is a replay of completed execution; it does not show the sandbox desktop. Its Anchor session is closed afterward.
 
 ## Verify changes
+
+### Run a recursive engineering sample
+
+```sh
+pnpm --filter @hollow-purple/server exec node --import tsx src/scripts/recursive-demo.ts
+pnpm --filter @hollow-purple/web dev
+```
+
+The runner prints a local dashboard URL containing its fresh run ID. It owns a loopback-only controller and does not load another controller's journals. The initial FIFO is an explicitly labeled manually broken fixture. Red authors real sequences, Daytona executes the RTL, and the independent controller oracle reproduces a public failure before Blue writes a repair child. Every confirmed counterexample stays in the run's regression suite.
+
+A passing repair receives two additional Red searches using prior attacks as context and different search seeds. An identical prior sequence earns no fresh-audit credit. If a new attack reproduces a failure, Blue creates a deeper descendant with all accumulated regressions. A candidate becomes champion only after every required check and both fresh audits pass. Budgets cap this sample at five designs and eight evaluations; Stop run cancels further work. If no new break is found, the demo reports its tested coverage rather than inventing a new weakness or claiming formal correctness.
+
+Configured graph memory records proposed lessons and validates them against source-bound passing descendants. The runner saves `fullrun.json` and `memory.json` under its own run directory, then leaves the local dashboard available for inspection. Re-audits retain separate sandbox artifact directories and do not count as new generations. The verifier and frozen requirements remain outside the Blue/Red editing surface.
 
 ```sh
 pnpm test          # Agent transport, engine/acceptance, RTL/attack validation, Python oracle

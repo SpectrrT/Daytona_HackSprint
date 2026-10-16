@@ -9,6 +9,7 @@ import { type InitialRun, RunStore, TerminalRunError } from "../store.js";
 import { assertFrozenContract, freezeContract } from "./contract.js";
 import { buildBlue, searchRed } from "../agents/index.js";
 import { validateRtl } from "../lab/validation.js";
+import type { LessonMemory } from "../memory/graph.js";
 
 export interface EvaluationRequest {
   runId: string; candidateId: string; variant: CandidateVariant; provider: "local" | "daytona";
@@ -30,6 +31,10 @@ export interface RepairVerificationInput {
   maxCandidates?: 3;
   seed?: number;
 }
+export interface RecursiveDemoInput {
+  source: string; label: string; prompt: string; seed?: number;
+  maxCandidates?: number; maxEvaluations?: number; challengePasses?: number;
+}
 
 export class CapacityError extends Error {}
 
@@ -37,7 +42,7 @@ export class CapacityError extends Error {}
 export class EvolutionEngine {
   private readonly active = new Map<string, ActiveRun>();
   private demoTask?: Promise<EvolutionRun>;
-  constructor(private readonly store: RunStore, private readonly evaluate: Evaluator = evaluateCandidate, private readonly agents: AgentTeam = { buildBlue, searchRed }) {}
+  constructor(private readonly store: RunStore, private readonly evaluate: Evaluator = evaluateCandidate, private readonly agents: AgentTeam = { buildBlue, searchRed }, readonly memory?: LessonMemory) {}
 
   async start(request: CreateRunRequest, id: string = randomUUID()): Promise<string> {
     return this.startRun(request, id);
@@ -53,7 +58,19 @@ export class EvolutionEngine {
     return this.startRun({ prompt: input.prompt, provider: "daytona", maxCandidates: 3, seed: input.seed }, randomUUID(), { ...input, label: input.label.trim() });
   }
 
-  private async startRun(request: CreateRunRequest, id: string, verification?: RepairVerificationInput): Promise<string> {
+  /** Imported starting work, genuine model repairs, then fresh attacks on each pass. */
+  async startRecursiveDemo(input: RecursiveDemoInput): Promise<string> {
+    validateRtl(input.source);
+    if (!input.label.trim() || input.label.length > 120) throw new Error("Give the imported starter a clear label of at most 120 characters.");
+    const maxEvaluations = input.maxEvaluations ?? 8;
+    const challengePasses = input.challengePasses ?? 2;
+    if (!Number.isInteger(maxEvaluations) || maxEvaluations < 3 || maxEvaluations > 24) throw new Error("Recursive evaluation budget must be 3 to 24.");
+    if (!Number.isInteger(challengePasses) || challengePasses < 1 || challengePasses > 4 || challengePasses + 2 > maxEvaluations) throw new Error("Reserve a starter, repair and 1 to 4 fresh passing audits.");
+    const fixture = { source: input.source, label: input.label, prompt: input.prompt, seed: input.seed };
+    return this.startRun({ prompt: input.prompt, provider: "daytona", maxCandidates: input.maxCandidates ?? 5, seed: input.seed }, randomUUID(), fixture, { maxEvaluations, challengePasses });
+  }
+
+  private async startRun(request: CreateRunRequest, id: string, verification?: RepairVerificationInput, recursive?: NonNullable<EvolutionRun["recursive"]>): Promise<string> {
     if (this.active.size >= config.MAX_CONCURRENT_RUNS) throw new CapacityError("Run capacity reached. Stop an active run or wait for it to finish.");
     const maxCandidates = request.maxCandidates ?? 5;
     if (!Number.isInteger(maxCandidates) || maxCandidates < 3 || maxCandidates > 12) throw new Error("maxCandidates must be an integer between 3 and 12.");
@@ -64,6 +81,7 @@ export class EvolutionEngine {
       const initial: InitialRun = {
         id, prompt: request.prompt, provider: request.provider, status: "queued", contract,
         candidates: [], regressions: [], createdAt: Date.now(), strategy: request.provider === "daytona" ? "agents" : "curriculum", verificationFixture: verification ? true : undefined,
+        recursive,
         budget: { maxCandidates, maxCycles: 2_000_000, usedCandidates: 0, usedCycles: 0 },
       };
       await this.store.create(initial);
@@ -110,6 +128,7 @@ export class EvolutionEngine {
   private async run(id: string, seed: number, signal: AbortSignal, verification?: RepairVerificationInput): Promise<void> {
     try {
       throwIfStopped(signal);
+      if (this.store.get(id)!.recursive) { await this.runRecursive(id, seed, signal, verification!); return; }
       if (this.store.get(id)!.provider === "daytona") { await this.runAgents(id, seed, signal, verification); return; }
       await this.store.emit(id, { type: "run.started", message: "Blue creates three RTL variants. Red searches boundary, reset, concurrency, and seeded long-run sequences; the independent verifier judges the frozen contract." });
       for (const variant of ["baseline", "reset-leak", "full-drop"] as const) {
@@ -157,6 +176,49 @@ export class EvolutionEngine {
         if (!(terminalError instanceof TerminalRunError)) throw terminalError;
       }
     }
+  }
+
+  private async runRecursive(id: string, seed: number, signal: AbortSignal, fixture: RepairVerificationInput): Promise<void> {
+    const options = this.store.get(id)!.recursive!;
+    await this.store.emit(id, { type: "run.started", message: "Recursive engineering demo: imported manual starter, genuine Blue repair descendants, and fresh Red searches after each passing design. The independent verifier and contract stay fixed." });
+    const root: Candidate = { id: "c1", generation: 0, label: fixture.label, variant: "generated", status: "building", source: fixture.source,
+      rationale: "Imported manual faulty starter, NOT Blue-generated. All subsequent repairs require actual Blue model calls and Daytona execution.",
+      checks: [], score: 0, lessons: [], cycles: 0, createdAt: Date.now(), sourceHash: createHash("sha256").update(fixture.source).digest("hex") };
+    await this.store.emit(id, { type: "candidate.created", candidateId: root.id, message: root.rationale!, payload: root });
+    await this.challengeGenerated(id, root, seed, signal, 0, "c1-e0");
+    if (!this.store.get(id)!.candidates[0]!.failure?.reproduced) throw new Error("The starter did not produce a reproduced failure. No repair or improvement will be fabricated.");
+    let evaluations = 1, currentId = root.id, passedAudits = 0;
+    while (evaluations < options.maxEvaluations) {
+      throwIfStopped(signal);
+      const run = this.store.get(id)!;
+      assertFrozenContract(run.contract);
+      const current = run.candidates.find((candidate) => candidate.id === currentId)!;
+      if (run.budget.usedCycles + MAX_EVALUATION_CYCLES > run.budget.maxCycles) break;
+      if (current.failure?.reproduced || current.buildError) {
+        if (run.candidates.length >= run.budget.maxCandidates) break;
+        await this.store.emit(id, { type: "log", candidateId: current.id, message: `Recursive repair: generation ${current.generation + 1} inherits all ${run.regressions.length} confirmed regressions from ${current.id}.` });
+        await this.generateAndEvaluate(id, current.generation + 1, 0, current, seed + evaluations * 104729, signal);
+        currentId = this.store.get(id)!.candidates.at(-1)!.id;
+        passedAudits = 0;
+      } else if (current.status === "verified") {
+        await this.store.emit(id, { type: "log", candidateId: current.id, message: `Fresh Red audit ${passedAudits + 1}/${options.challengePasses}: attack the passing design again before declaring success. No new generation is claimed for an unchanged design.` });
+        await this.challengeGenerated(id, current, seed + evaluations * 104729, signal, evaluations, `${current.id}-e${evaluations}`, true);
+        const audited = this.store.get(id)!.candidates.find((candidate) => candidate.id === currentId)!;
+        passedAudits = audited.status === "verified" ? passedAudits + 1 : 0;
+      } else {
+        await this.store.emit(id, { type: "log", candidateId: current.id, message: "No reproduced public failure or compiler feedback is available. Hidden-check outcomes cannot be turned into invented repair evidence." });
+        break;
+      }
+      evaluations++;
+      const after = this.store.get(id)!;
+      const candidate = after.candidates.find((item) => item.id === currentId)!;
+      if (candidate.status === "verified" && candidate.regressionCount === after.regressions.length && passedAudits >= options.challengePasses) {
+        await this.store.emit(id, { type: "champion.selected", candidateId: candidate.id, message: `Model-written generation ${candidate.generation} passed every gate, all ${after.regressions.length} retained regressions and ${passedAudits} fresh Red audits.`, payload: { sourceHash: candidate.sourceHash, backend: candidate.backend, contractHash: after.contract.hash } });
+        await this.store.emit(id, { type: "run.completed", message: `Recursive demo completed: one imported starter, ${after.candidates.filter((item) => item.agent).length} genuine model-written descendants, ${evaluations} Daytona evaluations, ${after.regressions.length} retained regressions and ${passedAudits} fresh passing Red audits. Simulation coverage only, not formal proof.` });
+        return;
+      }
+    }
+    await this.store.emit(id, { type: "run.completed", message: `Recursive budget or available public evidence exhausted after ${evaluations} evaluations. No design completed the required fresh passing audits; no champion selected.` });
   }
 
   /** Actual model proposals and adversarial sequences. No template enters this path. */
@@ -223,7 +285,7 @@ export class EvolutionEngine {
     const run = this.store.get(id)!;
     assertFrozenContract(run.contract);
     const candidateId = `c${run.candidates.length + 1}`;
-    let candidate: Candidate = { id: candidateId, parentId: parent?.id, generation, label: `Blue agent · design ${candidateId}`, variant: "generated", status: "building", source: "", checks: [], score: 0, lessons: [...new Set(run.candidates.flatMap((c) => c.lessons))], cycles: 0, createdAt: Date.now() };
+    let candidate: Candidate = { id: candidateId, parentId: parent?.id, generation, label: `Blue agent · design ${candidateId}`, variant: "generated", status: "building", source: "", checks: [], score: 0, lessons: this.memory ? (await this.memory.retrieve(run, undefined, signal)).map((lesson) => lesson.text!) : [...new Set(run.candidates.flatMap((c) => c.lessons))], cycles: 0, createdAt: Date.now() };
     await this.store.emit(id, { type: "candidate.created", candidateId, message: parent ? `Blue is writing repaired child ${candidateId} from ${parent.id}.` : `Blue is writing independent design ${candidateId} from the frozen contract.`, payload: candidate });
     const proposal = await this.agents.buildBlue({ runId: id, candidateId, contract: run.contract, parent, lessons: candidate.lessons, failures: run.regressions, generation, branch, signal });
     throwIfStopped(signal);
@@ -233,16 +295,26 @@ export class EvolutionEngine {
     await this.challengeGenerated(id, candidate, seed, signal);
   }
 
-  private async challengeGenerated(id: string, candidate: Candidate, seed: number, signal: AbortSignal, round = 0): Promise<void> {
+  private async challengeGenerated(id: string, candidate: Candidate, seed: number, signal: AbortSignal, round = 0, executionId?: string, adaptive = false): Promise<void> {
     throwIfStopped(signal);
     const run = this.store.get(id)!;
-    const red = await this.agents.searchRed({ runId: id, candidateId: candidate.id, contract: run.contract, candidate: { source: candidate.source, label: candidate.label }, failures: run.regressions, round, seed, signal });
+    await this.memory?.recordCandidate(run, candidate, signal);
+    const validatedLessons = this.memory ? (await this.memory.retrieve(run, undefined, signal)).map((lesson) => lesson.text!) : [];
+    const history = new Map<string, RedAttack>();
+    if (adaptive) for (const event of run.events) {
+      const prior = event.type === "candidate.updated" && event.candidateId === candidate.id ? event.payload as Candidate : undefined;
+      for (const attack of prior?.attacks ?? []) history.set(JSON.stringify(attack.sequence), attack);
+    }
+    const red = await this.agents.searchRed({ lessons: validatedLessons, priorAttacks: adaptive ? [...history.values()].slice(-8) : undefined, runId: id, candidateId: candidate.id, contract: run.contract, candidate: { source: candidate.source, label: candidate.label }, failures: run.regressions, round, seed, signal });
     throwIfStopped(signal);
+    if (adaptive) {
+      if (red.attacks.some((attack) => history.has(JSON.stringify(attack.sequence)))) throw new Error("Red repeated a previous sequence during a required fresh audit. No fresh-audit credit is awarded.");
+    }
     candidate = { ...candidate, status: "testing", redAgent: red.agent, attacks: red.attacks, redRationale: red.rationale };
     await this.store.emit(id, { type: "candidate.updated", candidateId: candidate.id, message: `Red authored ${red.attacks.length} new attacks: ${red.rationale}. Executing actual RTL with Verilator in Daytona.`, payload: candidate });
     if (red.attacks.length !== 4) throw new Error("Red must submit four validated attacks before hardware acceptance is evaluated.");
     const attackIds = red.attacks.map((attack) => `agent-red-${attack.id.replace(/^agent-red-/, "").toLowerCase()}`);
-    const result = await this.evaluate({ runId: id, candidateId: candidate.id, variant: "generated", source: candidate.source, attacks: red.attacks, provider: "daytona", seed: (seed + run.candidates.length * 7919) >>> 0, regressions: run.regressions, signal });
+    const result = await this.evaluate({ runId: id, candidateId: executionId ?? candidate.id, variant: "generated", source: candidate.source, attacks: red.attacks, provider: "daytona", seed: (seed + run.candidates.length * 7919) >>> 0, regressions: run.regressions, signal });
     throwIfStopped(signal);
     assertFrozenContract(this.store.get(id)!.contract);
     if (result.backend !== "verilator" || result.source !== candidate.source) throw new Error("Generated candidate evidence did not match the submitted RTL and required Verilator backend.");
@@ -252,12 +324,25 @@ export class EvolutionEngine {
     const accepted = passesAcceptance(result, run.regressions.length, attackIds);
     const reproduced = Boolean(result.failure?.reproduced && result.reproduced);
     const failure = result.failure ? { ...result.failure, reproduced } : undefined;
-    const lesson = reproduced && failure ? lessonFor(failure) : result.buildError ? `Build rejected by the independent lab: ${result.buildError.slice(0, 1800)}` : undefined;
+    const lesson = !this.memory && reproduced && failure ? lessonFor(failure) : result.buildError ? `Build rejected by the independent lab: ${result.buildError.slice(0, 1800)}` : undefined;
     candidate = { ...candidate, status: accepted ? "verified" : reproduced || result.buildError ? "failed" : "rejected", checks: result.checks, failure, buildError: result.buildError, score: scoreEvaluation(result), backend: result.backend, sandboxId: result.sandboxId, artifactPath: result.artifactPath, cycles: candidate.cycles + result.cycles, regressionCount: run.regressions.length, lessons: lesson ? [...new Set([...candidate.lessons, lesson])] : candidate.lessons };
     await this.store.emit(id, { type: "candidate.updated", candidateId: candidate.id, message: accepted ? `${candidate.label} passed all hardware, Red-agent and current regression gates.` : result.buildError ? `${candidate.label} failed to build: ${result.buildError}` : `${candidate.label} failed acceptance; no model's self-assessment is used as a verdict.`, payload: candidate });
     if (failure && reproduced) {
       await this.store.emit(id, { type: "failure.reproduced", candidateId: candidate.id, message: failure.summary, payload: failure });
       if (!this.store.get(id)!.regressions.some((item) => JSON.stringify(item.sequence) === JSON.stringify(failure.sequence))) await this.store.emit(id, { type: "regression.added", candidateId: candidate.id, message: `Verified failure retained permanently: ${failure.testName}.`, payload: failure });
+    }
+    if (this.memory && failure && reproduced) {
+      const current = this.store.get(id)!;
+      const proposal = await this.memory.recordBreach(current, candidate, failure, signal);
+      await this.store.emit(id, { type: "lesson.learned", candidateId: candidate.id, message: `Blue proposed a lesson on ${proposal.family}. Pending descendant validation: ${proposal.text}`, payload: { lesson: proposal.text, status: proposal.status, family: proposal.family, memoryId: proposal.id } });
+    }
+    if (this.memory && accepted) {
+      const validated = await this.memory.validate(this.store.get(id)!, candidate, result, attackIds, signal);
+      if (validated.length) {
+        candidate = { ...candidate, lessons: [...new Set([...candidate.lessons, ...validated.map((item) => item.text!)])] };
+        await this.store.emit(id, { type: "candidate.updated", candidateId: candidate.id, message: `Validated ${validated.length} Blue lessons against the complete acceptance and inherited regression suite.`, payload: candidate });
+        for (const item of validated) await this.store.emit(id, { type: "lesson.learned", candidateId: candidate.id, message: `Validated parent-family lesson: ${item.text}`, payload: { lesson: item.text, status: "validated", family: item.family, memoryId: item.id } });
+      }
     }
     if (lesson) await this.store.emit(id, { type: "lesson.learned", candidateId: candidate.id, message: lesson, payload: { lesson } });
   }

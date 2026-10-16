@@ -15,7 +15,7 @@ export interface BlueInput {
 }
 export interface RedInput {
   runId: string; candidateId: string; contract: FrozenContract; candidate: { source: string; label: string };
-  failures: FailureEvidence[]; round: number; seed: number; signal?: AbortSignal;
+  failures: FailureEvidence[]; round: number; seed: number; signal?: AbortSignal; lessons?: string[]; priorAttacks?: import("@hollow-purple/shared/evolution").RedAttack[];
 }
 const safeId = (id: string) => { if (!/^[a-zA-Z0-9_-]{1,100}$/.test(id)) throw new Error("Invalid agent artifact identifier."); return id; };
 const text = (value: string, limit = 4000) => value.length <= limit ? value : `${value.slice(0, limit)} [context truncated]`;
@@ -52,7 +52,8 @@ export function buildRedPrompt(input: RedInput): string {
   return ["You are Red, responsible for finding reproducible contract violations in the actual candidate RTL below. Independently inspect the source and design adversarial input sequences; do not grade the design, change the contract, or copy a fixed test menu.", roleBoundary,
     `Return exactly ${RED_ATTACK_COUNT} novel and distinct attacks, each containing 1–${RED_SEQUENCE_LIMIT} explicit clock-edge stimuli (prefer 35–90 when sufficient). Every sequence MUST start with reset=true; each edge has exactly reset, write, read boolean fields and unsigned 16-bit data in [0,65535]. Use unique lowercase slug IDs of at most 50 characters; omit the controller-owned agent-red- prefix. No pseudocode, loops, formulas, or omitted repetitions in sequence arrays. A sequence is evaluated from a fresh simulator. Explain the specific suspected source weakness in each hypothesis. Hypotheses are unverified until the independent verifier reproduces them.`,
     "Target source-specific boundary combinations, occupancy transitions, pointer wrap, full same-cycle replacement, empty simultaneous requests, repeated reset, and output/valid holding as appropriate. Prefer new combinations guided by public failures; the mandatory and hidden suites are controller-owned and are not provided to you.",
-    "Frozen requirements and public evidence (JSON):", JSON.stringify({ contract: input.contract, candidate: { source: input.candidate.source, label: text(input.candidate.label, 120) }, round: input.round, searchSeed: input.seed, publicFailures: publicFailures(input.failures) }),
+    "For a re-audit, inspect the previously tested sequences and target different combinations or longer state histories. Do not copy an identical previous sequence or assume that a passing design is universally correct.",
+    "Frozen requirements and public evidence (JSON):", JSON.stringify({ contract: input.contract, candidate: { source: input.candidate.source, label: text(input.candidate.label, 120) }, round: input.round, searchSeed: input.seed, priorAttacks: input.priorAttacks?.slice(-8), validatedParentLessons: (input.lessons ?? []).slice(-24).map((lesson) => text(lesson, 1500)), publicFailures: publicFailures(input.failures) }),
   ].join("\n\n");
 }
 

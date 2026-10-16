@@ -146,6 +146,8 @@ export interface EvolutionRun {
   strategy?: "agents" | "curriculum";
   /** Explicitly imported faulty integration fixture; never attributed to Blue. */
   verificationFixture?: boolean;
+  /** Opt-in bounded repair chain with fresh Red audits after a passing design. */
+  recursive?: { maxEvaluations: number; challengePasses: number };
 }
 export interface RunSummary {
   id: string;
