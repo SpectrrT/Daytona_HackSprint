@@ -8,6 +8,7 @@ import { runTrial } from "./trial.js";
 import { summarizeTrials, formatMetrics } from "./metrics.js";
 import { buildBluePrompt, buildRedPrompt } from "../agents/index.js";
 import { createHash } from "node:crypto";
+import { repairChallenge } from "./challenge.js";
 const sha = (s: string) => createHash("sha256").update(s).digest("hex");
 const source = "// Unit test evidence, never submitted to a provider";
 const failure: FailureEvidence = { id: "unit-public-failure", testId: "simultaneous", testName: "Concurrent count", seed: 1, cycle: 2, expected: 1, actual: 2, summary: "Raw trace: concurrent requests changed occupancy.", sequence: [{reset:true,read:false,write:false,data:0},{reset:false,read:true,write:true,data:42}], trace: [], reproduced: true };
@@ -64,4 +65,15 @@ test("an interrupted paid model call cannot make token totals look complete",()=
  const evaluation={generation:0,result:result(),blue:agent,red:{...agent,role:"red" as const},retrieval:{ids:[],bytes:0,path:[]}};
  const trials=[{mode:"none" as const,seed:1,status:"completed" as const,evaluations:[evaluation],generationsUntilAllGates:1,regressionsReintroduced:0,wallMs:10},{mode:"none" as const,seed:2,status:"missing" as const,evaluations:[],generationsUntilAllGates:null,regressionsReintroduced:0,wallMs:10}];
  const summary=summarizeTrials(trials)[0]!;assert.equal(summary.acceptedDesigns,1);assert.equal(summary.totalModelTokens,null);assert.equal(summary.modelTokensPerAcceptedDesign,null);assert.equal(summary.missingTrials,1);
+});
+
+test("fresh compound repair cases are fixed independently of the arm and keep the same public contract", async () => {
+ const hashes = new Set([0,1,2].map(seed => repairChallenge(seed).sourceHash)); assert.equal(hashes.size,3);
+ const c=await corpus();const seen:string[]=[];
+ const agent={role:"blue" as const,provider:"bedrock" as const,model:"unit-claude",startedAt:0,durationMs:1,inputTokens:10,outputTokens:10};
+ for(const mode of ["none","flat","graph"] as const){
+  const trial=await runTrial({runId:`unit-repair-${mode}`,seed:900001,mode,corpus:c,generations:1,task:"compound-repair-v1"},{buildBlue:async input=>{assert.equal(input.contract.hash,c.contractHash);assert.equal(input.parent!.status,"queued");assert.deepEqual(input.parent!.checks,[]);assert.deepEqual(input.failures,[]);seen.push(input.parent!.sourceHash!);return {label:"unit",source,rationale:"unit",agent};},searchRed:async()=>({attacks:[],rationale:"unit",agent:{...agent,role:"red"}}),evaluateCandidate:async()=>result()});
+  assert.equal(trial.startingSourceHash,repairChallenge(900001).sourceHash);assert.equal(trial.task,"compound-repair-v1");
+ }
+ assert.equal(new Set(seen).size,1);
 });

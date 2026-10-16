@@ -9,7 +9,7 @@ import { freezeContract } from "../engine/contract.js";
 import { EvolutionEngine, type AgentTeam, type EvaluationRequest } from "../engine/index.js";
 import { RunStore } from "../store.js";
 import { createApp } from "../index.js";
-import { buildLessonPrompt } from "../agents/lessons.js";
+import { buildLessonPrompt, groundedLesson, lessonTransition } from "../agents/lessons.js";
 import { LessonMemory, name, type Entity, type GraphBackend, type GraphEdge, type GraphNode, type LessonWriter } from "./graph.js";
 
 export class TestGraph implements GraphBackend {
@@ -44,6 +44,7 @@ test("a public Red attack about held output is not mistaken for the held-out che
 
 async function proposed() {
   const r = run(), parent = candidate("c1"), child = candidate("c2", "c1"), backend = new TestGraph();
+  r.candidates = [parent, child];
   const memory = new LessonMemory(backend, writer); r.regressions = [structuredClone(failure)];
   await memory.recordCandidate(r, parent); await memory.recordCandidate(r, child);
   const lesson = await memory.recordBreach(r, parent, failure);
@@ -124,6 +125,44 @@ test("lesson prompts contain only their bounded public failure, never another ru
   const prompt = buildLessonPrompt({ run: r, candidate: candidate("c1"), failure, family: "occupancy" });
   assert.doesNotMatch(prompt, /PRIVATE_HIDDEN_RESULT_SENTINEL/); assert.match(prompt, /parentFamily.*occupancy/);
   assert.match(prompt, /Do not claim the lesson has been validated/);
+  assert.match(prompt, /failedSource/);
+});
+
+test("lesson facts distinguish pre-edge occupancy from the post-edge oracle trace", () => {
+  const sequence = [{ reset: true, read: false, write: false, data: 0 }, ...Array.from({ length: 8 }, (_, i) => ({ reset: false, read: false, write: true, data: i })), { reset: false, read: true, write: true, data: 99 }];
+  const f = { ...failure, cycle: 9, sequence, trace: [{ ...sequence[9]!, cycle: 9, occupancy: 8, actualOccupancy: 7, expected: 0, actual: 0, full: false, empty: false, mismatch: true }] };
+  assert.deepEqual(lessonTransition(f), { preEdgeOccupancy: 8, readAccepted: true, writeAccepted: true, expectedPostOccupancy: 8, observedPostOccupancy: 7 });
+  const corrupted = structuredClone(f); corrupted.trace[0]!.occupancy = 9;
+  assert.throws(() => lessonTransition(corrupted), /contradicts/);
+  const empty = { ...failure, cycle: 1, trace: [], sequence: [sequence[0]!, sequence[9]!] };
+  assert.deepEqual(lessonTransition(empty), { preEdgeOccupancy: 0, readAccepted: false, writeAccepted: true, expectedPostOccupancy: 1, observedPostOccupancy: null });
+});
+
+test("a passing child causes a fresh source-grounded lesson review before retrieval", async () => {
+  const f = await proposed(); const calls: Parameters<LessonWriter>[0][] = [];
+  const memory = new LessonMemory(f.backend, async input => { calls.push(input); return { ...await writer(input), text: "Reviewed actual repair: replace competing count assignments with one accepted-operation update." }; });
+  const validated = await memory.validate(f.r, f.child, result(f.child), ["agent-red-a"]);
+  assert.equal(calls.length, 1); assert.equal(calls[0]!.candidate.source, f.parent.source); assert.equal(calls[0]!.repair?.source, f.child.source);
+  assert.equal(validated[0]!.validationMethod, "source-grounded-repair");
+  assert.match((await memory.retrieve(f.r, ["empty_boundary"]))[0]!.text!, /Reviewed actual repair/);
+});
+
+test("a failed lesson review cannot promote an unreviewed explanation", async () => {
+  const f = await proposed();
+  const memory = new LessonMemory(f.backend, async () => { throw new Error("Review unavailable"); });
+  await assert.rejects(memory.validate(f.r, f.child, result(f.child), ["agent-red-a"]), /Review unavailable/);
+  assert.deepEqual(await memory.retrieve(f.r), []);
+});
+
+test("grounded lessons keep actual repair excerpts and reject invented citations", () => {
+  const parent = candidate("parent"), repair = candidate("repair", "parent");
+  parent.source = "assign occupancy = wrong_count;";
+  repair.source = "assign occupancy = corrected_count;";
+  const input = { run: run(), candidate: parent, failure, family: "occupancy" as const, repair };
+  const answer = { text: "Expose the state register used to calculate accepted operations through the occupancy port.", sourceLines: [1], repairLines: [1] };
+  assert.match(groundedLesson(input, answer), /Passing descendant excerpt:\nassign occupancy = corrected_count;/);
+  assert.throws(() => groundedLesson(input, { ...answer, sourceLines: [999] }), /citations/);
+  assert.throws(() => groundedLesson(input, { ...answer, repairLines: [] }), /citations/);
 });
 
 test("engine gives Blue and Red only validated graph lessons, and a sibling cannot validate a proposal", async () => {
@@ -168,6 +207,7 @@ test("engine gives Blue and Red only validated graph lessons, and a sibling cann
 
 test("repeated counterexamples retain each source's lesson while sharing the canonical regression", async () => {
   const f = await proposed(), other = candidate("c3"), child = candidate("c4", "c3");
+  f.r.candidates.push(other, child);
   await f.memory.recordCandidate(f.r, other); await f.memory.recordCandidate(f.r, child);
   const repeat = { ...failure, id: "c3-repeat" };
   await assert.rejects(f.memory.recordBreach(f.r, other, repeat), /journal/);
