@@ -119,7 +119,8 @@ test("voice approval needs a conversation ElevenLabs confirms was held with the 
     await requestApproval(ctx.store, ctx.id, "voice");
     const session = await voiceSession(ctx.store, ctx.id);
     assert.equal(session.signedUrl, "wss://example/signed");
-    assert.match(session.summary, /Approve releasing it\?/);
+    assert.match(session.summary, /passed all \d+ checks: the directed tests, Red's attacks and the hidden checks/);
+    assert.doesNotMatch(session.summary, /\?|_/, "the agent asks the question itself and reads the name aloud");
     await assert.rejects(decide(ctx.store, ctx.id, "approve", "voice", ctx.dir), /conversation id/);
     await assert.rejects(decide(ctx.store, ctx.id, "approve", "voice", ctx.dir, { conversationId: "conv_other" }), /not held with the release agent/);
     await assert.rejects(decide(ctx.store, ctx.id, "approve", "dashboard", ctx.dir), /must come from the voice/);

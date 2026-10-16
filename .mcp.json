@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "hollow-purple": {
+      "command": "pnpm",
+      "args": ["--silent", "--dir", "apps/mcp", "start"],
+      "env": {
+        "HOLLOW_PURPLE_URL": "http://localhost:8787",
+        "HOLLOW_PURPLE_DASHBOARD": "http://localhost:5173"
+      }
+    }
+  }
+}

@@ -155,11 +155,46 @@ APPROVER_PHONE_NUMBER=         # phone only: the phone that rings, E.164 (+1...)
 APPROVE_WEBHOOK_SECRET=        # phone only: shared secret for the agent's webhook tool
 ```
 
-The overview also shows **Single-shot vs evolved**: the best generation-0 design (one model call, no Red feedback) against the champion, scored only by the verifier's checks. Same model, same frozen contract.
+The overview also shows **Initial vs selected design**: the best generation-0 design (one model call, no Red feedback) against the champion, scored only by the verifier's checks. Same model, same frozen contract.
 
 ## Arize tracing
 
 With `ARIZE_SPACE_ID` and `ARIZE_API_KEY` set, every run is traced to Arize AX as one trace built from its event log: a run span, one span per candidate carrying the verifier's verdict (status, checks passed, hidden checks, inherited regressions), and an LLM span for each Blue and Red model call (model, provider, token counts, attempts, rationale or attack hypotheses). Release-gate approvals and releases appear as spans in the same trace. Spans go over OTLP to `https://otlp.arize.com/v1/traces` (override with `ARIZE_OTLP_URL`); the project name defaults to `hollow-purple` (`ARIZE_PROJECT_NAME`). Without the variables, tracing is off and nothing changes. Check the connection with `pnpm --filter @hollow-purple/server exec node --import tsx src/scripts/verify-arize.ts`.
+
+## Use it from Claude (MCP)
+
+Hollow Purple is also an MCP server, so Claude Code or Claude Desktop can drive the whole loop from a conversation: ask Claude to harden a design and it starts a live Daytona run, follows Blue, Red and the verifier while they work, then reports what Red tried, the reproduced failures, and the verified source. No custom UI is needed. The server calls the controller's HTTP API, so Claude and the dashboard see the same run.
+
+Start the controller (`pnpm dev`). Claude Code picks up the server from this repository's `.mcp.json`; approve it when prompted. For Claude Desktop, add the server to `claude_desktop_config.json` with absolute paths (`which pnpm` for the command):
+
+```json
+{
+  "mcpServers": {
+    "hollow-purple": {
+      "command": "/absolute/path/to/pnpm",
+      "args": ["--silent", "--dir", "/absolute/path/to/repo/apps/mcp", "start"],
+      "env": { "HOLLOW_PURPLE_URL": "http://localhost:8787" }
+    }
+  }
+}
+```
+
+| Tool | What it does |
+| --- | --- |
+| `lab_status` | Which providers are ready: Daytona, the Blue/Red agents, Arize, approval channels |
+| `start_hardening_run` | Starts a live Daytona run with a budget of 3–12 designs, an optional seed and prompt. Spends credits |
+| `watch_run` | Waits up to `wait_seconds` for new activity and returns what each agent said after `after_seq`, plus who is working now |
+| `get_run`, `list_runs` | Status, each design's verdict, the champion, regressions, approval and release |
+| `get_agent_transcript` | The full conversation, filtered by design (`c2`) or speaker (`red`) |
+| `get_failure_evidence` | Reproduced failures: clock cycle, expected and actual values, the exact input sequence |
+| `get_design_source` | A design's RTL and SHA-256 (default: the champion) |
+| `request_release_approval` | Asks a person to approve the champion by voice or in the dashboard |
+
+No tool can approve a release. `request_release_approval` only opens the release gate; the decision still comes from a person. Try: *"Harden the sensor FIFO with a 3-design budget, tell me what Red tried against each design, then ask me to approve the champion."* To check the server by hand against a running controller, run `pnpm --dir apps/mcp exec node --import tsx src/handshake.ts "$PWD" <run-id>` from the repository root.
+
+## Agent console
+
+The dashboard's **Agents** view (`/?run=<id>&view=agents`) shows a run as a live console. It includes Blue's rationale for each design, Red's hypotheses and every attack it wrote, each Daytona compile and replay, the verifier's verdicts, lessons learned, and the human approval. Pick a design in the roster or the lineage graph to see only its agents, or filter by speaker. While an agent works, the console shows who it is and how long it has been running. These lines are the agents' recorded outputs; models' private reasoning is never stored. The console and the MCP tools render the same transcript, built from the run's event log by `packages/shared/src/transcript.ts`.
 
 ## Verify changes
 
@@ -177,7 +212,7 @@ A passing repair receives two additional Red searches using prior attacks as con
 Configured graph memory records proposed lessons and validates them against source-bound passing descendants. The runner saves `fullrun.json` and `memory.json` under its own run directory, then leaves the local dashboard available for inspection. Re-audits retain separate sandbox artifact directories and do not count as new generations. The verifier and frozen requirements remain outside the Blue/Red editing surface.
 
 ```sh
-pnpm test          # Agent transport, engine/acceptance, RTL/attack validation, Python oracle
+pnpm test          # Agent transport, engine/acceptance, RTL/attack validation, MCP tools, Python oracle
 pnpm build         # All TypeScript checks + production dashboard build
 pnpm smoke         # Starts a real model + Daytona experiment; requires live credentials
 ```
@@ -194,6 +229,7 @@ The public endpoints are `POST /api/runs` (live Daytona only), `GET /api/runs/:i
 
 ```text
 packages/shared/src/evolution.ts   Shared contract, agent provenance, attacks, runs, events
+packages/shared/src/transcript.ts  Agent transcript shared by the console and the MCP server
 apps/server/src/agents/           Blue/Red prompts, schemas, bounded Codex/Anthropic transports
 apps/server/src/engine/           Frozen contract, generation/repair/requalification loop
 apps/server/src/store.ts          Durable append-only events and replay
@@ -203,6 +239,7 @@ apps/server/src/daytona/          Sandbox lifecycle and file/process adapter
 apps/server/src/browser/          Anchor session lifecycle and product audit
 apps/server/src/scripts/          Doctor, snapshot, live smoke, evidence publishing, cleanup
 apps/web/                        Lineage, agent/attack inspection, contract, waveform, source viewer
+apps/mcp/                        MCP server: start, follow and read runs from Claude
 lab/                             Python oracle, fixed Verilator driver, read-only preview server
 lab/software/                    Fixed storefront/runtime, source gate, private CDP relay, explicit faulty checkout fixture
 ```

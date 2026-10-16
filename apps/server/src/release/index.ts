@@ -68,9 +68,13 @@ function champion(run: EvolutionRun) {
   return winner;
 }
 
+/** Read aloud by the release agent, which then asks for the yes or no itself. */
 export function approvalSummary(run: EvolutionRun): string {
   const winner = champion(run);
-  return `Design ${winner.label} passed every directed check, all ${run.regressions.length} regression tests kept from earlier failures, and the hidden checks. Approve releasing it?`;
+  const name = winner.label.replace(/[_-]+/g, " ").replace(/\s+g\d+\s+b\d+$/i, "");
+  const regressions = run.regressions.length;
+  const kept = regressions === 0 ? "" : regressions === 1 ? ", plus the regression test kept from an earlier failure" : `, plus all ${regressions} regression tests kept from earlier failures`;
+  return `Design ${winner.id}, ${name}, passed all ${winner.checks.length} checks: the directed tests, Red's attacks and the hidden checks${kept}.`;
 }
 
 async function placeCall(summary: string, runId: string): Promise<string | undefined> {
