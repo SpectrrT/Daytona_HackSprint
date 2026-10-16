@@ -68,7 +68,7 @@ export interface EvaluationResult {
   sourceHash?: string;
 }
 export interface AgentInvocation {
-  role: "blue" | "red";
+  role: "blue" | "red" | "target";
   provider: "codex-cli" | "anthropic";
   model: string;
   startedAt: number;

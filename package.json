@@ -15,6 +15,7 @@
     "snapshot": "pnpm --filter @hollow-purple/server snapshot",
     "smoke": "pnpm --filter @hollow-purple/server smoke",
     "software:demo": "pnpm --filter @hollow-purple/server exec node --import tsx src/scripts/run-software.ts",
+    "agents:demo": "pnpm --filter @hollow-purple/server exec node --import tsx src/scripts/run-agent-lab.ts",
     "cleanup": "pnpm --filter @hollow-purple/server cleanup"
   }
 }

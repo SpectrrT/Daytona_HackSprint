@@ -16,6 +16,11 @@ import { approvalChannel, availableChannels, decide, pendingPhoneRun, ReleaseErr
 import { arizeConfigured, startArizeTracing } from "./telemetry/arize.js";
 import type { EvolutionEvent } from "@hollow-purple/shared/evolution";
 import { SoftwareService } from "./software/service.js";
+import { AgentLabService } from "./agent-lab/service.js";
+import { AGENT_ENVIRONMENTS } from "@hollow-purple/shared/agent-lab";
+import { labDirectory } from "./agent-lab/engine.js";
+import { readFile } from "node:fs/promises";
+import { join } from "node:path";
 
 const createSchema = z.object({
   prompt: z.string().trim().min(10).max(2000).refine(supportsPrompt, "The current hardware example supports a 32-entry, 16-bit synchronous FIFO. Other engineering tasks need their own contract and verifier."),
@@ -36,7 +41,7 @@ function agentsReady(): boolean {
   return agentCheck.ready;
 }
 
-export function createApp(store: RunStore = defaultStore, engine = new EvolutionEngine(store, undefined, undefined, configuredMemory()), software = new SoftwareService()): Hono {
+export function createApp(store: RunStore = defaultStore, engine = new EvolutionEngine(store, undefined, undefined, configuredMemory()), software = new SoftwareService(), agentLab = new AgentLabService()): Hono {
   const app = new Hono();
   const audits = new Set<string>();
   app.use("/api/*", bodyLimit({ maxSize: 16 * 1024, onError: (c) => c.json({ error: "Request body exceeds 16 KiB." }, 413) }));
@@ -48,6 +53,34 @@ export function createApp(store: RunStore = defaultStore, engine = new Evolution
     return c.json({ error: "The request failed. Check the server log and retained run evidence." }, 500);
   });
   app.get("/api/health", (c) => c.json({ status: "ok" }));
+  app.get("/api/agent-lab/status", c => c.json({ ready: Boolean(config.DAYTONA_API_KEY && config.ANCHOR_API_KEY && agentsReady()), environments: AGENT_ENVIRONMENTS }));
+  app.get("/api/agent-lab/runs", async c => c.json(await agentLab.list()));
+  app.post("/api/agent-lab/runs", async c => {
+    const body = z.object({ suite: z.literal("cross-domain") }).strict().safeParse(await c.req.json().catch(() => undefined));
+    if (!body.success) return c.json({ error: "Use {suite:'cross-domain'} for the current agent suite." }, 400);
+    if (!agentsReady()) return c.json({ error: "The configured model runtime is unavailable." }, 503);
+    try { return c.json({ id: agentLab.start() }, 202); } catch (error) { return c.json({ error: error instanceof Error ? error.message : "Agent experiment could not start." }, 409); }
+  });
+  app.get("/api/agent-lab/runs/:id", async c => {
+    if (!/^[a-zA-Z0-9_-]{1,100}$/.test(c.req.param("id"))) return c.json({ error: "Invalid run ID." }, 400);
+    const run = await agentLab.get(c.req.param("id")); return run ? c.json(run) : c.json({ error: "Agent experiment not found." }, 404);
+  });
+  app.get("/api/agent-lab/runs/:id/export", async c => {
+    if (!/^[a-zA-Z0-9_-]{1,100}$/.test(c.req.param("id"))) return c.json({ error: "Invalid run ID." }, 400);
+    const run = await agentLab.get(c.req.param("id")); if (!run) return c.json({ error: "Agent experiment not found." }, 404);
+    c.header("Content-Disposition", `attachment; filename="agent-lab-${run.id}.json"`); return c.json(run);
+  });
+  app.get("/api/agent-lab/runs/:id/video", async c => {
+    const id = c.req.param("id"); if (!/^[a-zA-Z0-9_-]{1,100}$/.test(id)) return c.json({ error: "Invalid run ID." }, 400);
+    const run = await agentLab.get(id); if (!run || run.status !== "completed") return c.json({ error: "Completed recording not available." }, 404);
+    const video = await readFile(join(labDirectory(id), "daytona-agent-workbench.mp4")).catch(() => undefined); if (!video) return c.json({ error: "Recording not found." }, 404);
+    c.header("Content-Type", "video/mp4"); c.header("Content-Disposition", "inline"); return c.body(new Uint8Array(video));
+  });
+  app.post("/api/agent-lab/runs/:id/stop", async c => {
+    const id = c.req.param("id"); if (!/^[a-zA-Z0-9_-]{1,100}$/.test(id)) return c.json({ error: "Invalid run ID." }, 400);
+    if (!await agentLab.get(id)) return c.json({ error: "Agent experiment not found." }, 404);
+    try { await agentLab.stop(id); return c.json(await agentLab.get(id)); } catch (error) { return c.json({ error: error instanceof Error ? error.message : "Could not stop the experiment." }, 409); }
+  });
   app.get("/api/software/runs", async c => c.json(await software.list()));
   app.post("/api/software/runs", async c => {
     const body = z.object({ example: z.literal("checkout") }).strict().safeParse(await c.req.json().catch(() => undefined));
@@ -210,13 +243,15 @@ export async function startServer(): Promise<void> {
   if (telemetry) console.log("Arize tracing enabled.");
   const engine = new EvolutionEngine(defaultStore, undefined, undefined, configuredMemory());
   const software = new SoftwareService();
-  const server = serve({ fetch: createApp(defaultStore, engine, software).fetch, port: config.PORT, hostname: "0.0.0.0" });
+  const agentLab = new AgentLabService();
+  const server = serve({ fetch: createApp(defaultStore, engine, software, agentLab).fetch, port: config.PORT, hostname: "0.0.0.0" });
   console.log(`Hollow Purple controller listening on http://localhost:${config.PORT}`);
   let closing = false;
   const shutdown = async () => {
     if (closing) return; closing = true;
     await engine.stopAll();
     await software.stopAll();
+    await agentLab.stopAll();
     await defaultStore.flush();
     await telemetry?.shutdown();
     server.close();
