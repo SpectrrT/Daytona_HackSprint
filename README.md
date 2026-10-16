@@ -62,15 +62,25 @@ Use the returned URL as `PUBLIC_DASHBOARD_URL` in `.env`, restart the local cont
 
 Preview metadata is stored at `data/runs/<id>/evidence-preview.json`. Signed links expire after six hours, and the preview sandbox auto-stops after 30 idle minutes. Use the scoped cleanup command when it is no longer needed. Browser checks verify the product; the independent hardware verifier controls design acceptance.
 
-## Record a browser walkthrough
+## Record the actual Daytona sandbox
 
-With ffmpeg installed, record a completed repair run after publishing its evidence and configuring `PUBLIC_DASHBOARD_URL`:
+Record the native Linux desktop while it opens Chromium, inspects RTL, compiles with Verilator, reproduces Red's failure, requests a new Blue model repair, applies it, and rebuilds and reruns the public regression suite:
+
+```sh
+pnpm --filter @hollow-purple/server exec node --import tsx src/scripts/record-sandbox.ts <verified-repair-run-id>
+```
+
+The controller must be running with that completed repair run loaded. The helper creates a private `daytona-medium` desktop, installs its tools, and records its real XFCE display with Daytona's native recording API. The baseline is explicitly identified as a manually fault-seeded fixture; Red's sequences come from the verified run, and Blue produces a fresh model response. Actual simulation observations are independently graded on the controller. Only public tests enter this inspection desktop; the hidden suite remains part of the original experiment's separate acceptance evidence.
+
+The MP4, source hashes, actual observations, model provenance, and verdicts are saved under `data/runs/<id>/native-desktop/`. When Anchor is configured, it also verifies the encrypted VNC connection, sandbox identity, and actual desktop canvas, saves a screenshot, and ends its browser session. The private noVNC link is saved in `recording.json`. The sandbox remains available for inspection and auto-stops after 30 idle minutes. It consumes the account's sandbox quota until stopped; delete it through Daytona when finished. An optional second argument reuses an empty desktop sandbox labelled `app=hollow-purple,purpose=visible-desktop`.
+
+For a separate replay of the published product dashboard, the earlier browser walkthrough helper remains available:
 
 ```sh
 pnpm --filter @hollow-purple/server exec node --import tsx src/scripts/record-demo.ts <verified-repair-run-id>
 ```
 
-Anchor opens the actual Daytona-hosted dashboard, replays the failure, inspects the original and repaired RTL, and shows both verified children. Browser frames are encoded locally into `data/runs/<id>/hollow-purple-daytona-walkthrough.mp4`. Captions explicitly identify the recording as a replay of completed execution and identify imported manual fixtures. The video contains no provider credentials or private model transcripts. Its Anchor session is closed after recording.
+That helper requires ffmpeg and a published evidence URL. It records the dashboard through Anchor, saving `data/runs/<id>/hollow-purple-daytona-walkthrough.mp4`. It is a replay of completed execution; it does not show the sandbox desktop. Its Anchor session is closed afterward.
 
 ## Verify changes
 
