@@ -24,7 +24,10 @@ export default function AgentLab() {
     setRun(previous => previous?.id === id ? previous : null); setError('');
     const load = async () => {
       try { const next = await api<LabRun | { id: string; status: 'queued' }>(`/api/agent-lab/runs/${encodeURIComponent(id)}`); if (cancelled) return;
-        if (next.status !== 'queued') setRun(next);
+        if (next.status !== 'queued') {
+          setRun(next);
+          setRuns(history => history.some(item => item.id === next.id) ? history.map(item => item.id === next.id ? { id: next.id, status: next.status, createdAt: next.createdAt, championId: next.championId } : item) : [{ id: next.id, status: next.status, createdAt: next.createdAt, championId: next.championId }, ...history]);
+        }
         if (next.status === 'running' || next.status === 'queued') timer = setTimeout(() => void load(), 1500);
       } catch (error) { if (!cancelled) setError((error as Error).message); }
     }; void load();
