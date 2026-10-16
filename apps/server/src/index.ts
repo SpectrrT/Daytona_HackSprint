@@ -27,6 +27,8 @@ import { AGENT_ENVIRONMENTS } from "@antibody/shared/agent-lab";
 import { labDirectory } from "./agent-lab/engine.js";
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
+import type { Server } from "node:http";
+import { NativeViewerProxy } from "./agent-lab/native-viewer-proxy.js";
 
 const createSchema = z.object({
   prompt: z.string().trim().min(10).max(2000).refine(supportsPrompt, "The current hardware example supports a 32-entry, 16-bit synchronous FIFO. Other engineering tasks need their own contract and verifier."),
@@ -48,7 +50,7 @@ function agentsReady(): boolean {
   return agentCheck.ready;
 }
 
-export function createApp(store: RunStore = defaultStore, engine = new EvolutionEngine(store, undefined, undefined, configuredMemory()), software = new SoftwareService(), agentLab = new AgentLabService()): Hono {
+export function createApp(store: RunStore = defaultStore, engine = new EvolutionEngine(store, undefined, undefined, configuredMemory()), software = new SoftwareService(), agentLab = new AgentLabService(), viewer?: NativeViewerProxy): Hono {
   const app = new Hono();
   const audits = new Set<string>();
   const labConnections = new LabConnectionChecks();
@@ -106,7 +108,7 @@ export function createApp(store: RunStore = defaultStore, engine = new Evolution
     const run = await agentLab.get(id);
     if (!run || run.status === "queued") return c.json({ error: "Sandboxes have not been provisioned for this run." }, 404);
     c.header("Cache-Control", "no-store");
-    return c.json(await agentLab.sandboxAccess.list(run));
+    return c.json({ ...await agentLab.sandboxAccess.list(run), ...(run.roleWorkspaceError ? { error: run.roleWorkspaceError } : {}) });
   });
   app.post("/api/agent-lab/runs/:id/sandboxes/:key/preview", async c => {
     const id = c.req.param("id"), key = c.req.param("key");
@@ -116,7 +118,8 @@ export function createApp(store: RunStore = defaultStore, engine = new Evolution
     const run = await agentLab.get(id);
     if (!run || run.status === "queued") return c.json({ error: "Sandbox not found for this run." }, 404);
     c.header("Cache-Control", "no-store");
-    return c.json(await agentLab.sandboxAccess.preview(run, key, body.data.resume));
+    const preview = await agentLab.sandboxAccess.preview(run, key, body.data.resume);
+    return c.json(viewer && preview.kind === "desktop" ? viewer.issue(run, key, preview, c.req.header("Origin") ?? new URL(c.req.url).origin) : preview);
   });
   app.get("/api/agent-lab/runs/:id/video", async c => {
     const id = c.req.param("id"); if (!/^[a-zA-Z0-9_-]{1,100}$/.test(id)) return c.json({ error: "Invalid run ID." }, 400);
@@ -299,7 +302,9 @@ export async function startServer(): Promise<void> {
   });
   const software = new SoftwareService();
   const agentLab = new AgentLabService();
-  const server = serve({ fetch: createApp(defaultStore, engine, software, agentLab).fetch, port: config.PORT, hostname: "0.0.0.0" });
+  const viewer = new NativeViewerProxy({ allowedOrigins: [...new Set(["http://127.0.0.1:5173", "http://localhost:5173", `http://127.0.0.1:${config.PORT}`, `http://localhost:${config.PORT}`, ...(config.PUBLIC_DASHBOARD_URL ? [new URL(config.PUBLIC_DASHBOARD_URL).origin] : [])])] });
+  const server = serve({ fetch: createApp(defaultStore, engine, software, agentLab, viewer).fetch, port: config.PORT, hostname: "0.0.0.0" });
+  viewer.attach(server as Server);
   console.log(`Antibody controller listening on http://localhost:${config.PORT}`);
   let closing = false;
   const shutdown = async () => {
@@ -310,7 +315,7 @@ export async function startServer(): Promise<void> {
     await defaultStore.flush();
     await flushTelemetry();
     await telemetry?.shutdown();
-    server.close();
+    viewer.close(); server.close();
   };
   process.once("SIGINT", () => { void shutdown(); });
   process.once("SIGTERM", () => { void shutdown(); });
