@@ -21,7 +21,7 @@ export const buildLessonPrompt = (input: Parameters<LessonWriter>[0]): string =>
       sequenceLength: input.failure.sequence.length, sequenceWindow: input.failure.sequence.slice(-24), trace: input.failure.trace.slice(-8), reproduced: true } }),
 ].join("\n\n");
 
-export const writeBlueLesson: LessonWriter = (input) => traced("lesson_writer", input.run.id, { "hollow.candidate_id": input.candidate.id, "hollow.generation": input.candidate.generation }, async () => {
+export const writeBlueLesson: LessonWriter = (input) => traced("lesson_writer", input.run.id, { "hollow.candidate_id": input.candidate.id, "hollow.generation": input.candidate.generation, "hollow.provider": config.AGENT_PROVIDER, "llm.model_name": config.BLUE_MODEL }, async () => {
   if (!/^[a-zA-Z0-9_-]{1,100}$/.test(input.run.id) || !/^[a-zA-Z0-9_-]{1,100}$/.test(input.candidate.id)) throw new Error("Invalid lesson artifact identifier.");
   const artifactPath = join(config.DATA_DIR, "runs", input.run.id, "agents", `${input.candidate.id}-blue-lesson-${randomUUID()}`);
   await mkdir(artifactPath, { recursive: true, mode: 0o700 });

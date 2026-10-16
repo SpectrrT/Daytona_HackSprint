@@ -88,7 +88,7 @@ export function rowsFromSoftwareRun(run: SoftwareRun): TimeseriesRow[] {
     }
     for(const bug of bugs){const check=selected.checks.find(c=>c.id===`regression-${bug.id}`);if(generation>bug.discovered&&check?.passed&&bug.fixed===undefined)bug.fixed=generation;else if(check&&!check.passed)bug.fixed=undefined;}
     const hidden=group.flatMap(c=>c.checks.filter(check=>check.hidden));const closed=bugs.filter(b=>b.fixed!==undefined);
-    const at=Math.max(run.createdAt,...run.events.filter(e=>group.some(c=>c.id===e.candidateId)).map(e=>e.at));
+    const at=Math.max(run.createdAt,...group.flatMap(c=>c.evaluatedAt?[c.evaluatedAt]:run.events.filter(e=>e.candidateId===c.id&&e.message===`${c.label}: ${c.status}; ${c.checks.filter(check=>check.passed).length}/${c.checks.length} checks passed.`).map(e=>e.at)));
     rows.push(validateRow({run:run.id,pack:"payments",arm:"recorded",seed:0,generation,t_elapsed_s:Math.max(0,(at-run.createdAt)/1000),breaches_new:fresh,breaches_cumulative:bugs.length,fixed_cumulative:closed.length,open_bugs:bugs.length-closed.length,heldout_pass:hidden.filter(c=>c.passed).length,heldout_total:hidden.length,fix_generations:closed.map(b=>b.fixed!-b.discovered)}));
   }
   return rows;

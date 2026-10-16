@@ -1,3 +1,5 @@
+import { assertFrozenContract, freezeContract } from "../engine/contract.js";
+import { BUFFER_PROMPT } from "@hollow-purple/shared/evolution";
 import { createHash } from "node:crypto";
 import type { EvolutionRun, FailureEvidence } from "@hollow-purple/shared/evolution";
 import { FAMILIES, LessonMemory, failureFamily, type Family, type GraphNode, type GraphEdge } from "../memory/graph.js";
@@ -14,6 +16,8 @@ export interface Corpus {
   failures: FailureEvidence[]; corpusHash: string;
 }
 export function assertCorpus(corpus: Corpus): void {
+  assertFrozenContract(corpus.developmentRun.contract);
+  if (corpus.contractHash !== freezeContract(BUFFER_PROMPT, 0).hash) throw new Error("Corpus differs from the frozen study contract.");
   const { corpusHash, ...body } = corpus;
   if (digest(body) !== corpusHash || corpus.contractHash !== corpus.developmentRun.contract.hash) throw new Error("Frozen corpus hash mismatch.");
   if (!corpus.failures.length || corpus.failures.some(f => !f.reproduced || /held.out|hidden/i.test(f.testId) || failureFamily(f) !== corpus.trainingFamily)) throw new Error("Corpus contains an unverified or out-of-family failure.");

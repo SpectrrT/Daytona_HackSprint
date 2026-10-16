@@ -15,6 +15,8 @@ import { buildTests } from "../lab/tests.js";
 const args = process.argv.slice(2);
 const option = (key: string) => { const i = args.indexOf(key); return i >= 0 ? args[i + 1] : undefined; };
 const seedsCount = Number(option("--seeds") ?? 3); const generations = Number(option("--generations") ?? 2);
+const developmentGenerations = Number(option("--development-generations") ?? 2);
+if (!Number.isInteger(developmentGenerations) || developmentGenerations < 1 || developmentGenerations > 4) throw new Error("Use 1 to 4 development generations.");
 if (!Number.isInteger(seedsCount) || seedsCount < 1 || seedsCount > 20 || !Number.isInteger(generations) || generations < 1 || generations > 4) throw new Error("Use 1 to 20 seeds and 1 to 4 generations.");
 if (!["bedrock", "anthropic"].includes(config.AGENT_PROVIDER) || !config.BLUE_MODEL || config.BLUE_MODEL !== config.RED_MODEL || !/claude/i.test(config.BLUE_MODEL)) throw new Error("Ablation requires the same explicit Claude model for Blue and Red. No provider fallback is allowed.");
 const runId = `abl-${randomUUID()}`; const directory = join(config.DATA_DIR, "ablation", runId);
@@ -23,7 +25,7 @@ const seeds = Array.from({ length: seedsCount }, (_, i) => 730201 + i * 7919);
 const protocolPaths = execFileSync("git", ["ls-files", "--cached", "--others", "--exclude-standard", "--", "apps/server/src", "packages/shared/src", "lab", "telemetry", "pnpm-lock.yaml"], {cwd:REPO_ROOT,encoding:"utf8"}).trim().split("\n").filter(path=>/\.(?:ts|py|sv|cpp|yaml)$/.test(path));
 const protocolHashes:Record<string,string>={};
 for(const path of protocolPaths){const bytes=await readFile(join(REPO_ROOT,path));protocolHashes[path]=createHash("sha256").update(bytes).digest("hex");const target=join(directory,"protocol",path);await mkdir(dirname(target),{recursive:true});await writeFile(target,bytes,{mode:0o600});}
-const manifest = { protocolHashes, protocolHash: digest(protocolHashes), runId, startedAt: Date.now(), model: config.BLUE_MODEL, provider: config.AGENT_PROVIDER, seeds, generations, orders: seeds.map(seed => ({ seed, order: armOrder(seed) })), retrievalK: RETRIEVAL_K, retrievalTokenBudget: RETRIEVAL_TOKEN_BUDGET, tokenCapMethod: "conservative UTF-8 byte upper bound", maxOutputTokensPerCall: config.AGENT_MAX_TOKENS, temperature: 0.2, modelSeedSupported: false, snapshot: config.PROD_SNAPSHOT, gitCommit: execFileSync("git", ["rev-parse", "HEAD"], { cwd: REPO_ROOT, encoding: "utf8" }).trim(),
+const manifest = { protocolHashes, protocolHash: digest(protocolHashes), runId, startedAt: Date.now(), model: config.BLUE_MODEL, provider: config.AGENT_PROVIDER, seeds, generations, developmentGenerations, orders: seeds.map(seed => ({ seed, order: armOrder(seed) })), retrievalK: RETRIEVAL_K, retrievalTokenBudget: RETRIEVAL_TOKEN_BUDGET, tokenCapMethod: "conservative UTF-8 byte upper bound", maxOutputTokensPerCall: config.AGENT_MAX_TOKENS, temperature: 0.2, modelSeedSupported: false, snapshot: config.PROD_SNAPSHOT, gitCommit: execFileSync("git", ["rev-parse", "HEAD"], { cwd: REPO_ROOT, encoding: "utf8" }).trim(),
   frozenSuites: seeds.map(seed => ({ seed, baseSuiteHash: digest(buildTests(seed, [])), transferFamily: "empty_boundary", transferVersion: 1 })) };
 await writeFile(join(directory, "manifest.json"), JSON.stringify(manifest, null, 2), { mode: 0o600 });
 const trials: Trial[] = [];
@@ -42,7 +44,7 @@ await save("development");
 try {
   await requireHardwareSnapshot();
   const corpusPath = option("--corpus");
-  corpus = corpusPath ? JSON.parse(await readFile(resolve(corpusPath), "utf8")) as Corpus : await traced("run", `${runId}-dev`, {}, () => developCorpus(runId, directory));
+  corpus = corpusPath ? JSON.parse(await readFile(resolve(corpusPath), "utf8")) as Corpus : await traced("run", `${runId}-dev`, {}, () => developCorpus(runId, directory, developmentGenerations));
   assertCorpus(corpus); if (corpus.model !== manifest.model) throw new Error("Development corpus model differs from the experiment model.");
   await writeFile(join(directory, "corpus.json"), JSON.stringify(corpus, null, 2), { mode: 0o600 });
   if (!args.includes("--develop-only")) {
@@ -68,4 +70,4 @@ if (!failure && trials.length && config.ARIZE_ENABLED) {
 await save(failure ? "failed" : "completed");
 console.log(formatMetrics(summarizeTrials(trials)));
 console.log(JSON.stringify({ runId, results: join(directory, "results.json"), failure: failure ?? null, arize }));
-if (failure || trials.some(t => t.status === "missing")) process.exitCode = 1;
+if (failure || trials.some(t => t.status === "missing") || (config.ARIZE_ENABLED && trials.length > 0 && (arize as {status?:string}|undefined)?.status !== "submitted")) process.exitCode = 1;

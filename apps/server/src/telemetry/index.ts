@@ -7,7 +7,7 @@ import type { AgentInvocation } from "@hollow-purple/shared/evolution";
 
 export type Attributes = Record<string, string | number | boolean | undefined>;
 export interface SpanRecord { traceId: string; spanId: string; parentSpanId?: string; name: string; startedAt: number; endedAt: number; status: "ok" | "error"; attributes: Record<string, string | number | boolean> }
-const allowed = /^(?:hollow\.(?:run_id|candidate_id|generation|role|provider|backend|score|checks_passed|checks_total|regressions|cycles|reproduced|attempts|source_hash|recorded_evidence|run_status)|llm\.(?:model_name|token_count\.(?:prompt|completion))|openinference\.span\.kind)$/;
+const allowed = /^(?:hollow\.(?:run_id|candidate_id|generation|role|provider|backend|score|checks_passed|checks_total|regressions|cycles|reproduced|attempts|source_hash|recorded_evidence|run_status)|llm\.(?:provider|system|model_name|token_count\.(?:prompt|completion))|openinference\.span\.kind)$/;
 export function safeAttributes(values: Attributes): SpanRecord["attributes"] {
   return Object.fromEntries(Object.entries(values).filter(([key, value]) => allowed.test(key) && value !== undefined && (typeof value !== "number" || Number.isFinite(value))).map(([key, value]) => [key, typeof value === "string" ? value.slice(0, 200) : value!])) as SpanRecord["attributes"];
 }
@@ -44,7 +44,7 @@ export async function submitSpan(record: SpanRecord): Promise<void> {
 }
 export async function flushTelemetry(): Promise<void> { await queued; }
 export function agentAttributes(agent: Partial<AgentInvocation>): Attributes {
-  return { "hollow.provider": agent.provider, "llm.model_name": agent.model, "llm.token_count.prompt": agent.inputTokens, "llm.token_count.completion": agent.outputTokens, "hollow.attempts": agent.attempts };
+  return { "llm.provider": agent.provider === "bedrock" ? "aws" : agent.provider, "llm.system": agent.provider === "bedrock" || agent.provider === "anthropic" ? "anthropic" : "openai", "hollow.provider": agent.provider, "llm.model_name": agent.model, "llm.token_count.prompt": agent.inputTokens, "llm.token_count.completion": agent.outputTokens, "hollow.attempts": agent.attempts };
 }
 
 /** Application errors remain errors; telemetry cannot change a model or checker verdict. */

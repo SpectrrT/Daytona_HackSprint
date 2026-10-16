@@ -1,3 +1,4 @@
+import { RunCharts } from './RunCharts';
 import { useEffect, useMemo, useState } from 'react';
 import { ArrowDownToLine, ArrowRight, Check, ChevronDown, GitBranch, Loader2, LockKeyhole, RotateCcw, ShieldCheck, X } from 'lucide-react';
 import type { SoftwareCandidate, SoftwareRun, SoftwareRunSummary } from '@hollow-purple/shared/software';
@@ -91,20 +92,7 @@ export function SoftwareProgressCharts({ run }: { run: SoftwareRun }) {
       <li><b className="role-blue">B</b><span><strong>Blue repairs</strong><small>Writes checkout.py in a separate model session</small></span><ArrowRight size={14}/></li>
       <li><b>V</b><span><strong>Verifier gates</strong><small>Regressions, new Red tests and held-out checks</small></span></li>
     </ol>
-    <div className="software-chart-grid">
-      <section className="panel software-chart-panel">
-        <div className="panel-heading"><div className="panel-title"><GitBranch size={16}/><h2>Known failures by version</h2></div><span className="panel-meta">Same reproduced scenarios</span></div>
-        <p className="software-chart-caption">Each point is one candidate’s verdict against the {failures.length || 'current'} known regression{failures.length === 1 ? '' : 's'}.</p>
-        {timePoints.length ? <RegressionChart points={timePoints} count={failures.length} start={run.createdAt} end={end} selected={candidate?.id ?? ''} onSelect={setSelectedId}/> : <div className="software-chart-empty">A reproduced failure and timed candidate verdicts will appear here.</div>}
-        <p className="software-chart-note">Lower is better. Unmeasured candidates are omitted. The repairs below retain their actual parent relationships.</p>
-      </section>
-      <section className="panel software-chart-panel">
-        <div className="panel-heading"><div className="panel-title"><ShieldCheck size={16}/><h2>Verification over time</h2></div><span className="panel-meta">{timed.total} timed results</span></div>
-        <div className="software-chart-legend"><span><i className="passed"/>Passed results</span><span><i className="failed"/>Failed results</span></div>
-        <VerificationChart points={progress.timeline} start={run.createdAt} end={end}/>
-        <p className="software-chart-note">Cumulative executions across versions, including repeated tests. {progress.historicalTiming ? 'Historical checks are grouped at recorded verdicts; individual check times were not saved.' : 'Each result is placed at its recorded verification time.'}{progress.untimedResults > 0 && ` ${progress.untimedResults} untimed results appear only in the version details.`}</p>
-      </section>
-    </div>
+    <RunCharts runId={run.id} pack="payments"/>
     <div className="software-version-list" aria-label="Inspect a software candidate">
       {progress.candidates.map(point => {
         const item = run.candidates.find(candidate => candidate.id === point.id)!;

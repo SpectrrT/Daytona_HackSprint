@@ -93,8 +93,8 @@ async function searchRedUntraced(input: RedInput): Promise<RedProposal> {
   return { ...answer, agent: result.agent };
 }
 export function buildBlue(input: BlueInput): Promise<BlueProposal> {
-  return traced("blue", input.runId, { "hollow.candidate_id": input.candidateId, "hollow.generation": input.generation }, () => buildBlueUntraced(input), (result) => agentAttributes(result.agent));
+  return traced("blue", input.runId, { "hollow.candidate_id": input.candidateId, "hollow.generation": input.generation, "hollow.provider": config.AGENT_PROVIDER, "llm.model_name": config.BLUE_MODEL }, () => buildBlueUntraced(input), (result) => agentAttributes(result.agent));
 }
 export function searchRed(input: RedInput): Promise<RedProposal> {
-  return traced("red", input.runId, { "hollow.candidate_id": input.candidateId }, () => searchRedUntraced(input), (result) => agentAttributes(result.agent));
+  return traced("red", input.runId, { "hollow.candidate_id": input.candidateId, "hollow.provider": config.AGENT_PROVIDER, "llm.model_name": config.RED_MODEL }, () => searchRedUntraced(input), (result) => agentAttributes(result.agent));
 }
