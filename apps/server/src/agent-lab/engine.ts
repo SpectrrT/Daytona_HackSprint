@@ -46,9 +46,9 @@ export async function runAgentLab(options: { id?: string; signal?: AbortSignal; 
     run.candidates.push(parent); await emit("Frozen three application contracts: customer support, purchasing, and engineering. The starter is an explicitly manual fault fixture.");
     desktop = await DaytonaAgentAdapter.provision(id, parent); adapters.set(parent.id, desktop); run.desktopSandboxId = desktop.computer.id; await save();
     await desktop.prepareDesktop();
+    recordingId = (await desktop.computer.sandbox.computerUse.recording.start(`agents-${id}`)).id; assert.ok(recordingId);
     await desktop.launch("chromium --no-sandbox --disable-dev-shm-usage --no-first-run --force-device-scale-factor=1 --remote-debugging-port=9222 --remote-allow-origins='*' --user-data-dir=/tmp/agent-workbench-chrome --start-maximized http://127.0.0.1:8080/"); await pause(1800);
     browser = await LabBrowser.connect(desktop, directory); run.desktopUrl = JSON.parse(await readFile(join(directory, "anchor-session.json"), "utf8")).desktopUrl;
-    recordingId = (await desktop.computer.sandbox.computerUse.recording.start(`agents-${id}`)).id; assert.ok(recordingId);
     await desktop.launch(`xfce4-terminal --disable-server --maximize --title='${terminalTitle}' --working-directory=${DESKTOP_DIR}`); await pause(900);
     await terminal("hostname; pwd; python3 --version; cat candidate-info.txt; cat guard.py", 3500);
     await emit("Red is generating source-specific inputs across all three applications.", parent.id);
@@ -80,10 +80,12 @@ export async function runAgentLab(options: { id?: string; signal?: AbortSignal; 
       const adapted = await redAgent(context(candidate.id), candidate, run.failures); candidate.redAgent = adapted.agent; candidate.attacks = adapted.attacks; await save();
       for (const attack of adapted.attacks) {
         assert.ok(!parent.attacks.some(previous => previous.domain === attack.domain && previous.message === attack.message && previous.knowledge === attack.knowledge), "Red repeated an earlier exact input instead of adapting.");
+        await emit(`Anchor is testing a new ${attack.domain} input: ${attack.name}`, candidate.id);
         const trial = await browser.trial(adapter, attack, run.contract, directory, context(candidate.id), consumeBrowser);
         await retain(candidate, trial, `adapted-${attack.id}`); await reproduce(candidate, adapter, trial);
       }
       await emit("The verifier is checking each tool boundary, repeated effects, and held-out action streams.", candidate.id);
+      await report("independent-checks", "INDEPENDENT TOOL VERIFICATION\n\nChecking actual tool decisions and persisted SQLite effects.\nThe browser will return for legitimate task checks.\nHeld-out inputs stay off the recorded browser display.");
       for (const test of [...gateTests(), ...hiddenGateTests(0x1792 + generation)]) {
         options.signal?.throwIfAborted(); await adapter.reset(); await adapter.tools(test.domain, test.actions);
         const snapshot = await adapter.observe(), check = verifyLab({ id: test.id, domain: test.domain, contract: run.contract, sourceHash: candidate.sourceHash, runtimeHash: adapter.runtimeHash, actions: test.actions, snapshot, hidden: test.hidden, kind: "tool-gate" });

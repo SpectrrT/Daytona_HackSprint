@@ -10,6 +10,50 @@
   max-width:1400px;
   margin:0 auto;
 }
+.nav-group+.nav-group {
+  margin-top:24px;
+}
+.lab-contract {
+  margin-top:21px;
+  border:1px solid var(--lab-line);
+  border-radius:8px;
+  background:var(--lab-surface);
+}
+.lab-contract>summary {
+  display:flex;
+  align-items:center;
+  gap:8px;
+  list-style:none;
+  padding:16px 18px;
+  font-size:12px;
+  cursor:pointer;
+}
+.lab-contract summary strong {
+  font-weight:500;
+}
+.lab-contract summary code {
+  margin-left:auto;
+  color:var(--lab-muted);
+  font-size:11px;
+}
+.lab-contract>div {
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(min(100%,280px),1fr));
+  gap:24px;
+  border-top:1px solid var(--lab-line);
+  padding:20px 18px;
+}
+.lab-contract h3 {
+  margin:0 0 8px;
+  font-size:12px;
+  font-weight:550;
+}
+.lab-contract p {
+  margin:0;
+  color:var(--lab-muted);
+  font-size:13px;
+  line-height:1.85;
+}
 .lab-hero {
   display:flex;
   justify-content:space-between;
