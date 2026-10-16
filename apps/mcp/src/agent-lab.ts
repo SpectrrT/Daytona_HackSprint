@@ -38,6 +38,9 @@ export function publicAgentRun(run: LabRun | QueuedRun) {
     candidates: run.candidates.map(candidateSummary),
     champion: run.status === "completed" ? run.championId ?? null : null,
     presentation: demoVerdict(run),
+    repository: run.repository ? { repo: run.repository.repo, branch: run.repository.branch, branch_url: `${run.repository.webUrl}/tree/${run.repository.branch}`,
+      base: `${run.repository.baseBranch}@${run.repository.baseCommit.slice(0, 12)}`, pushed_commits: run.repository.commits,
+      pull_request: run.repository.pullRequestUrl ?? null, error: run.repository.error ?? null } : null,
     lessons: run.lessons, error: run.error ?? null,
     measurement: "Finite checks against frozen contracts and synthetic business records; these counts are not an overall security percentage.",
   };

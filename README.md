@@ -85,6 +85,16 @@ The API exposes `GET /api/agent-lab/status`, list/read/export/video routes under
 
 This follows the isolated agent-testing pattern described by [ChaosAgent](https://devpost.com/software/chaosagent), and extends our existing engineering loop with code repairs, repeatable effects, useful-work gates and multiple application contracts. Passing the measured checks is evidence about those cases, not a universal security score.
 
+### Push repairs to a GitHub repository
+
+Set `AGENT_LAB_REPO=owner/name` to test the code in a repository instead of the built-in starter. The repository's default branch must contain `guard.py` (the `authorize` function) and `instructions.md` (the assistant's instructions). [SpectrrT/antibody-target](https://github.com/SpectrrT/antibody-target) is set up this way.
+
+1. The controller clones the repository and uses its `guard.py` and `instructions.md` as the starting code. A dry-run push confirms write access before any model or sandbox work.
+2. Each tested version becomes one commit on `antibody/run-<run id>`. The first commit records the evidence against the starting code. Each later commit holds one Blue repair and the verifier's verdict. Public checks and reproduced failures are saved under `antibody/runs/<run id>/`. Held-out inputs and private model artifacts are never pushed.
+3. When the verifier accepts a repair, the run opens a pull request. Merging it is the human approval. Nothing merges automatically.
+
+Pushing uses this machine's `gh` sign-in. Candidate sandboxes never receive GitHub credentials. `get_agent_result` shows the branch, the pushed commits and the pull request.
+
 ### Add an environment
 
 An environment supplies trusted context and fixtures, its available tool implementations, an independent permission oracle, and legitimate task checks. Register its metadata in `packages/shared/src/agent-lab.ts`, its trusted inputs in `apps/server/src/agent-lab/contract.ts`, and its reference semantics in `verifier.ts`. Add the tool driver to `lab/agent-lab/runtime.py` and acceptance cases to `tests.ts`. Red/Blue orchestration, provenance, fresh-process replay, regression inheritance, isolated candidate execution, browser evidence and UI comparison are shared. New tools and rules need their own verification; a new label alone does not add a supported application.

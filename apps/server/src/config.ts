@@ -63,6 +63,9 @@ const schema = z.object({
   /** Default model of the agent under test; each arena can override it. */
   TARGET_MODEL: z.string().default("claude-opus-5-5"),
   AGENT_LAB_TARGET_MODEL: optionalString,
+  /** GitHub owner/name whose guard.py and instructions.md the agent lab tests; runs push each version and open a PR for a verified repair. */
+  AGENT_LAB_REPO: optionalString.refine((v) => v === undefined || /^[A-Za-z0-9][A-Za-z0-9-]{0,38}\/[A-Za-z0-9_-][A-Za-z0-9._-]{0,99}$/.test(v) && !v.endsWith(".git"), "Use owner/name, for example SpectrrT/antibody-target."),
+  GH_BIN: z.string().regex(/^[A-Za-z0-9_./-]+$/).default("gh"),
   TARGET_EFFORT: effort.default("medium"),
   TARGET_MAX_TURNS: z.coerce.number().int().min(3).default(25),
 
