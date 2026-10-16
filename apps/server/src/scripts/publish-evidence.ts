@@ -14,8 +14,8 @@ const safeRunId = (value: string) => /^[a-zA-Z0-9_-]{1,100}$/.test(value);
 
 function publicInvocation(agent: AgentInvocation | undefined): AgentInvocation | undefined {
   if (!agent) return undefined;
-  const { role, provider, model, startedAt, durationMs, inputTokens, outputTokens } = agent;
-  return { role, provider, model, startedAt, durationMs, inputTokens, outputTokens };
+  const { role, provider, model, startedAt, durationMs, inputTokens, outputTokens, attempts } = agent;
+  return { role, provider, model, startedAt, durationMs, inputTokens, outputTokens, attempts };
 }
 function publicCandidate(candidate: Candidate): Candidate {
   const { id, parentId, generation, label, variant, status, source, checks, failure, score, lessons,

@@ -1,5 +1,5 @@
 import type { BrowserAudit } from "@hollow-purple/shared/evolution";
-import { chromium, type Browser } from "playwright-core";
+import { chromium, type Browser, type Page } from "playwright-core";
 import { mkdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { config } from "../config.js";
@@ -24,13 +24,16 @@ export async function runAnchorAudit(input: string): Promise<BrowserAudit> {
   const url = dashboardUrl(input);
   const session = await createAnchorSession(["hollow-purple", "dashboard-audit"]);
   let browser: Browser | undefined;
+  let page: Page | undefined;
   const checks: BrowserAudit["checks"] = [];
   let operationError: unknown;
   try {
     try { browser = await chromium.connectOverCDP(session.cdpUrl, { timeout: 30_000 }); }
     catch { throw new Error("Anchor browser connection failed. Inspect the session in the Anchor dashboard."); }
     const context = browser.contexts()[0] ?? await browser.newContext();
-    const page = context.pages()[0] ?? await context.newPage();
+    page = context.pages()[0] ?? await context.newPage();
+    // Daytona documents this header for automated preview clients. It carries no credential.
+    await page.setExtraHTTPHeaders({ "X-Daytona-Skip-Preview-Warning": "true" });
     const pageErrors: string[] = [];
     page.on("pageerror", () => pageErrors.push("uncaught error"));
     let response;
@@ -41,9 +44,20 @@ export async function runAnchorAudit(input: string): Promise<BrowserAudit> {
     checks.push({ name: "Application renders", passed: await page.getByTestId("app-shell").isVisible() });
     // The shell renders before the requested run has loaded from the controller.
     await page.getByTestId("lineage-graph").waitFor({ state: "visible", timeout: 30_000 }).catch(() => {});
+    const runId = url.searchParams.get("run");
+    if (runId) checks.push({ name: "Requested run is loaded", passed: await page.getByTestId("app-shell").getAttribute("data-run-id") === runId });
     checks.push({ name: "Prompt launch control is present", passed: await page.getByTestId("run-button").isVisible() });
+    if (await page.getByTestId("readonly-snapshot").isVisible()) {
+      checks.push({ name: "Published snapshot cannot launch another experiment", passed: await page.getByTestId("run-button").isDisabled() });
+    }
     checks.push({ name: "Lineage graph is inspectable", passed: await page.getByTestId("lineage-graph").isVisible() });
     checks.push({ name: "Reproducible failure evidence is inspectable", passed: await page.getByTestId("evidence-panel").isVisible() });
+    await page.getByRole("button", { name: "View source", exact: true }).click();
+    const sourceDialog = page.getByRole("dialog");
+    await sourceDialog.waitFor({ state: "visible", timeout: 10_000 });
+    checks.push({ name: "Candidate RTL source opens", passed: await sourceDialog.isVisible() && /module\s+fifo\s*\(/.test(await sourceDialog.locator("code").last().innerText()) });
+    checks.push({ name: "Executed source SHA-256 is displayed", passed: await sourceDialog.getByText(/^[a-f0-9]{64}$/).isVisible() });
+    await page.getByRole("button", { name: "Close source", exact: true }).click();
     const navigation = page.getByRole("navigation", { name: "Main navigation" });
     await navigation.getByRole("button", { name: "Contract", exact: true }).click();
     await page.getByTestId("contract-panel").waitFor({ state: "visible", timeout: 10_000 });
@@ -63,7 +77,6 @@ export async function runAnchorAudit(input: string): Promise<BrowserAudit> {
     }
     await navigation.getByRole("button", { name: "Overview", exact: true }).click();
     checks.push({ name: "No uncaught page errors", passed: pageErrors.length === 0 });
-    const runId = url.searchParams.get("run");
     let screenshotPath: string | undefined;
     if (runId && /^[a-zA-Z0-9_-]{1,100}$/.test(runId)) {
       const directory = join(config.DATA_DIR, "runs", runId);
@@ -76,6 +89,13 @@ export async function runAnchorAudit(input: string): Promise<BrowserAudit> {
       summary: `${checks.filter((check) => check.passed).length}/${checks.length} Anchor dashboard checks passed. Browser session ended after audit.` };
   } catch (error) {
     operationError = error;
+    const runId = url.searchParams.get("run");
+    if (page && runId && /^[a-zA-Z0-9_-]{1,100}$/.test(runId)) {
+      const directory = join(config.DATA_DIR, "runs", runId);
+      await mkdir(directory, { recursive: true });
+      const screenshot = await page.screenshot({ fullPage: true, timeout: 10_000 }).catch(() => undefined);
+      if (screenshot) await writeFile(join(directory, "anchor-audit-failed.png"), screenshot, { mode: 0o600 });
+    }
     throw error;
   } finally {
     await browser?.close().catch(() => {});

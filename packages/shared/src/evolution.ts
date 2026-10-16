@@ -70,6 +70,7 @@ export interface AgentInvocation {
   durationMs: number;
   inputTokens?: number;
   outputTokens?: number;
+  attempts?: number;
   artifactPath?: string;
   sessionId?: string;
 }

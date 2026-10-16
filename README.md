@@ -19,7 +19,7 @@ pnpm dev
 
 Open [localhost:5173](http://localhost:5173), select Daytona, and click **Start agent team**. The existing example is clearly labeled as an archived behavioral-model run; starting an experiment creates a new live run.
 
-The default model provider is `AGENT_PROVIDER=codex-cli`. It uses the installed CLI's existing sign-in without reading or copying auth files. `BLUE_MODEL` and `RED_MODEL` may be left blank to use the CLI default. Model jobs are ephemeral, have tools disabled, receive only the relevant contract/source/public evidence, and return schema-validated JSON. Their child environments exclude Daytona, Anchor, and model API keys. Each job has a timeout and bounded output. Private prompts, validated answers, and invocation metadata are saved under `data/runs/<id>/agents/`.
+The default model provider is `AGENT_PROVIDER=codex-cli`. It uses the installed CLI's existing sign-in without reading or copying auth files. `BLUE_MODEL` and `RED_MODEL` may be left blank to use the CLI default. Model jobs are ephemeral, have tools disabled, receive only the relevant contract/source/public evidence, and return schema-validated JSON. Their child environments exclude Daytona, Anchor, and model API keys. Each job has a timeout and bounded output. Codex process, connection, service, or rate failures may retry once within that same time budget, using the identical prompt and schema. Authentication, account quota, schema, output, and timeout failures stop immediately. Attempts have separate private artifacts; displayed token usage comes from the successful process. Private prompts, validated answers, and invocation metadata are saved under `data/runs/<id>/agents/`.
 
 An optional Anthropic provider is available with `AGENT_PROVIDER=anthropic`, `ANTHROPIC_API_KEY`, and explicit `BLUE_MODEL` / `RED_MODEL` values. The live verification workflow uses the configured provider; it never falls back to a template when a model fails.
 
@@ -47,7 +47,7 @@ pnpm cleanup -- --delete --run=<run-id>     # Remove only a selected run's resou
 
 ## Anchor Browser verification
 
-Set `ANCHOR_API_KEY` in `.env`. Anchor runs a real cloud browser through Playwright CDP, inspects the dashboard, opens the frozen contract, checks its SHA-256 hash, returns to lineage, and checks for uncaught errors. Its session is closed after the audit. CDP credentials never reach the frontend or candidate sandboxes.
+Set `ANCHOR_API_KEY` in `.env`. Anchor runs a real cloud browser through Playwright CDP, checks the requested run and read-only controls, opens RTL source and its SHA-256 hash, inspects the frozen contract, navigates the evidence, replays a failure trace when present, and checks for uncaught errors. It saves a real browser screenshot under the run’s evidence directory. Its session is closed after the audit. CDP credentials never reach the frontend or candidate sandboxes.
 
 For a local controller, publish a **read-only evidence snapshot** to Daytona rather than exposing the controller publicly:
 
@@ -99,6 +99,7 @@ The development controller has no user authentication; keep it private. Only the
 
 - [OpenAI: iterative repair loops with Codex](https://developers.openai.com/cookbook/examples/codex/build_iterative_repair_loops_with_codex) and [non-interactive execution](https://learn.chatgpt.com/docs/non-interactive-mode).
 - [Daytona TypeScript SDK](https://www.daytona.io/docs/en/typescript-sdk/) and [snapshots](https://www.daytona.io/docs/en/snapshots/).
+- [Daytona preview URLs and automated clients](https://www.daytona.io/docs/en/preview/).
 - [Anchor Browser sessions](https://docs.anchorbrowser.io/quickstart/create-session).
 - [Verilator overview](https://verilator.org/guide/latest/overview.html) and [command options](https://verilator.org/guide/latest/exe_verilator.html).
 - [cocotb](https://docs.cocotb.org/en/stable/) is a future Python testbench path; this implementation uses a fixed C++ observation driver with a Python oracle.

@@ -4,7 +4,8 @@ import { join } from "node:path";
 import type { BlueProposal, Candidate, FailureEvidence, FrozenContract, RedProposal } from "@hollow-purple/shared/evolution";
 import { config } from "../config.js";
 import { assertFrozenContract } from "../engine/contract.js";
-import { AgentCallError, runCodexStructured, type AgentAnswer } from "./codex.js";
+import { AgentCallError, type AgentAnswer } from "./codex.js";
+import { runCodexWithRetry } from "./retry.js";
 import { runAnthropicStructured } from "./llm.js";
 import { BLUE_SOURCE_LIMIT, RED_ATTACK_COUNT, RED_SEQUENCE_LIMIT, blueAnswerSchema, outputSchema, parseBlueAnswer, parseRedAnswer, redAnswerSchema } from "./schemas.js";
 
@@ -64,7 +65,7 @@ async function invoke(role: "blue" | "red", input: BlueInput | RedInput, prompt:
   const call = { binary: config.CODEX_BIN, role, artifactPath, prompt,
     schema: outputSchema(role === "blue" ? blueAnswerSchema : redAnswerSchema),
     timeoutMs: config.AGENT_TIMEOUT_SECONDS * 1000, model: role === "blue" ? config.BLUE_MODEL : config.RED_MODEL, signal: input.signal };
-  return config.AGENT_PROVIDER === "anthropic" ? runAnthropicStructured(call) : runCodexStructured(call);
+  return config.AGENT_PROVIDER === "anthropic" ? runAnthropicStructured(call) : runCodexWithRetry(call);
 }
 async function saveValidated(result: AgentAnswer, answer: unknown): Promise<void> {
   await writeFile(join(result.agent.artifactPath!, "answer.json"), JSON.stringify(answer, null, 2), { mode: 0o600 });
