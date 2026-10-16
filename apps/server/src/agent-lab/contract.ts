@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
-import type { EngineeringContract } from "@hollow-purple/shared/evolution";
-import type { AgentEnvironment, LabAction, LabSnapshot } from "@hollow-purple/shared/agent-lab";
+import type { EngineeringContract } from "@antibody/shared/evolution";
+import type { AgentEnvironment, LabAction, LabSnapshot } from "@antibody/shared/agent-lab";
 
 export const hash = (source: string) => createHash("sha256").update(source).digest("hex");
 export const candidateHash = (prompt: string, guard: string) => hash(JSON.stringify({ systemPrompt: prompt, guardSource: guard }));

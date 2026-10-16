@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import type { CheckoutContract } from "@hollow-purple/shared/software";
+import type { CheckoutContract } from "@antibody/shared/software";
 
 export const SOFTWARE_PROMPT = "Build a small checkout web app with five items in stock at 1999 cents each. A request ID identifies one purchase: retries must return the same order without charging or consuming inventory twice. Concurrent requests must not oversell.";
 export const sourceHash = (source: string) => createHash("sha256").update(source).digest("hex");

@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { BUFFER_PROMPT, type EvolutionRun } from "@hollow-purple/shared/evolution";
+import { BUFFER_PROMPT, type EvolutionRun } from "@antibody/shared/evolution";
 import { config } from "../config.js";
 
 const origin = process.env.SMOKE_URL ?? `http://127.0.0.1:${config.PORT}`;

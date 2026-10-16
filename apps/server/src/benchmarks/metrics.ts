@@ -1,4 +1,4 @@
-import type { EvaluationResult } from "@hollow-purple/shared/evolution";
+import type { EvaluationResult } from "@antibody/shared/evolution";
 
 export interface Measurement {
   id: string;

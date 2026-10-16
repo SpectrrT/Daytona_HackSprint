@@ -4,7 +4,7 @@ import { readFileSync } from "node:fs";
 import { mkdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { promisify } from "node:util";
-import type { CandidateVariant, EvaluationResult, FailureEvidence, RedAttack } from "@hollow-purple/shared/evolution";
+import type { CandidateVariant, EvaluationResult, FailureEvidence, RedAttack } from "@antibody/shared/evolution";
 import { config, REPO_ROOT } from "../config.js";
 import { CANDIDATE_DIR, Computer, provisionCandidate } from "../daytona/computer.js";
 import { observeModel, type Observation } from "./model.js";

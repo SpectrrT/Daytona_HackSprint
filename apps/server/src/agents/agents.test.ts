@@ -3,8 +3,8 @@ import { mkdtemp, readFile, readdir, rm, stat, writeFile } from "node:fs/promise
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { test } from "node:test";
-import type { Candidate, FailureEvidence } from "@hollow-purple/shared/evolution";
-import { BUFFER_PROMPT } from "@hollow-purple/shared/evolution";
+import type { Candidate, FailureEvidence } from "@antibody/shared/evolution";
+import { BUFFER_PROMPT } from "@antibody/shared/evolution";
 import { freezeContract } from "../engine/contract.js";
 import { codexChildEnv, AgentCallError, classifyCodexFailure, runCodexStructured } from "./codex.js";
 import { buildBluePrompt, buildRedPrompt } from "./index.js";

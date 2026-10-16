@@ -1,8 +1,8 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import type { Candidate, EvolutionRun, FailureEvidence } from "@hollow-purple/shared/evolution";
+import type { Candidate, EvolutionRun, FailureEvidence } from "@antibody/shared/evolution";
 import { rowsFromHardwareRun, rowsFromTrials, validateRow } from "./series.js";
-import type { TimeseriesRow } from "@hollow-purple/shared/charts";
+import type { TimeseriesRow } from "@antibody/shared/charts";
 import { createApp } from "../index.js";
 const failure:FailureEvidence={id:"unit-replay",testId:"simultaneous",testName:"Unit breach",seed:1,cycle:1,expected:1,actual:2,summary:"Unit test replay evidence",sequence:[{reset:true,read:false,write:false,data:0}],trace:[],reproduced:true};
 const c=(id:string,generation:number,broken=false):Candidate=>({id,generation,label:"Unit fixture",source:"unit",sourceHash:"unit",variant:"generated",status:broken?"failed":"verified",backend:"verilator",cycles:1,score:0,lessons:[],createdAt:0,failure:broken?failure:undefined,checks:[{id:"held-out",name:"Unit heldout",hidden:true,passed:!broken,cycles:1,summary:"Unit evidence"},...(generation?[{id:"regression-0",name:"Unit replay",hidden:false,passed:true,cycles:1,summary:"Unit evidence"}]:[])]});

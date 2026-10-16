@@ -39,7 +39,7 @@ DATA_DIR="$PWD/data" pnpm test
 pnpm build
 
 # Actual sponsor API write/read test. Requires the three Context credentials.
-DATA_DIR="$PWD/data" pnpm --filter @hollow-purple/server exec node --import tsx src/scripts/verify-memory.ts
+DATA_DIR="$PWD/data" pnpm --filter @antibody/server exec node --import tsx src/scripts/verify-memory.ts
 ```
 
 The live adapter check registers a unique `memory-qa-*` scope, writes typed nodes and real graph edges, reads each back, and saves a redacted report in `data/verification/memory-live.json`. It makes no model calls and performs no hardware runs. Its report proves graph persistence only. Unit tests cover the model/engine hooks with explicit fake agents and verifier results; those are not live repair evidence.

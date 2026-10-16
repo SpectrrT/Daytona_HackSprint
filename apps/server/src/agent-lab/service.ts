@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { readdir, readFile } from "node:fs/promises";
 import { join } from "node:path";
-import type { LabRun, LabRunSummary } from "@hollow-purple/shared/agent-lab";
+import type { LabRun, LabRunSummary } from "@antibody/shared/agent-lab";
 import { config } from "../config.js";
 import { labDirectory, runAgentLab } from "./engine.js";
 export class AgentLabService {

@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import type { LabSnapshot } from "@hollow-purple/shared/agent-lab";
+import type { LabSnapshot } from "@antibody/shared/agent-lab";
 import { action } from "../agent-lab/contract.js";
 import { executedActions } from "./retries.js";
 test("concurrent comparison binds actual journal order to every exact model action", () => {

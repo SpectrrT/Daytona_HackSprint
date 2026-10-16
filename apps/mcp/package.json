@@ -1,16 +1,16 @@
 {
-  "name": "@hollow-purple/mcp",
+  "name": "@antibody/mcp",
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "MCP server: lets Claude start, follow and read Hollow Purple's adversarial Daytona runs.",
+  "description": "MCP server: lets Claude start, follow and read Antibody's adversarial Daytona runs.",
   "scripts": {
     "start": "node --import tsx src/server.ts",
     "test": "node --import tsx --test \"src/**/*.test.ts\"",
     "typecheck": "tsc -p tsconfig.json"
   },
   "dependencies": {
-    "@hollow-purple/shared": "workspace:*",
+    "@antibody/shared": "workspace:*",
     "@modelcontextprotocol/sdk": "^1.32.1",
     "zod": "^4.6.7"
   },

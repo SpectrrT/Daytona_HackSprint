@@ -1,6 +1,6 @@
 import { useEffect, useId, useState, type KeyboardEvent } from 'react';
 import { ArrowDownToLine, ArrowRight, ArrowUpRight, Check, ChevronDown, Code2, ExternalLink, Loader2, Play, Plus, RotateCcw, ShieldCheck, Square, X } from 'lucide-react';
-import type { AgentEnvironment, LabCandidate, LabRun, LabRunSummary, LabTrial } from '@hollow-purple/shared/agent-lab';
+import type { AgentEnvironment, LabCandidate, LabRun, LabRunSummary, LabTrial } from '@antibody/shared/agent-lab';
 import { compareDomain, regressionProgress, runOutcome, runPhase } from './agent-lab-view';
 import './agent-lab.css';
 

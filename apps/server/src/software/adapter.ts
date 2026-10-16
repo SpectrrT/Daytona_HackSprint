@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
-import type { CheckoutInput, HttpObservation, LedgerSnapshot, ObservedRequest, SoftwareCandidate } from "@hollow-purple/shared/software";
+import type { CheckoutInput, HttpObservation, LedgerSnapshot, ObservedRequest, SoftwareCandidate } from "@antibody/shared/software";
 import { REPO_ROOT } from "../config.js";
 import { daytona } from "../daytona/client.js";
 import { Computer, shellQuote } from "../daytona/computer.js";
@@ -29,7 +29,7 @@ export class DaytonaSoftwareAdapter implements SoftwareExecutionAdapter {
   static async attach(candidate: SoftwareCandidate): Promise<DaytonaSoftwareAdapter> {
     assert.ok(candidate.sandboxId && candidate.appUrl);
     const sandbox = await daytona().get(candidate.sandboxId);
-    assert.ok(sandbox.labels.app === "hollow-purple" && sandbox.labels.purpose === "software-demo");
+    assert.ok(sandbox.labels.app === "antibody" && sandbox.labels.purpose === "software-demo");
     const runtime = await readFile(join(REPO_ROOT, "lab/software/runtime.py"), "utf8");
     const adapter = new DaytonaSoftwareAdapter(new Computer(sandbox), candidate, candidate.appUrl, runtime);
     await adapter.observe();
@@ -42,7 +42,7 @@ export class DaytonaSoftwareAdapter implements SoftwareExecutionAdapter {
       labels: { app: "hollow-purple", purpose: "software-demo", run: runId, candidate: candidate.id }, autoStopInterval: 30,
       autoDeleteInterval: linkedDesktopId ? 0 : -1, ...(linkedDesktopId ? { linkedSandbox: linkedDesktopId } : {}),
     }, { timeout: 180 });
-    if (existingDesktopId) assert.ok(sandbox.labels.app === "hollow-purple" && sandbox.labels.purpose === "software-demo", "Unrelated desktop sandbox.");
+    if (existingDesktopId) assert.ok(sandbox.labels.app === "antibody" && sandbox.labels.purpose === "software-demo", "Unrelated desktop sandbox.");
     const computer = new Computer(sandbox);
     candidate.sandboxId = sandbox.id;
     const runtime = await readFile(join(REPO_ROOT, "lab/software/runtime.py"), "utf8");

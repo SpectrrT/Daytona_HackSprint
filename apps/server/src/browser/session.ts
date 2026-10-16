@@ -1,4 +1,4 @@
-import type { BrowserAudit } from "@hollow-purple/shared/evolution";
+import type { BrowserAudit } from "@antibody/shared/evolution";
 import { chromium, type Browser, type Page } from "playwright-core";
 import { mkdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
@@ -22,7 +22,7 @@ export function dashboardUrl(input: string): URL {
 /** Read-only product audit. Navigation failures cannot expose the secret CDP URL. */
 export async function runAnchorAudit(input: string): Promise<BrowserAudit> {
   const url = dashboardUrl(input);
-  const session = await createAnchorSession(["hollow-purple", "dashboard-audit"]);
+  const session = await createAnchorSession(["antibody", "dashboard-audit"]);
   let browser: Browser | undefined;
   let page: Page | undefined;
   const checks: BrowserAudit["checks"] = [];

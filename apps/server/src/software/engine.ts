@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
 import { appendFile, mkdir, readFile, rename, writeFile } from "node:fs/promises";
 import { join } from "node:path";
-import type { BrowserTrial, RequestBatch, SoftwareCandidate, SoftwareFailure, SoftwareRun, WebAttack } from "@hollow-purple/shared/software";
+import type { BrowserTrial, RequestBatch, SoftwareCandidate, SoftwareFailure, SoftwareRun, WebAttack } from "@antibody/shared/software";
 import { config, REPO_ROOT } from "../config.js";
 import { daytona } from "../daytona/client.js";
 import { APP_DIR, DaytonaSoftwareAdapter, LAB_DIR, pause } from "./adapter.js";
@@ -142,7 +142,7 @@ export async function runSoftwareExperiment(options: SoftwareRunOptions = {}): P
         candidate.status = "rejected"; candidate.evaluatedAt = Date.now(); candidate.error = error instanceof Error ? error.message : "Candidate build failed.";
         if (candidate.sandboxId) {
           const orphan = await daytona().get(candidate.sandboxId).catch(() => undefined);
-          if (orphan?.labels.app === "hollow-purple" && orphan.labels.run === id && orphan.labels.candidate === candidate.id) await orphan.delete(60, true).catch(() => {});
+          if (orphan?.labels.app === "antibody" && orphan.labels.run === id && orphan.labels.candidate === candidate.id) await orphan.delete(60, true).catch(() => {});
         }
         await emit(candidate.error, candidate.id); continue;
       }

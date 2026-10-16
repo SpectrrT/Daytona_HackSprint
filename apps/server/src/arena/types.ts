@@ -1,4 +1,4 @@
-import type { CandidateVariant, ExecutionProvider, FailureEvidence, FrozenContract } from "@hollow-purple/shared/evolution";
+import type { CandidateVariant, ExecutionProvider, FailureEvidence, FrozenContract } from "@antibody/shared/evolution";
 
 /** The builder may change source and variant; the verifier retains the frozen contract. */
 export interface CandidateTaskContext {

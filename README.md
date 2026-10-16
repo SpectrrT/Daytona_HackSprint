@@ -1,4 +1,4 @@
-# Hollow Purple
+# Antibody
 
 A general adversarial engineering system. **Blue builds candidates. Red searches for reproducible failures. An independent verifier checks the evidence against a frozen contract.** Verified failures become permanent regression tests and guide repaired descendants.
 
@@ -21,7 +21,7 @@ Then tell Claude:
 
 > Harden the purchasing and engineering agents in Daytona. Have Red try prompt injections through Anchor, independently reproduce any forbidden effects, then have Blue repair them. Follow the run to completion and show me the actual failure, code changes, and verification.
 
-`pnpm claude` starts the controller if needed and opens the installed, real Claude Code CLI with this repository's MCP server. It uses session-scoped tool permissions and preserves your Claude settings. Existing Claude users can also start the controller with `pnpm --filter @hollow-purple/server dev` and type `claude` in this repository; approve its project MCP server on first use. Claude's own sign-in is separate from the runtime used for Blue, Red and the target. Controller keys stay out of the terminal's tool responses and candidate sandboxes.
+`pnpm claude` starts the controller if needed and opens the installed, real Claude Code CLI with this repository's MCP server. It uses session-scoped tool permissions and preserves your Claude settings. Existing Claude users can also start the controller with `pnpm --filter @antibody/server dev` and type `claude` in this repository; approve its project MCP server on first use. Claude's own sign-in is separate from the runtime used for Blue, Red and the target. Controller keys stay out of the terminal's tool responses and candidate sandboxes.
 
 The terminal tools are `agent_lab_status`, `start_agent_hardening`, `watch_agent_run`, `get_agent_failures`, `get_agent_repair`, `get_agent_result`, `list_agent_runs`, and `stop_agent_run`. Watching uses an event cursor so Claude can follow a long experiment without losing or repeating a page of progress. A new run provisions actual Daytona sandboxes; it does not replay a saved demonstration. The controller owns browser execution and independent verification. Claude orchestrates that controller rather than pretending to click a browser itself.
 
@@ -153,7 +153,7 @@ For a local controller, publish a **read-only evidence snapshot** to Daytona rat
 
 ```sh
 pnpm build
-pnpm --filter @hollow-purple/server exec node --import tsx src/scripts/publish-evidence.ts <run-id>
+pnpm --filter @antibody/server exec node --import tsx src/scripts/publish-evidence.ts <run-id>
 ```
 
 The publisher uploads only the built dashboard, sanitized completed-run evidence, and a fixed read-only Python server. It creates a private Daytona sandbox with a signed preview URL. It never uploads `.env`, private agent prompts, auth files, or dependencies. All write requests are refused. Navigation, source inspection, trace replay, and evidence export remain available.
@@ -171,20 +171,20 @@ Optional SurrealDB Agent Memory integration stores source-bound failures and Blu
 Record the native Linux desktop while it opens Chromium, inspects RTL, compiles with Verilator, reproduces Red's failure, requests a new Blue model repair, applies it, and rebuilds and reruns the public regression suite:
 
 ```sh
-pnpm --filter @hollow-purple/server exec node --import tsx src/scripts/record-sandbox.ts <verified-repair-run-id>
+pnpm --filter @antibody/server exec node --import tsx src/scripts/record-sandbox.ts <verified-repair-run-id>
 ```
 
 The controller must be running with that completed repair run loaded. The helper creates a private `daytona-medium` desktop, installs its tools, and records its real XFCE display with Daytona's native recording API. The baseline is explicitly identified as a manually fault-seeded fixture; Red's sequences come from the verified run, and Blue produces a fresh model response. Actual simulation observations are independently graded on the controller. Only public tests enter this inspection desktop; the hidden suite remains part of the original experiment's separate acceptance evidence.
 
-The MP4, source hashes, actual observations, model provenance, and verdicts are saved under `data/runs/<id>/native-desktop/`. When Anchor is configured, it also verifies the encrypted VNC connection, sandbox identity, and actual desktop canvas, saves a screenshot, and ends its browser session. The private noVNC link is saved in `recording.json`. The sandbox remains available for inspection and auto-stops after 30 idle minutes. It consumes the account's sandbox quota until stopped; delete it through Daytona when finished. An optional second argument reuses an empty desktop sandbox labelled `app=hollow-purple,purpose=visible-desktop`.
+The MP4, source hashes, actual observations, model provenance, and verdicts are saved under `data/runs/<id>/native-desktop/`. When Anchor is configured, it also verifies the encrypted VNC connection, sandbox identity, and actual desktop canvas, saves a screenshot, and ends its browser session. The private noVNC link is saved in `recording.json`. The sandbox remains available for inspection and auto-stops after 30 idle minutes. It consumes the account's sandbox quota until stopped; delete it through Daytona when finished. An optional second argument reuses an empty desktop sandbox labelled `app=antibody,purpose=visible-desktop`.
 
 For a separate replay of the published product dashboard, the earlier browser walkthrough helper remains available:
 
 ```sh
-pnpm --filter @hollow-purple/server exec node --import tsx src/scripts/record-demo.ts <verified-repair-run-id>
+pnpm --filter @antibody/server exec node --import tsx src/scripts/record-demo.ts <verified-repair-run-id>
 ```
 
-That helper requires ffmpeg and a published evidence URL. It records the dashboard through Anchor, saving `data/runs/<id>/hollow-purple-daytona-walkthrough.mp4`. It is a replay of completed execution; it does not show the sandbox desktop. Its Anchor session is closed afterward.
+That helper requires ffmpeg and a published evidence URL. It records the dashboard through Anchor, saving `data/runs/<id>/antibody-daytona-walkthrough.mp4`. It is a replay of completed execution; it does not show the sandbox desktop. Its Anchor session is closed afterward.
 
 ## Release gate (human approval)
 
@@ -199,7 +199,7 @@ Only the requested channel can decide. On approval, the champion's exact RTL and
 Set up the voice agent once, then put its id in `.env`:
 
 ```sh
-pnpm --filter @hollow-purple/server exec node --import tsx src/scripts/create-approver-agent.ts
+pnpm --filter @antibody/server exec node --import tsx src/scripts/create-approver-agent.ts
 # prints ELEVENLABS_AGENT_ID=agent_...
 ```
 
@@ -215,11 +215,11 @@ The hardware overview also shows **Initial candidate vs selected design**, score
 
 ## Arize tracing
 
-With `ARIZE_SPACE_ID` and `ARIZE_API_KEY` set, every run is traced to Arize AX as one trace built from its event log: a run span, one span per candidate carrying the verifier's verdict (status, checks passed, hidden checks, inherited regressions), and an LLM span for each Blue and Red model call (model, provider, token counts, attempts, rationale or attack hypotheses). Release-gate approvals and releases appear as spans in the same trace. Spans go over OTLP to `https://otlp.arize.com/v1/traces` (override with `ARIZE_OTLP_URL`); the project name defaults to `hollow-purple` (`ARIZE_PROJECT_NAME`). Without the variables, tracing is off and nothing changes. Check the connection with `pnpm --filter @hollow-purple/server exec node --import tsx src/scripts/verify-arize.ts`.
+With `ARIZE_SPACE_ID` and `ARIZE_API_KEY` set, every run is traced to Arize AX as one trace built from its event log: a run span, one span per candidate carrying the verifier's verdict (status, checks passed, hidden checks, inherited regressions), and an LLM span for each Blue and Red model call (model, provider, token counts, attempts, rationale or attack hypotheses). Release-gate approvals and releases appear as spans in the same trace. Spans go over OTLP to `https://otlp.arize.com/v1/traces` (override with `ARIZE_OTLP_URL`); the project name defaults to `hollow-purple` (`ARIZE_PROJECT_NAME`). Without the variables, tracing is off and nothing changes. Check the connection with `pnpm --filter @antibody/server exec node --import tsx src/scripts/verify-arize.ts`.
 
 ## Use it from Claude (MCP)
 
-Hollow Purple is also an MCP server, so Claude Code or Claude Desktop can drive the whole loop from a conversation: ask Claude to harden a design and it starts a live Daytona run, follows Blue, Red and the verifier while they work, then reports what Red tried, the reproduced failures, and the verified source. No custom UI is needed. The server calls the controller's HTTP API, so Claude and the dashboard see the same run.
+Antibody is also an MCP server, so Claude Code or Claude Desktop can drive the whole loop from a conversation: ask Claude to harden a design and it starts a live Daytona run, follows Blue, Red and the verifier while they work, then reports what Red tried, the reproduced failures, and the verified source. No custom UI is needed. The server calls the controller's HTTP API, so Claude and the dashboard see the same run.
 
 The MCP server exposes the three-application agent loop through `start_agent_hardening`, `watch_agent_run`, and the failure, repair and result tools. Separate hardware tools remain available for explicitly requested hardware work. Both loops use the same controller and evidence as their optional web views.
 
@@ -228,10 +228,10 @@ Start the controller (`pnpm dev`). Claude Code picks up the server from this rep
 ```json
 {
   "mcpServers": {
-    "hollow-purple": {
+    "antibody": {
       "command": "/absolute/path/to/pnpm",
       "args": ["--silent", "--dir", "/absolute/path/to/repo/apps/mcp", "start"],
-      "env": { "HOLLOW_PURPLE_URL": "http://localhost:8787" }
+      "env": { "ANTIBODY_URL": "http://localhost:8787" }
     }
   }
 }
@@ -259,8 +259,8 @@ The dashboard's **Agents** view (`/?run=<id>&view=agents`) shows a run as a live
 ### Run a recursive engineering sample
 
 ```sh
-pnpm --filter @hollow-purple/server exec node --import tsx src/scripts/recursive-demo.ts
-pnpm --filter @hollow-purple/web dev
+pnpm --filter @antibody/server exec node --import tsx src/scripts/recursive-demo.ts
+pnpm --filter @antibody/web dev
 ```
 
 The runner prints a local dashboard URL containing its fresh run ID. It owns a loopback-only controller and does not load another controller's journals. The initial FIFO is an explicitly labeled manually broken fixture. Red authors real sequences, Daytona executes the RTL, and the independent controller oracle reproduces a public failure before Blue writes a repair child. Every confirmed counterexample stays in the run's regression suite.
@@ -277,7 +277,7 @@ pnpm smoke         # Starts a real model + Daytona experiment; requires live cre
 
 The smoke test checks provenance, generated RTL, all acceptance gates, regression reproduction, and evidence export. It does not manufacture a failure: a correct initial design may pass every attempted attack without needing a repair. A lack of counterexamples is reported as test coverage, not a proof of universal correctness.
 
-To exercise the repair path with an explicitly labelled manual fault fixture, run `pnpm --filter @hollow-purple/server exec node --import tsx src/scripts/verify-live-repair.ts`. A real Red agent must expose a reproducible failure before two model-written Blue children are tested in Daytona. Imported source is never attributed to Blue.
+To exercise the repair path with an explicitly labelled manual fault fixture, run `pnpm --filter @antibody/server exec node --import tsx src/scripts/verify-live-repair.ts`. A real Red agent must expose a reproducible failure before two model-written Blue children are tested in Daytona. Imported source is never attributed to Blue.
 
 ## Contract and APIs
 

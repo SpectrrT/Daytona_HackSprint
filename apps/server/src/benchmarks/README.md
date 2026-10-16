@@ -1,8 +1,8 @@
-# Quantitative evidence for Hollow Purple
+# Quantitative evidence for Antibody
 
 Measure three different claims separately: Red discovers faults, memory improves Blue, and Daytona increases throughput. Numbers from satellite classification or cheating detection are useful presentation examples, not comparable FIFO baselines.
 
-[ChaosAgent's submission](https://devpost.com/software/chaosagent) describes an attack library, model-driven mutations, optional Daytona isolation and LLM evaluation. Its published workflow is an attack-testing reference. Mutation alone is not Hollow Purple's distinction. Demonstrate independently checked repairs and retained regressions, then measure their value against matched FIFO baselines. The submission does not establish that its authors never implemented other functionality.
+[ChaosAgent's submission](https://devpost.com/software/chaosagent) describes an attack library, model-driven mutations, optional Daytona isolation and LLM evaluation. Its published workflow is an attack-testing reference. Mutation alone is not Antibody's distinction. Demonstrate independently checked repairs and retained regressions, then measure their value against matched FIFO baselines. The submission does not establish that its authors never implemented other functionality.
 
 Its [committed result file](https://github.com/vishnudut/chaosagent/blob/main/chaos-results.json) records 17 tests, 15 passes, 2 failures and an 88 security score. Those are target-defense outcomes, not a planted-bug detection-rate denominator or a clean-control calibration. Do not claim ChaosAgent had no numeric results.
 

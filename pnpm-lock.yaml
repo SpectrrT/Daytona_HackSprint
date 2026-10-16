@@ -10,7 +10,7 @@ importers:
 
   apps/mcp:
     dependencies:
-      '@hollow-purple/shared':
+      '@antibody/shared':
         specifier: workspace:*
         version: link:../../packages/shared
       '@modelcontextprotocol/sdk':
@@ -35,15 +35,15 @@ importers:
       '@anthropic-ai/sdk':
         specifier: ^0.135.0
         version: 0.135.0(zod@4.6.7)
+      '@antibody/shared':
+        specifier: workspace:*
+        version: link:../../packages/shared
       '@aws-sdk/client-bedrock-runtime':
         specifier: ^3.1152.0
         version: 3.1152.0
       '@daytona/sdk':
         specifier: ^0.224.1
         version: 0.224.1
-      '@hollow-purple/shared':
-        specifier: workspace:*
-        version: link:../../packages/shared
       '@hono/node-server':
         specifier: ^2.1.5
         version: 2.1.5(hono@4.13.13)
@@ -81,12 +81,12 @@ importers:
 
   apps/web:
     dependencies:
+      '@antibody/shared':
+        specifier: workspace:*
+        version: link:../../packages/shared
       '@elevenlabs/react':
         specifier: 1.18.0
         version: 1.18.0(@types/dom-mediacapture-record@1.0.22)(react@19.3.1)
-      '@hollow-purple/shared':
-        specifier: workspace:*
-        version: link:../../packages/shared
       lucide-react:
         specifier: ^0.577.0
         version: 0.577.0(react@19.3.1)

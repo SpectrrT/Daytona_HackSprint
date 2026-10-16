@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
 import { test } from "node:test";
-import { BUFFER_PROMPT, type AgentInvocation, type Candidate, type EvolutionEvent, type EvolutionRun } from "@hollow-purple/shared/evolution";
+import { BUFFER_PROMPT, type AgentInvocation, type Candidate, type EvolutionEvent, type EvolutionRun } from "@antibody/shared/evolution";
 import { freezeContract } from "../engine/contract.js";
 import { parseRunEvidence, summarizeRun } from "./run-metrics.js";
 

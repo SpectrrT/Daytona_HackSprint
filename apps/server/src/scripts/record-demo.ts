@@ -4,7 +4,7 @@ import { spawn } from "node:child_process";
 import { mkdir, readFile, stat, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { chromium, type CDPSession, type Page } from "playwright-core";
-import type { EvolutionRun } from "@hollow-purple/shared/evolution";
+import type { EvolutionRun } from "@antibody/shared/evolution";
 import { config } from "../config.js";
 import { createAnchorSession, endAnchorSession } from "../browser/anchor.js";
 import { dashboardUrl } from "../browser/session.js";
@@ -90,8 +90,8 @@ async function main() {
   const children = run.candidates.filter(candidate => candidate.parentId === baseline.id && candidate.agent);
   assert.ok(children.length >= 2 && children.every(candidate => candidate.backend === "verilator" && candidate.checks.every(check => check.passed)));
   await mkdir(directory, { recursive: true });
-  const output = join(directory, "hollow-purple-daytona-walkthrough.mp4");
-  const session = await createAnchorSession(["hollow-purple", "verified-video"]);
+  const output = join(directory, "antibody-daytona-walkthrough.mp4");
+  const session = await createAnchorSession(["antibody", "verified-video"]);
   let stop: (() => Promise<void>) | undefined;
   let browser;
   const chapters: { title: string; wallTime: number }[] = [];
@@ -107,7 +107,7 @@ async function main() {
     const page = context.pages()[0] ?? await context.newPage();
     await page.setViewportSize({ width: 1600, height: 1000 });
     await page.setExtraHTTPHeaders({ "X-Daytona-Skip-Preview-Warning": "true" });
-    await page.setContent('<html><head><title>Hollow Purple walkthrough</title></head><body style="margin:0;background:#f6f6f2;color:#27362c;font-family:system-ui;display:grid;place-items:center;height:100vh"><main style="max-width:1050px"><div style="font-size:16px;letter-spacing:4px;color:#857391">HOLLOW PURPLE / DAYTONA + ANCHOR</div><h1 style="font-size:72px;line-height:1.1;letter-spacing:-3px">A failure becomes<br>a better design.</h1><p style="font-size:27px;color:#697267">Open the lab → reproduce the failure → inspect Blue’s repairs.</p><p style="font-size:20px;color:#857391">A walkthrough of a completed, independently verified hardware run.</p></main></body></html>');
+    await page.setContent('<html><head><title>Antibody walkthrough</title></head><body style="margin:0;background:#f6f6f2;color:#27362c;font-family:system-ui;display:grid;place-items:center;height:100vh"><main style="max-width:1050px"><div style="font-size:16px;letter-spacing:4px;color:#857391">ANTIBODY / DAYTONA + ANCHOR</div><h1 style="font-size:72px;line-height:1.1;letter-spacing:-3px">A failure becomes<br>a better design.</h1><p style="font-size:27px;color:#697267">Open the lab → reproduce the failure → inspect Blue’s repairs.</p><p style="font-size:20px;color:#857391">A walkthrough of a completed, independently verified hardware run.</p></main></body></html>');
     stop = await startRecording(page, output);
     await chapter(page, "Actual cloud execution, replayed for inspection", run.verificationFixture ? "The first source is an explicitly fault-seeded manual fixture. Real Blue agents wrote both repair children; Red and Daytona tested them." : "These are recorded model proposals and actual Verilator results, not a newly running generation.");
     await pause(4500);

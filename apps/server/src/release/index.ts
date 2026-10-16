@@ -2,7 +2,7 @@ import { createHash, timingSafeEqual } from "node:crypto";
 import { mkdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { z } from "zod";
-import type { ApprovalChannel, ApprovalState, EvolutionRun, ReleaseRecord } from "@hollow-purple/shared/evolution";
+import type { ApprovalChannel, ApprovalState, EvolutionRun, ReleaseRecord } from "@antibody/shared/evolution";
 import { config } from "../config.js";
 import type { RunStore } from "../store.js";
 

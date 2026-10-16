@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import type { RedAttack, Stimulus } from "@hollow-purple/shared/evolution";
+import type { RedAttack, Stimulus } from "@antibody/shared/evolution";
 import { REPO_ROOT } from "../config.js";
 
 export interface BenchmarkFixture {

@@ -1,6 +1,6 @@
-# Hollow Purple — terminal workflow
+# Antibody — terminal workflow
 
-This repository exposes the real adversarial engineering controller to Claude Code through the `hollow-purple` MCP server in `.mcp.json`. Run `pnpm claude` to start the controller and open Claude, or start the controller separately and run `claude` here. No dashboard is needed for orchestration or evidence.
+This repository exposes the real adversarial engineering controller to Claude Code through the `antibody` MCP server in `.mcp.json`. Run `pnpm claude` to start the controller and open Claude, or start the controller separately and run `claude` here. No dashboard is needed for orchestration or evidence.
 
 For hardening tool-using agents or testing prompt injections:
 

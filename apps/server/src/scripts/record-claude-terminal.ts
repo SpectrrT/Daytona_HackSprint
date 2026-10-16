@@ -27,18 +27,18 @@ if (command === "help") {
   await writeFile(join(directory, "recording-state.json"), JSON.stringify({ id: recordingId, sandboxId: sandbox.id, actualNativeTerminal: true, terminalHost: "Daytona", claudeProcessHost: "controller via real PTY", createdAt: Date.now() }), { mode: 0o600 });
   try {
     await sandbox.computerUse.start();
-    await checked(computer, `mkdir -p ${remote}/bin /home/daytona/hollow-purple /home/daytona/.config/xfce4/terminal`);
+    await checked(computer, `mkdir -p ${remote}/bin /home/daytona/antibody /home/daytona/.config/xfce4/terminal`);
     for (const name of ["terminal_relay.py", "capture_terminal.py"]) await computer.writeFile(`${remote}/${name}`, await readFile(join(REPO_ROOT, "tools/recording", name)));
     const secret = { token: randomBytes(32).toString("hex"), expiresAt: Date.now() / 1000 + 3600 };
     await computer.writeFile(`${remote}/relay-secret.json`, JSON.stringify(secret));
     await checked(computer, `chmod 600 ${remote}/relay-secret.json`);
     await computer.writeFile("/home/daytona/.config/xfce4/terminal/terminalrc", "[Configuration]\nFontName=DejaVu Sans Mono 17\nColorBackground=#111318\nColorForeground=#e7e6e2\nColorSelectionBackground=#5c467d\nColorSelection=#ffffff\nMiscMenubarDefault=FALSE\nMiscBordersDefault=FALSE\nMiscBell=FALSE\nScrollingLines=30000\nScrollingBar=TERMINAL_SCROLLBAR_NONE\n");
     await computer.writeFile(`${remote}/bin/claude`, `#!/bin/sh\nexec python3 ${remote}/terminal_relay.py client --directory ${remote}\n`);
-    await computer.writeFile(`${remote}/bashrc`, `export PATH="${remote}/bin:$PATH"\nexport TERM=xterm-256color\nexport COLORTERM=truecolor\nPS1='\\[\\e[38;5;141m\\]daytona \\[\\e[38;5;245m\\]~/hollow-purple \\[\\e[0m\\]❯ '\nclear\n`);
+    await computer.writeFile(`${remote}/bashrc`, `export PATH="${remote}/bin:$PATH"\nexport TERM=xterm-256color\nexport COLORTERM=truecolor\nPS1='\\[\\e[38;5;141m\\]daytona \\[\\e[38;5;245m\\]~/antibody \\[\\e[0m\\]❯ '\nclear\n`);
     await checked(computer, `chmod 700 ${remote}/bin/claude; nohup python3 -u ${remote}/terminal_relay.py server --directory ${remote} >${remote}/relay.log 2>&1 </dev/null &`);
     const preview = await sandbox.getSignedPreviewUrl(8778, 3600);
     await writeFile(join(directory, "relay.json"), JSON.stringify({ url: preview.url, token: secret.token, expiresAt: secret.expiresAt }), { mode: 0o600 });
-    await checked(computer, `nohup env DISPLAY=:0 xfce4-terminal --disable-server --maximize --title='Claude Code | Hollow Purple' --working-directory=/home/daytona/hollow-purple --command='/bin/bash --noprofile --rcfile ${remote}/bashrc -i' >${remote}/terminal.log 2>&1 </dev/null &`);
+    await checked(computer, `nohup env DISPLAY=:0 xfce4-terminal --disable-server --maximize --title='Claude Code | Antibody' --working-directory=/home/daytona/antibody --command='/bin/bash --noprofile --rcfile ${remote}/bashrc -i' >${remote}/terminal.log 2>&1 </dev/null &`);
     await delay(1200); await sandbox.computerUse.keyboard.press("f11"); await delay(500);
     const screenshot = await sandbox.computerUse.screenshot.takeFullScreen(false);
     await writeFile(join(directory, "prepared-terminal.png"), Buffer.from(screenshot.screenshot!, "base64"));

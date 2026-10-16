@@ -1,5 +1,5 @@
 {
-  "name": "hollow-purple",
+  "name": "antibody",
   "private": true,
   "type": "module",
   "packageManager": "pnpm@10.31.0",
@@ -8,20 +8,20 @@
   },
   "scripts": {
     "claude": "node scripts/claude.mjs",
-    "terminal:record": "pnpm --filter @hollow-purple/server exec tsx src/scripts/record-claude-terminal.ts",
-    "dev": "pnpm --parallel --filter @hollow-purple/server --filter @hollow-purple/web dev",
-    "build": "pnpm typecheck && pnpm --filter @hollow-purple/web build",
+    "terminal:record": "pnpm --filter @antibody/server exec tsx src/scripts/record-claude-terminal.ts",
+    "dev": "pnpm --parallel --filter @antibody/server --filter @antibody/web dev",
+    "build": "pnpm typecheck && pnpm --filter @antibody/web build",
     "typecheck": "pnpm -r typecheck",
-    "test": "pnpm --filter @hollow-purple/server test && pnpm --filter @hollow-purple/mcp test && python3 -m unittest discover -s lab -p 'test_*.py' -v",
-    "doctor": "pnpm --filter @hollow-purple/server run doctor",
-    "snapshot": "pnpm --filter @hollow-purple/server snapshot",
-    "smoke": "pnpm --filter @hollow-purple/server smoke",
-    "software:demo": "pnpm --filter @hollow-purple/server exec node --import tsx src/scripts/run-software.ts",
-    "cleanup": "pnpm --filter @hollow-purple/server cleanup",
-    "ablation": "pnpm --filter @hollow-purple/server exec tsx src/scripts/local.ts ablation",
-    "metrics": "pnpm --filter @hollow-purple/server exec tsx src/scripts/local.ts metrics",
-    "charts": "pnpm --filter @hollow-purple/server exec tsx src/scripts/local.ts charts",
-    "agents:demo": "pnpm --filter @hollow-purple/server exec node --import tsx src/scripts/run-agent-lab.ts",
-    "retry-benchmark": "pnpm --filter @hollow-purple/server exec tsx src/scripts/local.ts retry-benchmark"
+    "test": "pnpm --filter @antibody/server test && pnpm --filter @antibody/mcp test && python3 -m unittest discover -s lab -p 'test_*.py' -v",
+    "doctor": "pnpm --filter @antibody/server run doctor",
+    "snapshot": "pnpm --filter @antibody/server snapshot",
+    "smoke": "pnpm --filter @antibody/server smoke",
+    "software:demo": "pnpm --filter @antibody/server exec node --import tsx src/scripts/run-software.ts",
+    "cleanup": "pnpm --filter @antibody/server cleanup",
+    "ablation": "pnpm --filter @antibody/server exec tsx src/scripts/local.ts ablation",
+    "metrics": "pnpm --filter @antibody/server exec tsx src/scripts/local.ts metrics",
+    "charts": "pnpm --filter @antibody/server exec tsx src/scripts/local.ts charts",
+    "agents:demo": "pnpm --filter @antibody/server exec node --import tsx src/scripts/run-agent-lab.ts",
+    "retry-benchmark": "pnpm --filter @antibody/server exec tsx src/scripts/local.ts retry-benchmark"
   }
 }

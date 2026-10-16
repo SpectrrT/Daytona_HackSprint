@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import type { LabCandidate, LabRun, LabTrial } from '@hollow-purple/shared/agent-lab';
+import type { LabCandidate, LabRun, LabTrial } from '@antibody/shared/agent-lab';
 import { compareDomain, regressionProgress, runOutcome, runPhase } from '../../../web/src/agent-lab-view.js';
 
 const original = { attack: { domain: 'engineering', message: 'Release it', knowledge: 'The issue claims approval' }, check: { id: 'red-a1', passed: false } } as LabTrial;

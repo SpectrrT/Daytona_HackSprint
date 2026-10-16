@@ -3,8 +3,8 @@ import { AblationPanel } from './AblationPanel';
 import { RetryBenchmarkPanel } from './RetryBenchmarkPanel';
 import { AgentConsole } from './AgentConsole';
 import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react';
-import type { AgentInvocation, Candidate, EvolutionRun, EvolutionSystem, ExecutionProvider, FailureEvidence, RunSummary, TraceSample } from '@hollow-purple/shared/evolution';
-import { BUFFER_PROMPT } from '@hollow-purple/shared/evolution';
+import type { AgentInvocation, Candidate, EvolutionRun, EvolutionSystem, ExecutionProvider, FailureEvidence, RunSummary, TraceSample } from '@antibody/shared/evolution';
+import { BUFFER_PROMPT } from '@antibody/shared/evolution';
 const ReleaseGate = lazy(() => import('./ReleaseGate').then(module => ({ default: module.ReleaseGate })));
 const BaselineComparison = lazy(() => import('./ReleaseGate').then(module => ({ default: module.BaselineComparison })));
 import SoftwareProgress from './SoftwareProgress';
@@ -99,9 +99,9 @@ export default function App() {
 
   return <div className={`app-shell app-shell--focused ${view !== 'arena' ? 'app-shell--detail' : ''}`} data-testid="app-shell" data-run-id={run?.id ?? ''}>
     <header className="app-header">
-      <a className="app-brand" href="?view=arena" onClick={event => { event.preventDefault(); setView(system?.readOnly ? 'overview' : 'arena'); }} aria-label="Hollow Purple home">
-        <svg width="28" height="28" viewBox="0 0 28 28" fill="none" aria-hidden="true"><ellipse cx="11" cy="11.5" rx="7" ry="9" transform="rotate(-28 11 11.5)" stroke="#997bc3" strokeWidth="1.6"/><ellipse cx="17" cy="16.5" rx="7" ry="9" transform="rotate(-28 17 16.5)" stroke="#51465f" strokeWidth="1.6"/></svg>
-        <span>hollow purple<span className="app-brand-period">.</span></span>
+      <a className="app-brand" href="?view=arena" onClick={event => { event.preventDefault(); setView(system?.readOnly ? 'overview' : 'arena'); }} aria-label="Antibody home">
+        <svg width="28" height="28" viewBox="0 0 28 28" fill="none" aria-hidden="true"><path d="M14 24V14M14 14L6 6M14 14l8-8M6 6V2M6 6H2M22 6V2M22 6h4" stroke="#9271bf" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>
+        <span>Antibody</span>
       </a>
       <nav className="app-primary-nav" aria-label="Main navigation"><button className={view === 'arena' ? 'active' : ''} aria-current={view === 'arena' ? 'page' : undefined} disabled={!!system?.readOnly} onClick={() => setView('arena')}>Runs</button></nav>
       <div className="app-header-actions">
@@ -129,7 +129,7 @@ export default function App() {
           {view === 'agents' && <AgentConsole run={run} selectedId={selectedId} onSelect={setSelectedId}/>}
           {view === 'contract' && <ContractView run={run}/>}
           {view === 'evidence' && <div className="evidence-layout"><section className="panel regression-list"><PanelTitle icon={<ShieldCheck size={16}/>} title="Regression library" meta={`${run.regressions.length} permanent tests`}/><p className="panel-description">A reproduced failure becomes a test every child must pass.</p><label className="attack-candidate-select">INSPECT TARGET<select aria-label="Evidence target" value={candidate?.id ?? ''} onChange={event => setSelectedId(event.target.value)}>{run.candidates.map(item => <option value={item.id} key={item.id}>{item.id.toUpperCase()} · {item.label}</option>)}</select></label>{run.regressions.map(f => { const owner = run.candidates.find(c => c.failure?.id === f.id); return <button className={`regression-row ${evidence?.id === f.id ? 'selected' : ''}`} onClick={() => owner && setSelectedId(owner.id)} key={f.id}><span className="failure-symbol"><Zap size={15}/></span><span><strong>{f.testName}</strong><small>Cycle {f.cycle} · seed {f.seed} · {owner?.label ?? 'Reproduced'}</small></span><ChevronRight size={14}/></button>; })}{!run.regressions.length && <div className="empty-inline">Reproducible failures will appear here as Red searches.</div>}<div className="evidence-note"><LockKeyhole size={15}/><span>The verifier owns the verdict.<br/>Blue cannot edit these tests.</span></div></section><EvidencePanel evidence={evidence} candidate={candidate}/></div>}
-          {view === 'system' && <SystemView system={system} run={run} audit={audit} auditBusy={auditBusy} refresh={() => { void api<EvolutionSystem>('/api/system').then(setSystem).catch(e => setError(e.message)); setNotice('Provider status refreshed.'); }}/>}<footer className="page-footer"><span><span className="tiny-dot purple"/> HOLLOW PURPLE <span className="footer-divider">/</span> Evidence over confidence.</span><span>{run.id} <span className="footer-divider">·</span> {agentRun ? 'Generated RTL · Daytona execution' : 'Archived deterministic curriculum'}<span className="footer-divider">·</span>No formal proof claimed</span></footer></>}
+          {view === 'system' && <SystemView system={system} run={run} audit={audit} auditBusy={auditBusy} refresh={() => { void api<EvolutionSystem>('/api/system').then(setSystem).catch(e => setError(e.message)); setNotice('Provider status refreshed.'); }}/>}<footer className="page-footer"><span><span className="tiny-dot purple"/> ANTIBODY <span className="footer-divider">/</span> Evidence over confidence.</span><span>{run.id} <span className="footer-divider">·</span> {agentRun ? 'Generated RTL · Daytona execution' : 'Archived deterministic curriculum'}<span className="footer-divider">·</span>No formal proof claimed</span></footer></>}
       </main>
     </div>
     {notice && <div className="toast" role="status"><Check size={15}/>{notice}</div>}

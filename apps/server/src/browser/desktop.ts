@@ -10,7 +10,7 @@ export async function auditDaytonaDesktop(sandbox: Sandbox, directory: string) {
   const preview = await sandbox.getSignedPreviewUrl(6080, 3600);
   const url = new URL("/vnc.html", preview.url);
   url.searchParams.set("autoconnect", "true"); url.searchParams.set("resize", "scale");
-  const session = await createAnchorSession(["hollow-purple", "native-desktop-audit"]);
+  const session = await createAnchorSession(["antibody", "native-desktop-audit"]);
   let browser: Browser | undefined;
   try {
     try { browser = await chromium.connectOverCDP(session.cdpUrl, { timeout: 30_000 }); }

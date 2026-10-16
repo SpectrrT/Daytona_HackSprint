@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import type { RedAttack } from "@hollow-purple/shared/evolution";
+import type { RedAttack } from "@antibody/shared/evolution";
 import { buildTests } from "./tests.js";
 import { validateRedAttacks, validateRtl } from "./validation.js";
 import { evaluateCandidate } from "./index.js";

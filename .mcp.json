@@ -1,10 +1,10 @@
 {
   "mcpServers": {
-    "hollow-purple": {
+    "antibody": {
       "command": "pnpm",
       "args": ["--silent", "--dir", "apps/mcp", "start"],
       "env": {
-        "HOLLOW_PURPLE_URL": "http://127.0.0.1:8787"
+        "ANTIBODY_URL": "http://127.0.0.1:8787"
       }
     }
   }

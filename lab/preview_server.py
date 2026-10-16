@@ -36,7 +36,7 @@ def create_handler(root: Path):
             assets["/" + relative.as_posix()] = candidate
 
     class EvidenceHandler(BaseHTTPRequestHandler):
-        server_version = "HollowPurpleEvidence/1"
+        server_version = "AntibodyEvidence/1"
         sys_version = ""
 
         def log_message(self, _format, *_args):

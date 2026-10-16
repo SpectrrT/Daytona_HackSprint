@@ -1,8 +1,8 @@
 import { RunCharts } from './RunCharts';
 import { useEffect, useMemo, useState } from 'react';
 import { ArrowDownToLine, ArrowRight, Check, ChevronDown, GitBranch, Loader2, LockKeyhole, RotateCcw, ShieldCheck, X } from 'lucide-react';
-import type { SoftwareCandidate, SoftwareRun, SoftwareRunSummary } from '@hollow-purple/shared/software';
-import { checkOutcome, countChecks, DIRECTED_CHECKS, softwareProgress, type CandidateProgress, type CheckOutcome, type VerificationPoint } from '@hollow-purple/shared/software-progress';
+import type { SoftwareCandidate, SoftwareRun, SoftwareRunSummary } from '@antibody/shared/software';
+import { checkOutcome, countChecks, DIRECTED_CHECKS, softwareProgress, type CandidateProgress, type CheckOutcome, type VerificationPoint } from '@antibody/shared/software-progress';
 import './software-progress.css';
 
 const elapsed = (milliseconds: number) => `${Math.floor(Math.max(0, milliseconds) / 60000)}:${String(Math.floor(Math.max(0, milliseconds) / 1000) % 60).padStart(2, '0')}`;

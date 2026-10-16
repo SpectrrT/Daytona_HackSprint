@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import type { Candidate, EvolutionRun } from '@hollow-purple/shared/evolution';
-import { activeWork, buildTranscript, type Speaker, type TranscriptLine } from '@hollow-purple/shared/transcript';
+import type { Candidate, EvolutionRun } from '@antibody/shared/evolution';
+import { activeWork, buildTranscript, type Speaker, type TranscriptLine } from '@antibody/shared/transcript';
 import { ArrowDownToLine, Check, Terminal, Users, X } from 'lucide-react';
 
 const SPEAKER_LABEL: Record<Speaker, string> = { blue: 'BLUE', red: 'RED', daytona: 'DAYTONA', verifier: 'VERIFIER', memory: 'MEMORY', human: 'HUMAN', anchor: 'ANCHOR', system: 'LAB' };

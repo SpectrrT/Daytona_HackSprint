@@ -2,8 +2,8 @@ import assert from "node:assert/strict";
 import { afterEach, beforeEach, test } from "node:test";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
-import type { LabCandidate, LabRun, LabTrial } from "@hollow-purple/shared/agent-lab";
-import type { AgentInvocation, EngineeringContract } from "@hollow-purple/shared/evolution";
+import type { LabCandidate, LabRun, LabTrial } from "@antibody/shared/agent-lab";
+import type { AgentInvocation, EngineeringContract } from "@antibody/shared/evolution";
 import { createServer } from "./server.js";
 
 const at = Date.UTC(2026, 9, 16, 20);

@@ -4,7 +4,7 @@ import { mkdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { config } from "../config.js";
 import { freezeContract } from "../engine/contract.js";
-import { BUFFER_PROMPT } from "@hollow-purple/shared/evolution";
+import { BUFFER_PROMPT } from "@antibody/shared/evolution";
 import { name, type GraphNode } from "../memory/graph.js";
 import { SurrealGraphBackend } from "../memory/surreal.js";
 

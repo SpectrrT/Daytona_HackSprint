@@ -2,7 +2,7 @@
 import { chmod, mkdir, readdir, readFile, stat, writeFile } from "node:fs/promises";
 import { dirname, relative, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
-import type { AgentInvocation, Candidate, EvolutionRun, EvolutionSystem } from "@hollow-purple/shared/evolution";
+import type { AgentInvocation, Candidate, EvolutionRun, EvolutionSystem } from "@antibody/shared/evolution";
 import { config, REPO_ROOT } from "../config.js";
 import { daytona } from "../daytona/client.js";
 import { shellQuote } from "../daytona/computer.js";
@@ -56,7 +56,7 @@ async function collectAssets(directory: string): Promise<{ source: string; desti
     }
   }
   await visit(root);
-  if (!files.some(file => file.destination === `${REMOTE_ROOT}/index.html`)) throw new Error("Build the dashboard first: pnpm --filter @hollow-purple/web build");
+  if (!files.some(file => file.destination === `${REMOTE_ROOT}/index.html`)) throw new Error("Build the dashboard first: pnpm --filter @antibody/web build");
   return files;
 }
 async function localJson<T>(path: string): Promise<T> {

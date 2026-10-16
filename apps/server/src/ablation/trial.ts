@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
 import { passesAcceptance } from "../arena/tools.js";
-import type { AgentInvocation, Candidate, EvaluationResult, FailureEvidence } from "@hollow-purple/shared/evolution";
+import type { AgentInvocation, Candidate, EvaluationResult, FailureEvidence } from "@antibody/shared/evolution";
 import { buildBlue, searchRed } from "../agents/index.js";
 import { evaluateCandidate } from "../lab/index.js";
 import { retrieveContext, type Corpus, type MemoryMode } from "./memory.js";

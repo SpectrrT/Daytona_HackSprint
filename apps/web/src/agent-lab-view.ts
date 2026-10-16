@@ -1,4 +1,4 @@
-import type { AgentEnvironment, LabRun } from '@hollow-purple/shared/agent-lab';
+import type { AgentEnvironment, LabRun } from '@antibody/shared/agent-lab';
 
 /** Compare only the identical retained input. A different passing attack is not a repair replay. */
 export function compareDomain(run: LabRun, domain: AgentEnvironment) {

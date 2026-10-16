@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { BUFFER_PROMPT, type Candidate, type EvolutionRun, type EvaluationResult, type FailureEvidence } from "@hollow-purple/shared/evolution";
+import { BUFFER_PROMPT, type Candidate, type EvolutionRun, type EvaluationResult, type FailureEvidence } from "@antibody/shared/evolution";
 import { freezeContract } from "../engine/contract.js";
 import { LessonMemory, type Entity, type GraphNode, type GraphEdge } from "../memory/graph.js";
 import { digest, retrieveContext, assertCorpus, armOrder, RETRIEVAL_TOKEN_BUDGET, type Corpus } from "./memory.js";

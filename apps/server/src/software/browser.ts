@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { chromium, type Browser, type Page, type Response } from "playwright-core";
-import type { BrowserTrial, CheckoutContract, CheckoutInput, ObservedRequest, RequestBatch, WebAction, WebAttack } from "@hollow-purple/shared/software";
+import type { BrowserTrial, CheckoutContract, CheckoutInput, ObservedRequest, RequestBatch, WebAction, WebAttack } from "@antibody/shared/software";
 import { createAnchorSession, endAnchorSession, type AnchorSession } from "../browser/anchor.js";
 import { DaytonaSoftwareAdapter, pause } from "./adapter.js";
 import { verifyCheckout } from "./verifier.js";
@@ -15,7 +15,7 @@ export class AnchorNativeBrowser {
     private readonly anchor: Browser, private readonly native: Browser, readonly viewer: Page, readonly app: Page) {}
 
   static async connect(lab: DaytonaSoftwareAdapter, directory: string): Promise<AnchorNativeBrowser> {
-    const session = await createAnchorSession(["hollow-purple", "software-red", "actual-daytona-desktop"]);
+    const session = await createAnchorSession(["antibody", "software-red", "actual-daytona-desktop"]);
     let anchor: Browser | undefined, native: Browser | undefined;
     try {
       try { anchor = await chromium.connectOverCDP(session.cdpUrl, { timeout: 30000 }); }

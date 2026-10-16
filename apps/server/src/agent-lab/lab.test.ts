@@ -4,7 +4,7 @@ import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { spawnSync } from "node:child_process";
-import type { LabSnapshot } from "@hollow-purple/shared/agent-lab";
+import type { LabSnapshot } from "@antibody/shared/agent-lab";
 import { REPO_ROOT } from "../config.js";
 import { action, candidateHash, CONTEXTS, hash, labContract, RECORDS } from "./contract.js";
 import { gateTests, hiddenGateTests, type GateTest } from "./tests.js";

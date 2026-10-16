@@ -1,6 +1,6 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
-import type { LabCandidate, LabCheck, LabRun, LabRunSummary } from "@hollow-purple/shared/agent-lab";
+import type { LabCandidate, LabCheck, LabRun, LabRunSummary } from "@antibody/shared/agent-lab";
 
 type Request = <T>(path: string, init?: RequestInit) => Promise<T>;
 type QueuedRun = { id: string; status: "queued" };

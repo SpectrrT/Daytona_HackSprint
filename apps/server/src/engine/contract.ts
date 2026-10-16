@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import type { FrozenContract } from "@hollow-purple/shared/evolution";
+import type { FrozenContract } from "@antibody/shared/evolution";
 
 /** Recognize the first hardware example's contract; new examples require their own verifier. */
 export function supportsPrompt(prompt: string): boolean {

@@ -9,7 +9,7 @@ import { runCodexWithRetry } from "./retry.js";
 import { runAnthropicStructured } from "./llm.js";
 import { outputSchema } from "./schemas.js";
 import { traced, agentAttributes } from "../telemetry/index.js";
-import type { FailureEvidence } from "@hollow-purple/shared/evolution";
+import type { FailureEvidence } from "@antibody/shared/evolution";
 
 export const lessonAnswerSchema = z.object({ text: z.string().min(20).max(800), transferText: z.string().min(20).max(800), sourceLines: z.array(z.number().int().min(1)).min(1).max(3), repairLines: z.array(z.number().int().min(1)).max(3) }).strict();
 const numberedSource = (source: string) => source.split("\n").map((code, index) => ({ line: index + 1, code }));

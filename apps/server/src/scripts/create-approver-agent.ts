@@ -3,8 +3,8 @@ import "../config.js";
 /**
  * Creates the ElevenLabs voice agent the release gate talks to, and prints its id for ELEVENLABS_AGENT_ID.
  *
- *   pnpm --filter @hollow-purple/server exec node --import tsx src/scripts/create-approver-agent.ts
- *   pnpm --filter @hollow-purple/server exec node --import tsx src/scripts/create-approver-agent.ts --update <agent id>
+ *   pnpm --filter @antibody/server exec node --import tsx src/scripts/create-approver-agent.ts
+ *   pnpm --filter @antibody/server exec node --import tsx src/scripts/create-approver-agent.ts --update <agent id>
  *
  * --update re-sends the full configuration (prompt, first message, client tool) to an existing agent.
  *
@@ -17,7 +17,7 @@ const key = process.env.ELEVENLABS_API_KEY;
 if (!key) throw new Error("Set ELEVENLABS_API_KEY in .env first.");
 
 const prompt = [
-  "You are the release gate for Hollow Purple, an adversarial engineering lab. You speak with one human approver.",
+  "You are the release gate for Antibody, an adversarial engineering lab. You speak with one human approver.",
   "The design up for release: {{summary}}",
   "Ask clearly whether they approve releasing this design. Answer short questions about the summary, but never invent details.",
   "If and only if the approver clearly says yes or approve, call the record_decision tool with decision \"approve\".",
@@ -31,11 +31,11 @@ const response = await fetch(existing ? `https://api.elevenlabs.io/v1/convai/age
   method: existing ? "PATCH" : "POST",
   headers: { "xi-api-key": key, "content-type": "application/json" },
   body: JSON.stringify({
-    name: "Hollow Purple release approver",
-    tags: ["hollow-purple"],
+    name: "Antibody release approver",
+    tags: ["antibody"],
     conversation_config: {
       agent: {
-        first_message: "Hi, this is the Hollow Purple release gate. {{summary}} Do you approve releasing it? Please say yes or no.",
+        first_message: "Hi, this is the Antibody release gate. {{summary}} Do you approve releasing it? Please say yes or no.",
         language: "en",
         dynamic_variables: { dynamic_variable_placeholders: { summary: "A verified design is ready for release.", run_id: "none" } },
         prompt: {

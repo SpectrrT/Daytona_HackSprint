@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
 import { readFile, mkdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
-import { BUFFER_PROMPT, type EvolutionRun } from "@hollow-purple/shared/evolution";
+import { BUFFER_PROMPT, type EvolutionRun } from "@antibody/shared/evolution";
 import { config, REPO_ROOT } from "../config.js";
 import { EvolutionEngine } from "../engine/index.js";
 import { passesAcceptance } from "../arena/tools.js";

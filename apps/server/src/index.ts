@@ -17,11 +17,11 @@ import { configuredMemory } from "./memory/index.js";
 import { telemetryStatus, flushTelemetry } from "./telemetry/index.js";
 import { approvalChannel, availableChannels, decide, pendingPhoneRun, ReleaseError, requestApproval, voiceSession, webhookAuthorized } from "./release/index.js";
 import { arizeConfigured, startArizeTracing } from "./telemetry/arize.js";
-import type { EvolutionEvent } from "@hollow-purple/shared/evolution";
+import type { EvolutionEvent } from "@antibody/shared/evolution";
 import { SoftwareService } from "./software/service.js";
 import { AgentLabService } from "./agent-lab/service.js";
 import { retrySummary } from "./benchmarks/retry-summary.js";
-import { AGENT_ENVIRONMENTS } from "@hollow-purple/shared/agent-lab";
+import { AGENT_ENVIRONMENTS } from "@antibody/shared/agent-lab";
 import { labDirectory } from "./agent-lab/engine.js";
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
@@ -178,7 +178,7 @@ export function createApp(store: RunStore = defaultStore, engine = new Evolution
   app.get("/api/runs/:id/export", (c) => {
     const run = store.get(c.req.param("id"));
     if (!run) return c.json({ error: "Run not found." }, 404);
-    c.header("content-disposition", `attachment; filename="hollow-purple-${run.id}.json"`);
+    c.header("content-disposition", `attachment; filename="antibody-${run.id}.json"`);
     return c.json(run);
   });
   app.post("/api/runs/:id/stop", async (c) => {
@@ -278,7 +278,7 @@ export async function startServer(): Promise<void> {
   const software = new SoftwareService();
   const agentLab = new AgentLabService();
   const server = serve({ fetch: createApp(defaultStore, engine, software, agentLab).fetch, port: config.PORT, hostname: "0.0.0.0" });
-  console.log(`Hollow Purple controller listening on http://localhost:${config.PORT}`);
+  console.log(`Antibody controller listening on http://localhost:${config.PORT}`);
   let closing = false;
   const shutdown = async () => {
     if (closing) return; closing = true;

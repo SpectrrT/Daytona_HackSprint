@@ -1,7 +1,7 @@
 import { mkdirSync } from "node:fs";
 import { appendFile, readFile, readdir, truncate } from "node:fs/promises";
 import { join } from "node:path";
-import type { ApprovalState, BrowserAudit, Candidate, EvolutionEvent, EvolutionRun, FailureEvidence, ReleaseRecord, RunSummary } from "@hollow-purple/shared/evolution";
+import type { ApprovalState, BrowserAudit, Candidate, EvolutionEvent, EvolutionRun, FailureEvidence, ReleaseRecord, RunSummary } from "@antibody/shared/evolution";
 import { config } from "./config.js";
 import { assertFrozenContract } from "./engine/contract.js";
 
