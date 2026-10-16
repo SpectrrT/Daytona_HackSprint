@@ -12,9 +12,10 @@ export const pause = (ms: number) => new Promise(resolve => setTimeout(resolve, 
 export interface LabJob { id: string; input: { domain: AgentEnvironment; message: string; knowledge: string }; result: { proposal: LabProposal; tools: unknown[] } | null }
 export class DaytonaAgentAdapter {
   private constructor(readonly computer: Computer, readonly candidate: LabCandidate, readonly appUrl: string, readonly runtimeHash: string) {}
-  static async provision(runId: string, candidate: LabCandidate, desktopId?: string): Promise<DaytonaAgentAdapter> {
-    const sandbox = await daytona().create({ name: `agents-${runId.slice(0, 12)}-${candidate.id}`.toLowerCase(), snapshot: desktopId ? "daytona-small" : "daytona-medium", public: false,
-      envVars: desktopId ? {} : { VNC_RESOLUTION: "1600x1000" }, labels: { app: "hollow-purple", purpose: "agent-lab", run: runId, candidate: candidate.id }, autoStopInterval: 30, autoDeleteInterval: desktopId ? 0 : -1, ...(desktopId ? { linkedSandbox: desktopId } : {}) }, { timeout: 180 });
+  static async provision(runId: string, candidate: LabCandidate, desktopId?: string, options: { headless?: boolean } = {}): Promise<DaytonaAgentAdapter> {
+    const small = !!desktopId || options.headless;
+    const sandbox = await daytona().create({ name: `agents-${runId.slice(0, 12)}-${candidate.id}`.toLowerCase(), snapshot: small ? "daytona-small" : "daytona-medium", public: false,
+      envVars: small ? {} : { VNC_RESOLUTION: "1600x1000" }, labels: { app: "hollow-purple", purpose: "agent-lab", run: runId, candidate: candidate.id }, autoStopInterval: 30, autoDeleteInterval: desktopId ? 0 : -1, ...(desktopId ? { linkedSandbox: desktopId } : {}) }, { timeout: 180 });
     candidate.sandboxId = sandbox.id;
     const computer = new Computer(sandbox);
     try {
@@ -64,6 +65,16 @@ export class DaytonaAgentAdapter {
   }
   async jobs(): Promise<LabJob[]> { return (await this.request<{ jobs: LabJob[] }>("/api/jobs")).jobs; }
   async tools(domain: AgentEnvironment, actions: LabAction[]): Promise<void> { await this.request("/api/tool-test", { domain, actions }); }
+  /** A headless paired benchmark owns this sandbox and resets state per version. */
+  async replaceCandidate(candidate: LabCandidate): Promise<DaytonaAgentAdapter> {
+    assert.equal(candidate.sourceHash, candidateHash(candidate.systemPrompt, candidate.guardSource));
+    await this.computer.writeFile(`${APP_DIR}/guard.py`, candidate.guardSource);
+    await this.computer.writeFile(`${APP_DIR}/candidate.json`, JSON.stringify({ id: candidate.id, label: candidate.label, importedFixture: !!candidate.importedFixture, systemPrompt: candidate.systemPrompt }));
+    await this.checked("python3 validate.py guard.py && python3 runtime.py validate && git add guard.py candidate.json && git -c core.hooksPath=/dev/null -c commit.gpgSign=false -c user.name=Lab -c user.email=lab@local commit --allow-empty -qm 'Paired candidate version'");
+    candidate.sandboxId = this.computer.id;
+    const adapter = new DaytonaAgentAdapter(this.computer, candidate, this.appUrl, this.runtimeHash);
+    await adapter.reset(); return adapter;
+  }
   async destroy(): Promise<void> { await this.computer.sandbox.delete(60, true); }
   async prepareDesktop(): Promise<void> {
     await this.computer.sandbox.computerUse.start(); await this.checked(`mkdir -p ${DESKTOP_DIR} /home/daytona/.config/xfce4/terminal`);
