@@ -51,9 +51,9 @@ Even then, nothing ships on its own. No tool can approve a release, not even Cla
 
 [The agent reads the summary and asks for a yes or no.]
 
-Yes, release it.
+Yes, release it. [Read the four-digit code on screen aloud.]
 
-The controller confirms with ElevenLabs that this conversation was held with our release agent, then writes the release bundle: the exact RTL and a manifest of its hashes.
+The agent never knows that code, so an echo or a voice in the room can't approve. The controller finds the code in my words in the ElevenLabs transcript, then writes the release bundle: the exact RTL and a manifest of its hashes.
 
 **[Close]**
 
@@ -69,7 +69,7 @@ This is simulation evidence, not a formal proof. But every claim has a receipt. 
 | 2. Agents view | 0:45 | Dashboard, `http://localhost:5173/?run=<id>&view=agents` | Open the `agent_console` link. Pick a design in the roster to show only its agents. If the fresh run is still on its first design, say the fallback line and open the warm-up run's Agents view. | **BLUE**: the design rationale. **RED**: four attack hypotheses, each an N-cycle input. **DAYTONA**: "Compiling c1 with Verilator and replaying every attack". **VERIFIER**: the verdict. The "working now" line shows who is busy and for how long. |
 | 3. Reproduced failure becomes a regression test | 1:15 | Agents view, or the **Evidence** tab | Select the failed design in the roster. Click the **Verifier** chip, then the **Memory** chip. | **VERIFIER ✗**: test name, cycle, expected vs. got, "independently replayed". **MEMORY**: "Verified failure retained permanently". With SurrealDB on, also "Blue proposed a lesson … Pending descendant validation". The Evidence tab's **Regression library** lists the permanent tests. |
 | 4. Champion selected | 1:40 | Agents view | Click **ALL** at the top of the roster and the **All** chip, then scroll to the end of the run. | **VERIFIER ✓**: the champion line, which names the gates the design passed. The roster marks that design "champion". |
-| 5. Voice approval and release bundle | 1:50 | Dashboard **Overview**, **Release gate** panel | If the panel shows **Approve by voice**, click it. Then click **Talk to the release agent**, let it read the summary, and answer "Yes, release it." | "Recorded: approved. The design is being released." In the Agents view, a **HUMAN ✓** line with `runs/<id>/release · approved by voice`. On disk: `data/runs/<id>/release/<champion>.sv` and `manifest.json`. |
+| 5. Voice approval and release bundle | 1:50 | Dashboard **Overview**, **Release gate** panel | If the panel shows **Approve by voice**, click it. Then click **Talk to the release agent**, let it read the summary, then say "Yes, release it" and read the four-digit code shown in the panel | The panel shows the code, then "Checking the code with ElevenLabs…" after the call ends. In the Agents view, a **HUMAN ✓** line with `runs/<id>/release · approved by voice`. On disk: `data/runs/<id>/release/<champion>.sv` and `manifest.json`. |
 
 If beat 3 comes up with no failure, say: "Red didn't break this design. That's test coverage, not proof. When Red does break one, this is where it lands," and point at the Regression library.
 

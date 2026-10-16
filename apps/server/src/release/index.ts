@@ -167,7 +167,7 @@ interface VoiceConversation { agent_id?: string; status?: string; transcript?: {
  */
 async function verifyVoiceConversation(conversationId: string, code?: string): Promise<void> {
   const e = env();
-  const deadline = Date.now() + 25_000;
+  const deadline = Date.now() + 40_000; // ElevenLabs finalizes the transcript shortly after the call ends
   let held = false;
   for (;;) {
     const response = await fetch(`${ELEVENLABS}/convai/conversations/${encodeURIComponent(conversationId)}`, {
