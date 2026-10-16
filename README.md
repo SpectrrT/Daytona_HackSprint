@@ -42,6 +42,10 @@ The run has a fixed limit of three candidates, 120 adversarial browser actions, 
 
 The controller also exposes `POST /api/software/runs` with `{"example":"checkout"}`, plus `GET /api/software/runs`, `GET /api/software/runs/:id`, `GET /api/software/runs/:id/export`, and `POST /api/software/runs/:id/stop`. Starting an API run dispatches the same recorded execution path. Software evidence is stored separately from existing hardware experiments.
 
+The dashboard's **Software progress** view (`/?view=software`) reads this saved evidence and follows running experiments. It charts the same known regressions at each candidate verdict and cumulative verification results over elapsed run time. A coverage table distinguishes passed, failed, and unmeasured checks, with source and model provenance available per version. The fault-seeded baseline stops after its first reproduced failure, so its one recorded check is not presented as comparable to a repair's full suite. Historical runs group checks at their recorded verdicts; new runs record individual check times. Results measure the stated checkout behavior, not an overall website security percentage.
+
+Blue and Red are separate, ephemeral model sessions with separate role instructions and evidence. `BLUE_MODEL` and `RED_MODEL` can select different underlying models; leaving both blank uses the configured Codex default for both. Red proposes bounded browser scenarios, the controller executes them through Anchor, the independent verifier confirms failures, and **Blue writes repairs**. These roles do not currently receive general terminal or browser tool access. The controller owns execution, deployment, regression retention, and acceptance decisions.
+
 ## Start the system
 
 Requires Node.js 22+, pnpm 10, Python 3.10+, and a signed-in Codex CLI.

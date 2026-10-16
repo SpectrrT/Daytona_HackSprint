@@ -65,7 +65,7 @@ export async function runSoftwareExperiment(options: SoftwareRunOptions = {}): P
     await terminal(`clear; cat ${name}.txt`, 2500);
   };
   const retainTrial = async (candidate: SoftwareCandidate, trial: BrowserTrial, label: string) => {
-    candidate.checks.push({ ...trial.check, id: label });
+    candidate.checks.push({ ...trial.check, id: label, recordedAt: Date.now() });
     await writeFile(join(directory, `${candidate.id}-${label}.json`), JSON.stringify(trial, null, 2), { mode: 0o600 });
     await save();
   };
@@ -118,7 +118,7 @@ export async function runSoftwareExperiment(options: SoftwareRunOptions = {}): P
       if (await retainFailure(parent, lab, trial)) break;
     }
     assert.ok(run.regressions.length, "Red did not produce a reproducible failure. No failure or repair was fabricated.");
-    parent.status = "rejected";
+    parent.status = "rejected"; parent.evaluatedAt = Date.now();
     await report("failure", ["INDEPENDENT VERIFIER: FAILURE REPRODUCED", "", run.regressions[0]!.summary, "",
       `Actual SQLite orders: ${run.regressions[0]!.discovery.ledger.orders.length}`, `Actual remaining stock: ${run.regressions[0]!.discovery.ledger.stock}`,
       "", "Red's exact Anchor actions failed again after a new process and empty database.", "The imported baseline is a manual fault fixture, not Blue output."].join("\n"));
@@ -139,7 +139,7 @@ export async function runSoftwareExperiment(options: SoftwareRunOptions = {}): P
       let adapter: DaytonaSoftwareAdapter;
       try { adapter = await DaytonaSoftwareAdapter.provision(id, candidate, undefined, lab.computer.id); }
       catch (error) {
-        candidate.status = "rejected"; candidate.error = error instanceof Error ? error.message : "Candidate build failed.";
+        candidate.status = "rejected"; candidate.evaluatedAt = Date.now(); candidate.error = error instanceof Error ? error.message : "Candidate build failed.";
         if (candidate.sandboxId) {
           const orphan = await daytona().get(candidate.sandboxId).catch(() => undefined);
           if (orphan?.labels.app === "hollow-purple" && orphan.labels.run === id && orphan.labels.candidate === candidate.id) await orphan.delete(60, true).catch(() => {});
@@ -178,12 +178,13 @@ export async function runSoftwareExperiment(options: SoftwareRunOptions = {}): P
         }
         const ledger = await adapter.observe();
         const check = verifyCheckout({ id: test.id, contract: run.contract, sourceHash: candidate.sourceHash, runtimeHash: adapter.runtimeHash, batches, ledger, hidden: test.hidden });
-        candidate.checks.push(test.hidden && !check.passed ? { ...check, summary: "Independent held-out check failed." } : check);
+        candidate.checks.push({ ...check, summary: test.hidden && !check.passed ? "Independent held-out check failed." : check.summary, recordedAt: Date.now() });
         apiChecks.push(check);
         if (!test.hidden) await writeFile(join(directory, `${candidate.id}-${test.id}.json`), JSON.stringify({ batches, ledger, check }, null, 2), { mode: 0o600 });
         await save();
       }
       candidate.status = browserPassed && apiChecks.every(check => check.passed) ? "verified" : "rejected";
+      candidate.evaluatedAt = Date.now();
       await report(`verdict-${candidate.id}`, [`INDEPENDENT VERIFIER: ${candidate.label}`, "", ...candidate.checks.map(check => `${check.passed ? "PASS" : "FAIL"}  ${check.id}`), "",
         `${candidate.checks.filter(check => check.passed).length}/${candidate.checks.length} checks passed.`, `Source: ${candidate.sourceHash}`, "Actual HTTP + SQLite evidence. Hidden inputs were not given to either agent."].join("\n"));
       await emit(`${candidate.label}: ${candidate.status}; ${candidate.checks.filter(check => check.passed).length}/${candidate.checks.length} checks passed.`, candidate.id);
@@ -194,6 +195,7 @@ export async function runSoftwareExperiment(options: SoftwareRunOptions = {}): P
         if (candidate.checks.some(check => check.id === `regression-${failure.id}` && check.passed)) continue;
         const trial = await browser.trial(adapters.get(candidate.id)!, failure.discovery.attack, run.contract, directory, consume, options.signal);
         await retainTrial(candidate, trial, `regression-${failure.id}`);
+        candidate.evaluatedAt = Date.now();
         if (!trial.check.passed) candidate.status = "rejected";
       }
     }
