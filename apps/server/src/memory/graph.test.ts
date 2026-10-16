@@ -159,10 +159,10 @@ test("grounded lessons keep actual repair excerpts and reject invented citations
   parent.source = "assign occupancy = wrong_count;";
   repair.source = "assign occupancy = corrected_count;";
   const input = { run: run(), candidate: parent, failure, family: "occupancy" as const, repair };
-  const answer = { text: "Expose the state register used to calculate accepted operations through the occupancy port.", sourceExcerpt: parent.source, repairExcerpt: repair.source };
+  const answer = { text: "Expose the state register used to calculate accepted operations through the occupancy port.", sourceLines: [1], repairLines: [1] };
   assert.match(groundedLesson(input, answer), /Passing descendant excerpt:\nassign occupancy = corrected_count;/);
-  assert.throws(() => groundedLesson(input, { ...answer, sourceExcerpt: "assign occupancy = invented;" }), /citations/);
-  assert.throws(() => groundedLesson(input, { ...answer, repairExcerpt: "" }), /citations/);
+  assert.throws(() => groundedLesson(input, { ...answer, sourceLines: [999] }), /citations/);
+  assert.throws(() => groundedLesson(input, { ...answer, repairLines: [] }), /citations/);
 });
 
 test("engine gives Blue and Red only validated graph lessons, and a sibling cannot validate a proposal", async () => {
