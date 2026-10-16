@@ -122,6 +122,7 @@ export interface EvaluateCandidateInput {
   regressions: FailureEvidence[];
   source?: string;
   attacks?: RedAttack[];
+  suite?: "development-simultaneous" | "ablation-exam";
   signal?: AbortSignal;
 }
 
@@ -138,7 +139,12 @@ async function evaluateCandidateUntraced(input: EvaluateCandidateInput): Promise
   aborted(signal);
   if ((input.source !== undefined || variant === "generated") && provider !== "daytona") throw new Error("Blue-authored RTL requires Daytona Verilator execution; a behavioral model cannot verify arbitrary source.");
   if (variant === "generated" && input.source === undefined) throw new Error("Generated candidates require Blue-authored source.");
-  const tests = buildTests(seed, regressions, input.attacks);
+  let tests = buildTests(seed, regressions, input.attacks);
+  if (input.suite === "development-simultaneous") tests = tests.filter(test => test.id === "simultaneous");
+  if (input.suite === "ablation-exam") {
+    const step = (write = false, read = false, data = 0, reset = false) => ({ write, read, data: data & 65535, reset });
+    tests.push({ id: "transfer-empty-boundary", name: "Unseen sibling: empty boundary", hidden: true, sequence: [step(false, false, 0, true), ...Array.from({ length: 64 }, (_, i) => [step(true, true, (seed + i * 7919) & 65535), step(false, true), step(false, true), step(false, false)]).flat()] });
+  }
   const suiteCycles = tests.reduce((total, test) => total + test.sequence.length, 0);
   const maxReplay = Math.max(0, ...tests.filter((test) => !test.hidden).map((test) => test.sequence.length));
   if (suiteCycles + maxReplay > MAX_EVALUATION_CYCLES) throw new Error(`Candidate evaluation exceeds ${MAX_EVALUATION_CYCLES} cycle budget.`);

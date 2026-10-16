@@ -15,6 +15,9 @@
     "snapshot": "pnpm --filter @hollow-purple/server snapshot",
     "smoke": "pnpm --filter @hollow-purple/server smoke",
     "software:demo": "pnpm --filter @hollow-purple/server exec node --import tsx src/scripts/run-software.ts",
-    "cleanup": "pnpm --filter @hollow-purple/server cleanup"
+    "cleanup": "pnpm --filter @hollow-purple/server cleanup",
+    "ablation": "pnpm --filter @hollow-purple/server exec tsx src/scripts/ablation.ts",
+    "metrics": "pnpm --filter @hollow-purple/server exec tsx src/scripts/ablation-metrics.ts",
+    "charts": "pnpm --filter @hollow-purple/server exec tsx src/scripts/charts.ts"
   }
 }

@@ -1,3 +1,5 @@
+import { readTimeseries, rowsFromHardwareRun, writeTimeseries } from "./charts/series.js";
+import { readAblationSummary } from "./ablation/read.js";
 import { pathToFileURL } from "node:url";
 import { spawnSync } from "node:child_process";
 import { serve } from "@hono/node-server";
@@ -27,6 +29,7 @@ const createSchema = z.object({
 
 let agentCheck: { ts: number; ready: boolean } | undefined;
 function agentsReady(): boolean {
+  if (config.AGENT_PROVIDER === "bedrock") return !!(config.BEDROCK_CREDENTIALS_FILE && config.BLUE_MODEL && config.RED_MODEL);
   if (config.AGENT_PROVIDER === "anthropic") return Boolean(config.ANTHROPIC_API_KEY && config.BLUE_MODEL && config.RED_MODEL);
   if (agentCheck && Date.now() - agentCheck.ts < 30_000) return agentCheck.ready;
   const check = spawnSync(config.CODEX_BIN, ["login", "status"], {
@@ -47,6 +50,24 @@ export function createApp(store: RunStore = defaultStore, engine = new Evolution
     if (error instanceof ReleaseError) return c.json({ error: error.message }, error.status);
     console.error("[api]", error.message);
     return c.json({ error: "The request failed. Check the server log and retained run evidence." }, 500);
+  });
+  app.get("/api/ablation/latest", async c => {
+    try { return c.json(await readAblationSummary()); }
+    catch { return c.json({ status: "missing", summary: [] }); }
+  });
+  app.get("/api/charts/:id/events", c => {
+    const id=c.req.param("id");
+    if(!/^[a-zA-Z0-9_-]{1,100}$/.test(id))return c.json({error:"Invalid run ID."},400);
+    return streamSSE(c,async stream=>{
+      let ended=false;let revision="";let wake:(()=>void)|undefined;
+      stream.onAbort(()=>{ended=true;wake?.();});
+      while(!ended){
+        const rows=await readTimeseries(id).catch(()=>[]);
+        const next=JSON.stringify(rows);
+        if(next!==revision){await stream.writeSSE({event:"timeseries",data:next});revision=next;}
+        await new Promise<void>(resolve=>{const timer=setTimeout(resolve,1000);wake=()=>{clearTimeout(timer);resolve();};if(ended)wake();});
+      }
+    });
   });
   app.get("/api/health", (c) => c.json({ status: "ok" }));
   app.get("/api/telemetry/status", (c) => c.json(telemetryStatus()));
@@ -212,6 +233,11 @@ export async function startServer(): Promise<void> {
   const telemetry = startArizeTracing(defaultStore);
   if (telemetry) console.log("Arize tracing enabled.");
   const engine = new EvolutionEngine(defaultStore, undefined, undefined, configuredMemory());
+  defaultStore.observe(event=>{
+    if(["candidate.updated","run.completed","run.failed","run.stopped"].includes(event.type)){
+      const run=defaultStore.get(event.runId);if(run)void writeTimeseries(run.id,rowsFromHardwareRun(run)).catch(()=>{});
+    }
+  });
   const software = new SoftwareService();
   const server = serve({ fetch: createApp(defaultStore, engine, software).fetch, port: config.PORT, hostname: "0.0.0.0" });
   console.log(`Hollow Purple controller listening on http://localhost:${config.PORT}`);

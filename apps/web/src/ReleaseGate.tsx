@@ -142,13 +142,14 @@ export function BaselineComparison({ run }: { run: EvolutionRun }) {
   const champion = run.candidates.find(c => c.id === run.championId);
   const evolved = champion ?? [...run.candidates].sort((a, b) => b.score - a.score)[0]!;
   const bestFirst = Math.max(...first.map(c => c.score));
+  const imported = first.some(c => !c.agent && run.verificationFixture);
   const acceptedFirst = first.filter(c => c.status === 'verified').length;
   const rows = [
-    { label: 'Single-shot designs', detail: `generation 0 · ${first.length} designs · ${acceptedFirst} accepted`, score: bestFirst, tone: 'red' },
+    { label: imported ? 'Imported faulty starter' : 'Single-shot designs', detail: `generation 0 · ${first.length} designs · ${acceptedFirst} accepted`, score: bestFirst, tone: 'red' },
     { label: champion ? 'Evolved champion' : 'Best design so far', detail: `generation ${evolved.generation} · ${run.regressions.length} regression tests inherited`, score: evolved.score, tone: 'purple' },
   ];
   return <section className="panel compare-panel" data-testid="baseline-comparison">
-    <div className="panel-heading"><div className="panel-title"><TrendingUp size={16}/><h2>Single-shot vs evolved</h2><span className="panel-meta">Same model, same frozen contract</span></div></div>
+    <div className="panel-heading"><div className="panel-title"><TrendingUp size={16}/><h2>{imported ? 'Starter versus verified repair' : 'Single-shot vs evolved'}</h2><span className="panel-meta">{imported ? 'Manual starter, model-written repair, same contract' : 'Same model, same frozen contract'}</span></div></div>
     <div className="compare-body">
       {rows.map(row => <div className="compare-row" key={row.label}>
         <div className="compare-head"><span><span className={`tiny-dot ${row.tone}`}/>{row.label}</span><b>{Math.round(row.score)}%</b></div>
