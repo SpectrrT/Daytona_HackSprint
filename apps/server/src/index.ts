@@ -20,6 +20,8 @@ import { arizeConfigured, startArizeTracing } from "./telemetry/arize.js";
 import type { EvolutionEvent } from "@antibody/shared/evolution";
 import { SoftwareService } from "./software/service.js";
 import { AgentLabService } from "./agent-lab/service.js";
+import { LabConnectionChecks } from "./agent-lab/connections.js";
+import { SandboxAccessError } from "./agent-lab/sandboxes.js";
 import { retrySummary } from "./benchmarks/retry-summary.js";
 import { AGENT_ENVIRONMENTS } from "@antibody/shared/agent-lab";
 import { labDirectory } from "./agent-lab/engine.js";
@@ -49,11 +51,13 @@ function agentsReady(): boolean {
 export function createApp(store: RunStore = defaultStore, engine = new EvolutionEngine(store, undefined, undefined, configuredMemory()), software = new SoftwareService(), agentLab = new AgentLabService()): Hono {
   const app = new Hono();
   const audits = new Set<string>();
+  const labConnections = new LabConnectionChecks();
   app.use("/api/*", bodyLimit({ maxSize: 16 * 1024, onError: (c) => c.json({ error: "Request body exceeds 16 KiB." }, 413) }));
   app.onError((error, c) => {
     if (error instanceof ConfigError) return c.json({ error: error.message }, 503);
     if (error instanceof CapacityError) return c.json({ error: error.message }, 429);
     if (error instanceof ReleaseError) return c.json({ error: error.message }, error.status);
+    if (error instanceof SandboxAccessError) return c.json({ error: error.message }, error.status);
     console.error("[api]", error.message);
     return c.json({ error: "The request failed. Check the server log and retained run evidence." }, 500);
   });
@@ -80,12 +84,13 @@ export function createApp(store: RunStore = defaultStore, engine = new Evolution
   });
   app.get("/api/health", (c) => c.json({ status: "ok" }));
   app.get("/api/agent-lab/status", c => c.json({ ready: Boolean(config.DAYTONA_API_KEY && config.ANCHOR_API_KEY && agentsReady()), environments: AGENT_ENVIRONMENTS }));
+  app.get("/api/agent-lab/connections", async c => c.json(await labConnections.get()));
   app.get("/api/agent-lab/runs", async c => c.json(await agentLab.list()));
   app.post("/api/agent-lab/runs", async c => {
-    const body = z.object({ suite: z.literal("cross-domain") }).strict().safeParse(await c.req.json().catch(() => undefined));
+    const body = z.object({ suite: z.literal("cross-domain"), prompt: z.string().trim().min(5).max(2000).optional() }).strict().safeParse(await c.req.json().catch(() => undefined));
     if (!body.success) return c.json({ error: "Use {suite:'cross-domain'} for the current agent suite." }, 400);
     if (!agentsReady()) return c.json({ error: "The configured model runtime is unavailable." }, 503);
-    try { return c.json({ id: agentLab.start() }, 202); } catch (error) { return c.json({ error: error instanceof Error ? error.message : "Agent experiment could not start." }, 409); }
+    try { return c.json({ id: agentLab.start({ prompt: body.data.prompt }) }, 202); } catch (error) { return c.json({ error: error instanceof Error ? error.message : "Agent experiment could not start." }, 409); }
   });
   app.get("/api/agent-lab/runs/:id", async c => {
     if (!/^[a-zA-Z0-9_-]{1,100}$/.test(c.req.param("id"))) return c.json({ error: "Invalid run ID." }, 400);
@@ -95,6 +100,23 @@ export function createApp(store: RunStore = defaultStore, engine = new Evolution
     if (!/^[a-zA-Z0-9_-]{1,100}$/.test(c.req.param("id"))) return c.json({ error: "Invalid run ID." }, 400);
     const run = await agentLab.get(c.req.param("id")); if (!run) return c.json({ error: "Agent experiment not found." }, 404);
     c.header("Content-Disposition", `attachment; filename="agent-lab-${run.id}.json"`); return c.json(run);
+  });
+  app.get("/api/agent-lab/runs/:id/sandboxes", async c => {
+    const id = c.req.param("id"); if (!/^[a-zA-Z0-9_-]{1,100}$/.test(id)) return c.json({ error: "Invalid run ID." }, 400);
+    const run = await agentLab.get(id);
+    if (!run || run.status === "queued") return c.json({ error: "Sandboxes have not been provisioned for this run." }, 404);
+    c.header("Cache-Control", "no-store");
+    return c.json(await agentLab.sandboxAccess.list(run));
+  });
+  app.post("/api/agent-lab/runs/:id/sandboxes/:key/preview", async c => {
+    const id = c.req.param("id"), key = c.req.param("key");
+    if (!/^[a-zA-Z0-9_-]{1,100}$/.test(id) || !/^[a-zA-Z0-9_-]{1,100}$/.test(key)) return c.json({ error: "Invalid run or sandbox key." }, 400);
+    const body = z.object({ resume: z.boolean().default(false) }).strict().safeParse(await c.req.json().catch(() => undefined));
+    if (!body.success) return c.json({ error: "Use {resume:true} to resume this run’s sandbox." }, 400);
+    const run = await agentLab.get(id);
+    if (!run || run.status === "queued") return c.json({ error: "Sandbox not found for this run." }, 404);
+    c.header("Cache-Control", "no-store");
+    return c.json(await agentLab.sandboxAccess.preview(run, key, body.data.resume));
   });
   app.get("/api/agent-lab/runs/:id/video", async c => {
     const id = c.req.param("id"); if (!/^[a-zA-Z0-9_-]{1,100}$/.test(id)) return c.json({ error: "Invalid run ID." }, 400);

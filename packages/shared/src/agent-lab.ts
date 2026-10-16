@@ -28,5 +28,18 @@ export interface LabRun {
   budget: { maxModelCalls: number; usedModelCalls: number; maxCandidates: number; usedBrowserActions: number };
   desktopUrl?: string; desktopSandboxId?: string; videoPath?: string; error?: string;
   controllable?: boolean;
+  prompt?: string;
 }
 export interface LabRunSummary { id: string; status: LabRun["status"]; createdAt: number; championId?: string }
+
+export interface LabSandbox {
+  key: string; id: string; candidateId?: string; title: string; kind: "desktop" | "app";
+  state: string; detail?: string; canOpen: boolean; canResume: boolean;
+}
+export interface LabSandboxList { checkedAt: number; sandboxes: LabSandbox[] }
+export interface LabPreview { url: string; expiresAt: number; sandboxId: string; kind: LabSandbox["kind"]; note?: string }
+export interface LabConnection {
+  id: "daytona" | "anchor" | "agents"; name: string;
+  state: "connected" | "authenticated" | "configured" | "missing" | "error"; detail: string;
+}
+export interface LabConnections { checkedAt: number; ready: boolean; connections: LabConnection[] }

@@ -1,5 +1,5 @@
-:root { background: #faf9fc; }
-.app-shell--focused { background: #faf9fc; min-height: 100svh; color: #29252f; }
+:root { background: #fafbf9; }
+.app-shell--focused { background: #fafbf9; min-height: 100svh; color: #29252f; }
 .app-shell--focused .workspace { margin: 0; }
 .app-shell--focused .workspace > main { max-width: 1400px; margin: 0 auto; padding: 49px 48px 0; }
 .app-header { height: 72px; padding: 0 44px; display: flex; align-items: center; gap: 45px; border-bottom: 1px solid #eceaf0; background: #fff; }
@@ -7,8 +7,8 @@
 .app-brand > span { font-size: 19px; font-weight: 550; letter-spacing: -.65px; }
 .app-primary-nav { height: 100%; display: flex; align-items: stretch; }
 .app-primary-nav button { position: relative; font-size: 13px; padding: 0 5px; color: #92909a; font-weight: 500; }
-.app-primary-nav button.active { color: #5f447e; }
-.app-primary-nav button.active::after { content: ''; position: absolute; height: 2px; bottom: -1px; left: 0; right: 0; background: #9571c4; }
+.app-primary-nav button.active { color: #3e5c48; }
+.app-primary-nav button.active::after { content: ''; position: absolute; height: 2px; bottom: -1px; left: 0; right: 0; background: #4c6855; }
 .app-header-actions { margin-left: auto; display: flex; align-items: center; gap: 24px; }
 .app-examples { position: relative; }
 .app-examples > summary { display: flex; align-items: center; gap: 7px; min-height: 36px; padding: 0 4px; font-size: 12px; color: #797180; list-style: none; cursor: pointer; }
@@ -18,13 +18,13 @@
 .app-examples nav button:first-child { margin-bottom: 4px; }
 .app-examples nav button:nth-child(2) { border-top: 1px solid #f0edf3; border-radius: 0; padding-top: 4px; }
 .app-settings { width: 34px; height: 34px; display: grid; place-items: center; border-radius: 6px; color: #82768d; }
-.app-settings.active { background: #f2edf8; color: #8962b5; }
-.app-header button:focus-visible, .app-header summary:focus-visible, .app-brand:focus-visible { outline: 2px solid #9774dd; outline-offset: 4px; }
+.app-settings.active { background: #eff4ee; color: #526e59; }
+.app-header button:focus-visible, .app-header summary:focus-visible, .app-brand:focus-visible { outline: 2px solid #788d7f; outline-offset: 4px; }
 .detail-run-history { max-width: 180px; min-height: 33px; border: 1px solid #e3dfe8; color: #8b7d97; background: #fff; border-radius: 5px; padding: 0 8px; font-size: 10px; }
 .app-shell--detail .page-heading { margin-bottom: 28px; }
 @media (hover:hover) and (pointer:fine) {
-  .app-examples nav button:hover, .app-settings:hover { color: #7350a2; background: #f5f1f9; }
-  .app-examples > summary:hover { color: #7350a2; }
+  .app-examples nav button:hover, .app-settings:hover { color: #4a6752; background: #f1f5f0; }
+  .app-examples > summary:hover { color: #4a6752; }
 }
 @media (max-width:700px) {
   .app-header { height: 64px; padding: 0 20px; gap: 22px; }
@@ -36,3 +36,17 @@
   .app-examples > summary { font-size: 11px; }
   .app-shell--focused .workspace > main { padding: 29px 20px 0; }
 }
+
+.research-disclosure { margin:24px 0; border:1px solid #e0e6de; border-radius:8px; background:#fff; padding:0 18px; }
+.research-disclosure > summary { min-height:48px; display:flex; align-items:center; justify-content:space-between; cursor:pointer; font-size:12px; color:#7d8a7b; list-style:none; }
+.research-disclosure .ablation-panel { background:#fff; color:#465443; border:1px solid #e0e7dc; padding:20px; box-shadow:none; }
+.research-disclosure .ablation-panel h2,.research-disclosure .ablation-panel h3 { color:#465443; }
+.research-disclosure .ablation-panel p,.research-disclosure .ablation-panel li,.research-disclosure .ablation-panel small,.research-disclosure .ablation-panel footer { color:#8c9986; }
+.research-disclosure .ablation-panel .ablation-arm { background:#fafcf8; color:#7f8e77; border-color:#e0e8d9; }
+.research-disclosure .ablation-panel .ablation-arm.graph { background:#f5f9f0; border-color:#ccdabe; }
+.research-disclosure .ablation-panel strong,.research-disclosure .ablation-panel dt,.research-disclosure .ablation-panel dd { color:#829675; }
+
+.research-disclosure .ablation-arms article { background:#fafcf8; border-color:#e1e7dc; }
+.research-disclosure .ablation-arms article.ablation-graph { background:#f4f8ef; border-color:#c9d9bd; }
+.research-disclosure .ablation-heading small,.research-disclosure .ablation-heading > span,.research-disclosure .ablation-arms article > small { color:#8c9f7d; }
+.research-disclosure .ablation-transfer { border-color:#b3c4a3; }

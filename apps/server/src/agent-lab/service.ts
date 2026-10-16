@@ -4,12 +4,14 @@ import { join } from "node:path";
 import type { LabRun, LabRunSummary } from "@antibody/shared/agent-lab";
 import { config } from "../config.js";
 import { labDirectory, runAgentLab } from "./engine.js";
+import { LabSandboxAccess } from "./sandboxes.js";
 export class AgentLabService {
+  readonly sandboxAccess = new LabSandboxAccess();
   private readonly active = new Map<string, { controller: AbortController; task: Promise<LabRun> }>();
-  start(): string {
+  start(options: { prompt?: string } = {}): string {
     if (this.active.size) throw new Error("An agent experiment is already running.");
     if (!config.DAYTONA_API_KEY || !config.ANCHOR_API_KEY) throw new Error("Configure Daytona and Anchor to run the agent lab.");
-    const id = randomUUID(), controller = new AbortController(), task = runAgentLab({ id, signal: controller.signal });
+    const id = randomUUID(), controller = new AbortController(), task = runAgentLab({ id, signal: controller.signal, prompt: options.prompt });
     this.active.set(id, { controller, task }); void task.catch(() => {}).finally(() => this.active.delete(id)); return id;
   }
   async get(id: string): Promise<LabRun | { id: string; status: "queued" } | undefined> {

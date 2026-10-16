@@ -25,7 +25,7 @@ test("agent-lab start rejects arbitrary targets, source and unsupported suites b
 
 test("agent-lab evidence routes bound IDs and require an actual completed recording", async () => {
   const lab = new OfflineLab(), app = createApp(undefined, undefined, undefined, lab);
-  for (const suffix of ["", "/export", "/video", "/stop"]) {
+  for (const suffix of ["", "/export", "/video", "/stop", "/sandboxes"]) {
     const response = await app.request(`/api/agent-lab/runs/not.valid${suffix}`, suffix === "/stop" ? { method: "POST" } : undefined);
     assert.equal(response.status, 400);
   }
@@ -38,4 +38,14 @@ test("agent-lab evidence routes bound IDs and require an actual completed record
   assert.equal((await app.request("/api/agent-lab/runs/missing/stop", { method: "POST" })).status, 404);
   assert.equal((await app.request("/api/agent-lab/runs/offline-agent-run/stop", { method: "POST" })).status, 200);
   assert.deepEqual(lab.stopped, ["offline-agent-run"]);
+});
+
+test("sandbox routes reject caller-chosen ports, URLs, invalid keys and missing runs", async () => {
+  const app = createApp(undefined, undefined, undefined, new OfflineLab());
+  assert.equal((await app.request('/api/agent-lab/runs/offline-agent-run/sandboxes')).status, 404);
+  for (const body of [{ resume: true, port: 22 }, { url: 'https://elsewhere.example' }, { sandboxId: 'arbitrary' }]) {
+    assert.equal((await app.request('/api/agent-lab/runs/offline-agent-run/sandboxes/desktop/preview', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })).status, 400);
+  }
+  assert.equal((await app.request('/api/agent-lab/runs/missing/sandboxes/desktop/preview', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' })).status, 404);
+  assert.equal((await app.request('/api/agent-lab/runs/offline-agent-run/sandboxes/invalid.key/preview', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' })).status, 400);
 });
