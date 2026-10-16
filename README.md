@@ -108,6 +108,19 @@ That helper requires ffmpeg and a published evidence URL. It records the dashboa
 
 ## Verify changes
 
+### Run a recursive engineering sample
+
+```sh
+pnpm --filter @hollow-purple/server exec node --import tsx src/scripts/recursive-demo.ts
+pnpm --filter @hollow-purple/web dev
+```
+
+The runner prints a local dashboard URL containing its fresh run ID. It owns a loopback-only controller and does not load another controller's journals. The initial FIFO is an explicitly labeled manually broken fixture. Red authors real sequences, Daytona executes the RTL, and the independent controller oracle reproduces a public failure before Blue writes a repair child. Every confirmed counterexample stays in the run's regression suite.
+
+A passing repair receives two additional Red searches using prior attacks as context and different search seeds. An identical prior sequence earns no fresh-audit credit. If a new attack reproduces a failure, Blue creates a deeper descendant with all accumulated regressions. A candidate becomes champion only after every required check and both fresh audits pass. Budgets cap this sample at five designs and eight evaluations; Stop run cancels further work. If no new break is found, the demo reports its tested coverage rather than inventing a new weakness or claiming formal correctness.
+
+Configured graph memory records proposed lessons and validates them against source-bound passing descendants. The runner saves `fullrun.json` and `memory.json` under its own run directory, then leaves the local dashboard available for inspection. Re-audits retain separate sandbox artifact directories and do not count as new generations. The verifier and frozen requirements remain outside the Blue/Red editing surface.
+
 ```sh
 pnpm test          # Agent transport, engine/acceptance, RTL/attack validation, Python oracle
 pnpm build         # All TypeScript checks + production dashboard build

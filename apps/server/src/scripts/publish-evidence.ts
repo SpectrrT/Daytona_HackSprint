@@ -26,8 +26,8 @@ function publicCandidate(candidate: Candidate): Candidate {
 }
 /** Explicit allowlist excludes transcripts, local paths, private prompts, and browser capabilities. */
 export function sanitizeRun(run: EvolutionRun): EvolutionRun {
-  const { id, prompt, provider, status, contract, regressions, championId, createdAt, finishedAt, budget, summary, error, strategy, verificationFixture } = run;
-  return { id, prompt, provider, status, contract, regressions, championId, createdAt, finishedAt, budget, summary, error, strategy, verificationFixture,
+  const { id, prompt, provider, status, contract, regressions, championId, createdAt, finishedAt, budget, summary, error, strategy, verificationFixture, recursive } = run;
+  return { id, prompt, provider, status, contract, regressions, championId, createdAt, finishedAt, budget, summary, error, strategy, verificationFixture, recursive,
     candidates: run.candidates.map(publicCandidate),
     events: run.events.map(({ seq, ts, runId, type, message, candidateId }) => ({ seq, ts, runId, type, message, candidateId })) };
 }
