@@ -78,6 +78,12 @@ def export(path):
         ax.xaxis.set_major_locator(MaxNLocator(integer=True))
         if index != 2:
             ax.yaxis.set_major_locator(MaxNLocator(integer=True))
+            ax.set_ylim(top=max(1, ax.get_ylim()[1]))
+        if index < 3 and groups:
+            generations = sorted({p["generation"] for points in groups.values() for p in points})
+            ax.set_xticks(generations)
+            if len(generations) == 1:
+                ax.set_xlim(generations[0] - .5, generations[0] + .5)
         ax.set_ylim(bottom=0)
         if index == 2:
             ax.set_ylim(-2, 118)

@@ -20,6 +20,16 @@ and their SHA-256 hashes are saved before inference in `protocol/` and
 Paths are relative to the repository root. Set `--development-generations` and
 `--generations` to bound development and evaluation separately.
 
+Use fresh seeds for a revised system, for example `--seed-start 910001`.
+The optional `--task compound-repair-v1` changes the task from new synthesis to
+repairing a supplied manual FIFO with three planted defects. Three fixed repair
+inputs cover occupancy and output holding, reset and pointers, and empty/full
+boundaries. Every arm receives the identical input source per seed, frozen
+contract and budgets. Its source hash and task identifier are recorded before
+inference. Three consecutive study seeds cover all three inputs. This is a
+separate challenge, not a replacement for prior synthesis results. Do not
+combine its scores with those of the original task or promise an advantage.
+
 ## Provider and credentials
 
 Set the same explicit Claude model in `BLUE_MODEL` and `RED_MODEL`.
@@ -59,6 +69,14 @@ an actual repair. A lesson becomes validated only after a real descendant passes
 the entire fixed suite, held-out validation and retained regression. A failure
 from another family aborts corpus freezing rather than contaminating the study.
 The model never receives a failing sibling counterexample during development.
+
+New lessons include controller-replayed pre-edge and post-edge facts, so the
+writer cannot confuse an oracle post-edge count with a pre-edge count. The
+writer sees the actual failed source. Before a proposal becomes retrievable,
+it is reviewed again against the actual passing descendant. Exact source
+excerpts are checked against both executed designs and retained in the lesson.
+This grounds the explanation in the repair; it is not formal proof of prose.
+Legacy frozen corpora remain unchanged, including their original limitations.
 
 Evaluation targets the sibling `empty_boundary` through parent `occupancy`.
 The contract states the empty-boundary requirement for every arm. This is a
