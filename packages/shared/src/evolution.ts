@@ -4,18 +4,23 @@ export type CandidateVariant = "baseline" | "reset-leak" | "full-drop" | "repair
 export type RunStatus = "queued" | "running" | "completed" | "stopped" | "failed";
 export type CandidateStatus = "queued" | "building" | "testing" | "failed" | "verified" | "rejected";
 
-export interface FrozenContract {
+/** Shared requirements for an engineering task; execution interfaces belong to each example. */
+export interface EngineeringContract {
   id: string;
-  version: 1;
+  version: number;
   title: string;
   prompt: string;
   hash: string;
-  depth: 32;
-  width: 16;
-  interface: { name: string; direction: "input" | "output"; width: number; description: string }[];
   rules: { id: string; title: string; description: string }[];
   acceptance: string[];
   frozenAt: number;
+}
+/** First working example: the FIFO hardware contract. */
+export interface FrozenContract extends EngineeringContract {
+  version: 1;
+  depth: 32;
+  width: 16;
+  interface: { name: string; direction: "input" | "output"; width: number; description: string }[];
 }
 export interface Stimulus { reset: boolean; write: boolean; read: boolean; data: number }
 export interface TraceSample extends Stimulus {

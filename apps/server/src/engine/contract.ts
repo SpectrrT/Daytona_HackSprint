@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto";
 import type { FrozenContract } from "@hollow-purple/shared/evolution";
 
-/** The first demo supports one explicit domain, rather than silently inventing a new specification. */
+/** Recognize the first hardware example's contract; new examples require their own verifier. */
 export function supportsPrompt(prompt: string): boolean {
   if (!/\b(buffer|fifo|queue)\b/i.test(prompt) || !/\b32\b/.test(prompt)) return false;
   const capacities = [...prompt.matchAll(/\b(\d+)\s*[- ]?(?:(?:sensor|data)\s+)?(?:readings?|entries|entry|slots?|words?|samples?|elements?|deep)\b/gi)];
@@ -19,7 +19,7 @@ export function contractHash(contract: Omit<FrozenContract, "hash"> | FrozenCont
 }
 
 export function freezeContract(prompt: string, now = Date.now()): FrozenContract {
-  if (!supportsPrompt(prompt)) throw new Error("This scaffold supports the 32-reading FIFO buffer task. Use the provided example prompt; other domains need their own contract and verifier.");
+  if (!supportsPrompt(prompt)) throw new Error("The current hardware example supports a 32-reading FIFO buffer. Other engineering tasks need their own contract and verifier.");
   const contract: FrozenContract = {
     id: "fifo32-v1", version: 1, title: "32 × 16-bit synchronous FIFO", prompt, hash: "", depth: 32, width: 16,
     interface: [

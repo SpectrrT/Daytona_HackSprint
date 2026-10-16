@@ -6,7 +6,7 @@ import { config } from "../config.js";
 import { createAnchorSession, endAnchorSession } from "./anchor.js";
 
 /** Only the explicitly configured public dashboard may be audited by Anchor. */
-function dashboardUrl(input: string): URL {
+export function dashboardUrl(input: string): URL {
   if (!config.PUBLIC_DASHBOARD_URL) throw new Error("Set PUBLIC_DASHBOARD_URL to a publicly reachable HTTPS dashboard before running an Anchor audit.");
   const allowed = new URL(config.PUBLIC_DASHBOARD_URL);
   const url = new URL(input);

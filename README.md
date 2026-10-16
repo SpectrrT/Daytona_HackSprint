@@ -1,8 +1,28 @@
 # Hollow Purple
 
-A working adversarial hardware engineering lab. **Blue writes RTL; Red reads it and authors adversarial input sequences; an independent verifier decides whether the hardware satisfies a frozen contract.** Verified failures become permanent regression tests and guide repaired descendants.
+A general adversarial engineering system. **Blue builds candidates. Red searches for reproducible failures. An independent verifier checks the evidence against a frozen contract.** Verified failures become permanent regression tests and guide repaired descendants.
 
-The supported design task is a synchronous **32 × 16-bit sensor FIFO**. New runs use actual model jobs and actual Verilator execution in Daytona. The old fixed variants are retained only for archived examples and isolated tests; they are never substituted into a live agent run.
+**The first working example is hardware:** a synchronous **32 × 16-bit sensor FIFO**. It makes ordering, concurrency, reset failures, and repairs easy to inspect. New runs use actual model jobs and actual Verilator execution in Daytona. The old fixed variants are retained only for archived examples and isolated tests; they are never substituted into a live agent run.
+
+The product's output is a tested design, reproducible failure cases, readable lessons, and evidence of improvement across a tree of versions. Hardware is one application of that loop.
+
+## One loop, different engineering examples
+
+1. Freeze a measurable contract: interface, behavior, constraints, and acceptance checks.
+2. Blue builds independent candidates in isolated Daytona sandboxes.
+3. Red inspects each candidate and produces concrete inputs or actions that might break it.
+4. An independent verifier replays those actions and compares actual behavior with the contract.
+5. Blue branches repairs from verified failures. Each child must pass inherited regressions and separate checks.
+6. Red adapts; the system preserves lineage, lessons, and evidence until the budget or acceptance threshold is reached.
+
+The same product can apply this loop to software. For a web application, Daytona runs the application and Anchor operates its real browser interface. Red submits browser actions or API requests; the verifier checks observable results and authoritative application state. A duplicate request or a broken checkout becomes an exact regression case for the next Blue repair.
+
+| Example | Candidate execution | Reproducible failure evidence | Implementation status |
+| --- | --- | --- | --- |
+| Hardware buffer | Verilator in Daytona | Clock-edge input sequence and observed signal values | Implemented and verified |
+| Web application or API | Running software in Daytona; Anchor for browser actions | Requests or browser actions, responses, and state changes | Extension design; execution adapter not yet implemented |
+
+Each new example needs its own contract, Blue/Red instructions, execution driver, attack format, and independent verifier. Shared contract fields live in `EngineeringContract`; the current FIFO contract extends them. The current agent instructions, input sequences, failure traces, and acceptance logic still specialize the working example to FIFO hardware. Supporting software requires implementing those parts for the new task; a free-form prompt alone does not provide a trustworthy verifier.
 
 ## Start the system
 
@@ -65,6 +85,26 @@ Preview metadata is stored at `data/runs/<id>/evidence-preview.json`. Signed lin
 ## Shared graph memory
 
 Optional SurrealDB Agent Memory integration stores source-bound failures and Blue-written lessons on a run-scoped attack-family graph. A lesson remains proposed until a descendant passes the complete acceptance and regression gate. Only validated parent-family lessons are retrieved for later Blue and Red calls. Read the [memory module guide](apps/server/src/memory/README.md) for configuration, read-only APIs, validation limits and the live graph write/read check. The current controller-owned family hierarchy is not a claim of implemented Red branch mutation.
+
+## Record the actual Daytona sandbox
+
+Record the native Linux desktop while it opens Chromium, inspects RTL, compiles with Verilator, reproduces Red's failure, requests a new Blue model repair, applies it, and rebuilds and reruns the public regression suite:
+
+```sh
+pnpm --filter @hollow-purple/server exec node --import tsx src/scripts/record-sandbox.ts <verified-repair-run-id>
+```
+
+The controller must be running with that completed repair run loaded. The helper creates a private `daytona-medium` desktop, installs its tools, and records its real XFCE display with Daytona's native recording API. The baseline is explicitly identified as a manually fault-seeded fixture; Red's sequences come from the verified run, and Blue produces a fresh model response. Actual simulation observations are independently graded on the controller. Only public tests enter this inspection desktop; the hidden suite remains part of the original experiment's separate acceptance evidence.
+
+The MP4, source hashes, actual observations, model provenance, and verdicts are saved under `data/runs/<id>/native-desktop/`. When Anchor is configured, it also verifies the encrypted VNC connection, sandbox identity, and actual desktop canvas, saves a screenshot, and ends its browser session. The private noVNC link is saved in `recording.json`. The sandbox remains available for inspection and auto-stops after 30 idle minutes. It consumes the account's sandbox quota until stopped; delete it through Daytona when finished. An optional second argument reuses an empty desktop sandbox labelled `app=hollow-purple,purpose=visible-desktop`.
+
+For a separate replay of the published product dashboard, the earlier browser walkthrough helper remains available:
+
+```sh
+pnpm --filter @hollow-purple/server exec node --import tsx src/scripts/record-demo.ts <verified-repair-run-id>
+```
+
+That helper requires ffmpeg and a published evidence URL. It records the dashboard through Anchor, saving `data/runs/<id>/hollow-purple-daytona-walkthrough.mp4`. It is a replay of completed execution; it does not show the sandbox desktop. Its Anchor session is closed afterward.
 
 ## Verify changes
 
