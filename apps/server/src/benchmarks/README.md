@@ -2,6 +2,10 @@
 
 Measure three different claims separately: Red discovers faults, memory improves Blue, and Daytona increases throughput. Numbers from satellite classification or cheating detection are useful presentation examples, not comparable FIFO baselines.
 
+[ChaosAgent's submission](https://devpost.com/software/chaosagent) describes an attack library, model-driven mutations, optional Daytona isolation and LLM evaluation. Its published workflow is an attack-testing reference. Mutation alone is not Hollow Purple's distinction. Demonstrate independently checked repairs and retained regressions, then measure their value against matched FIFO baselines. The submission does not establish that its authors never implemented other functionality.
+
+Its [committed result file](https://github.com/vishnudut/chaosagent/blob/main/chaos-results.json) records 17 tests, 15 passes, 2 failures and an 88 security score. Those are target-defense outcomes, not a planted-bug detection-rate denominator or a clean-control calibration. Do not claim ChaosAgent had no numeric results.
+
 ## Executable now
 
 From `apps/server`, with the normal private `.env` and a writable `DATA_DIR`:
@@ -59,11 +63,22 @@ Use the same pinned model/provider, task/interface, output and token budgets, st
 
 First add an explicit arm selector and target-family retrieval to the experiment runner. The separate graph feature's current engine default retrieves lessons across FIFO families. If flat and graph arms produce identical lesson contexts, that experiment cannot demonstrate a graph-selection advantage. A graph visualization alone is not evidence of a learning benefit.
 
+Disabling Surreal credentials alone is not a no-memory arm: the engine falls back to retained plain-text lessons. The explicit off arm must suppress both paths. Keep immediate parent/compiler feedback identical across arms. Graph memory is run-scoped and starts empty, so define a fixed training phase or seed lesson pool before comparing learned memory; otherwise initial A/C designs receive the same evidence. Never import final-exam outcomes into that pool.
+
 Freeze a separate private final-exam seed set before trials, exclude it from all agent prompts and repair/selection decisions, and evaluate the selected output once per trial. The existing `held-out` stream is checked during every generation and influences selection, so it is validation rather than an untouched final exam. Do not change the design after examining the final exam and continue calling it held out.
 
 Primary outcome: number of final designs passing the entire exam divided by planned trials. Supporting outcome: checks passed divided by total checks, grouped by design. Checks/cycles in one design are correlated, so do not pretend thousands of cycles are thousands of independent trials. Retain all failures and report uncertainty or describe a small sample as preliminary. Report A/B/C counts before percentages; do not manufacture an "89 versus 64" result.
 
 ## Repair and coverage
+
+```sh
+node --import tsx src/scripts/run-metrics.ts /path/to/fullrun.json
+node --import tsx src/scripts/run-metrics.ts /path/to/data/runs/RUN_ID.jsonl
+```
+
+The exporter reads one intact snapshot or journal, emits sanitized JSON to stdout, and never writes the source. It refuses corrupt or torn journals instead of repairing them or changing live run status. It does not instantiate `RunStore`. Repeated candidate updates and lesson validation do not multiply evaluation or model-call totals; actual requalification does count as another evaluation. Evaluation windows come from journal timestamps and are labeled accordingly.
+
+The verified repair field requires a completed run, a source-bound model-written Verilator champion, every required check, four Red attacks and the complete current regression count. Repair depth follows the champion's failing ancestor chain. Imported roots remain explicitly labeled manual fixtures. Lesson totals use unique memory IDs and explicit journal validation events; legacy lesson strings do not become validated graph lessons.
 
 Use actual run records to report the first failing candidate, reproduced failures retained, model-written descendant generations until acceptance, wall time, calls/tokens and full inherited-regression pass status. Branching siblings are not successive generations. Hidden validation failures provide no public counterexample and must not be fabricated into lessons.
 
