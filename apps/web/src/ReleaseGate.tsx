@@ -79,6 +79,7 @@ export function ReleaseGate({ run, channel, channels, readOnly, onRun, onError }
 function VoiceApproval({ run, onRun, onError }: { run: EvolutionRun; onRun: (run: EvolutionRun) => void; onError: (message: string) => void }) {
   const [phase, setPhase] = useState<'idle' | 'connecting' | 'live' | 'recording'>('idle');
   const [lines, setLines] = useState<{ who: 'Agent' | 'You'; text: string }[]>([]);
+  const [code, setCode] = useState('');
   const conversationId = useRef('');
   const conversation = useConversation({
     onConnect: ({ conversationId: id }) => { conversationId.current = id; setPhase('live'); },
@@ -91,7 +92,8 @@ function VoiceApproval({ run, onRun, onError }: { run: EvolutionRun; onRun: (run
     setPhase('connecting'); setLines([]);
     try {
       await navigator.mediaDevices.getUserMedia({ audio: true });
-      const session = await call<{ signedUrl: string; summary: string }>(`/api/runs/${run.id}/voice-session`);
+      const session = await call<{ signedUrl: string; summary: string; code: string }>(`/api/runs/${run.id}/voice-session`);
+      setCode(session.code); // shown to the approver only; never sent to the agent
       conversation.startSession({
         signedUrl: session.signedUrl,
         connectionType: 'websocket',
@@ -100,17 +102,16 @@ function VoiceApproval({ run, onRun, onError }: { run: EvolutionRun; onRun: (run
           record_decision: async ({ decision }: { decision?: string }) => {
             if (decision !== 'approve' && decision !== 'decline') return 'Ask again: the decision must be approve or decline.';
             setPhase('recording');
-            try {
-              const next = await call<EvolutionRun>(`/api/runs/${run.id}/approval`, { decision, conversation_id: conversationId.current || conversation.getId() });
-              onRun(next);
-              window.setTimeout(() => conversation.endSession(), 4000);
-              return decision === 'approve' ? 'Recorded: approved. The design is being released.' : 'Recorded: declined. Nothing will be released.';
-            } catch (e) {
-              setPhase('live');
-              const message = e instanceof Error ? e.message : 'unknown error';
-              onError(message);
-              return `The dashboard could not record the decision: ${message}`;
-            }
+            const id = conversationId.current || conversation.getId();
+            // End the call first so ElevenLabs holds the final transcript; the controller looks for the code in it.
+            window.setTimeout(() => {
+              conversation.endSession();
+              void call<EvolutionRun>(`/api/runs/${run.id}/approval`, { decision, conversation_id: id })
+                .then(onRun)
+                .catch(e => onError(e instanceof Error ? e.message : 'The decision was not recorded.'))
+                .finally(() => setPhase('idle'));
+            }, 3500);
+            return decision === 'approve' ? 'Thank you. The dashboard is checking the confirmation code before anything is released.' : 'Thank you. Recording that you declined. Nothing will be released.';
           },
         },
       });
@@ -125,8 +126,9 @@ function VoiceApproval({ run, onRun, onError }: { run: EvolutionRun; onRun: (run
     <div className="release-actions">
       {!live ? <button className="button primary" disabled={phase === 'connecting'} onClick={() => void start()}><Mic size={13}/>{phase === 'connecting' ? 'Connecting…' : 'Talk to the release agent'}</button>
         : <button className="button stop" onClick={() => conversation.endSession()}><MicOff size={13}/>End conversation</button>}
-      {live && <span className="voice-status"><span className={`tiny-dot ${conversation.isSpeaking ? 'purple' : 'green'}`}/>{phase === 'recording' ? 'Recording the decision…' : conversation.isSpeaking ? 'Agent speaking' : 'Listening'}</span>}
+      {live && <span className="voice-status"><span className={`tiny-dot ${conversation.isSpeaking ? 'purple' : 'green'}`}/>{phase === 'recording' ? 'Checking the code with ElevenLabs…' : conversation.isSpeaking ? 'Agent speaking' : 'Listening'}</span>}
     </div>
+    {code && phase !== 'idle' && <div className="voice-code"><span>To approve, say yes and read this code aloud</span><strong>{code.split('').join(' ')}</strong></div>}
     {lines.length > 0 && <ul className="voice-transcript">{lines.map((line, i) => <li key={i}><b>{line.who}</b>{line.text}</li>)}</ul>}
   </div>;
 }

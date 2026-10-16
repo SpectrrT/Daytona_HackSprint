@@ -8,6 +8,15 @@ The product's output is a tested design, reproducible failure cases, readable le
 
 ## Use it from Claude
 
+For the recording layout, run `pnpm demo` in a full-screen terminal. Claude stays
+at the top, with separate Blue, Red and Verifier panels below. The panels follow
+real events from runs created after the layout opens, including new Daytona
+sandbox IDs. They do not start extra model jobs or show private model reasoning.
+The final green `SUCCESS | VERIFIED REPAIR` summary requires a completed run,
+a model-written verified champion, and passing checks. Failed and stopped runs
+show no verified result. The verifier panel prints measured regression, fresh
+attack, directed, held-out and useful-task counts.
+
 ```sh
 pnpm install
 # Configure DAYTONA_API_KEY and ANCHOR_API_KEY in .env.
@@ -190,7 +199,7 @@ That helper requires ffmpeg and a published evidence URL. It records the dashboa
 
 A verified champion is not the end of a run: nothing is released until a person approves it. Once a run completes with a champion, the overview's **Release gate** panel starts the approval:
 
-- **Voice (ElevenLabs, default when configured).** **Approve by voice**, then **Talk to the release agent**: the approver speaks with an ElevenLabs agent in the dashboard. It reads the design summary, asks for a yes or no, and calls its `record_decision` client tool. The dashboard posts that decision with the conversation id, and the controller confirms with ElevenLabs that the conversation was held with the release agent before anything is released. The browser never sees the API key; it gets a signed session URL from `GET /api/runs/:id/voice-session`.
+- **Voice (ElevenLabs, default when configured).** **Approve by voice**, then **Talk to the release agent**: the approver speaks with an ElevenLabs agent in the dashboard. It reads the design summary, asks for a yes or no, and calls its `record_decision` client tool. The dashboard posts that decision with the conversation id, and the controller confirms with ElevenLabs that the conversation was held with the release agent before anything is released. To approve, the person must also read aloud a four-digit code shown only on their screen. The agent never knows the code, so the controller can find it in the person's own turns of the ElevenLabs transcript; speaker echo or room noise transcribed as "yes" cannot release anything. Declining needs no code. The browser never sees the API key; it gets a signed session URL from `GET /api/runs/:id/voice-session`.
 - **Phone (optional).** With a Twilio number imported into ElevenLabs, the controller places an outbound call instead, and the agent's webhook tool posts the decision to `POST /api/approval` with the `X-Approve-Secret` header.
 - **Dashboard.** **Use dashboard** (or no ElevenLabs configuration) shows **Approve release** and **Decline** buttons.
 

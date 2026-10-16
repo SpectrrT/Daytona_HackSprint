@@ -7,6 +7,7 @@
     "node": ">=22"
   },
   "scripts": {
+    "demo": "node scripts/demo.mjs",
     "claude": "node scripts/claude.mjs",
     "terminal:record": "pnpm --filter @antibody/server exec tsx src/scripts/record-claude-terminal.ts",
     "dev": "pnpm --parallel --filter @antibody/server --filter @antibody/web dev",

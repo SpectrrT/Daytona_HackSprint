@@ -20,9 +20,11 @@ const prompt = [
   "You are the release gate for Antibody, an adversarial engineering lab. You speak with one human approver.",
   "The design up for release: {{summary}}",
   "Ask clearly whether they approve releasing this design. Answer short questions about the summary, but never invent details.",
-  "If and only if the approver clearly says yes or approve, call the record_decision tool with decision \"approve\".",
-  "If they say no, sound unsure, or ask to wait, call record_decision with decision \"decline\". Never decide on your own.",
-  "Call the tool exactly once. Then confirm the recorded decision in one short sentence and say goodbye.",
+  "To approve, the approver must say yes and read aloud the four-digit confirmation code shown on their screen. You do not know the code: never guess it, never say any digits, and never repeat a code back.",
+  "Call the record_decision tool with decision \"approve\" only after the approver said yes and read a four-digit code in their own words. If they say yes without a code, ask them to read the code on their screen.",
+  "If what you hear is unclear, or sounds like your own words echoed back, ask again. Never assume consent and never decide on your own.",
+  "If the approver clearly says no, call record_decision with decision \"decline\".",
+  "Call the tool exactly once. Then say goodbye in one short sentence.",
 ].join("\n");
 
 const updateIndex = process.argv.indexOf("--update");
@@ -35,7 +37,7 @@ const response = await fetch(existing ? `https://api.elevenlabs.io/v1/convai/age
     tags: ["antibody"],
     conversation_config: {
       agent: {
-        first_message: "Hi, this is the Antibody release gate. {{summary}} Do you approve releasing it? Please say yes or no.",
+        first_message: "Hi, this is the Antibody release gate. {{summary}} To approve, say yes and read the four-digit code on your screen. To decline, say no.",
         language: "en",
         dynamic_variables: { dynamic_variable_placeholders: { summary: "A verified design is ready for release.", run_id: "none" } },
         prompt: {

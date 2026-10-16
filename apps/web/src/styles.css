@@ -38,6 +38,9 @@
 .release-request{display:flex;gap:8px}
 .release-request .button{width:auto;margin:0}
 .voice-approval{margin-top:2px}
+.voice-code{margin-top:10px;padding:10px 12px;border-radius:4px;border:1px solid #d9d2ec;background:#f5f2fb;display:flex;align-items:center;justify-content:space-between;gap:12px}
+.voice-code span{font-size:10.5px;color:#5d5670}
+.voice-code strong{font-family:'IBM Plex Mono',monospace;font-size:22px;letter-spacing:.08em;color:#3d2f6b;font-variant-numeric:tabular-nums}
 .voice-status{display:inline-flex;align-items:center;gap:7px;font-size:10px;color:#6b7363;margin-left:4px}
 .voice-transcript{list-style:none;margin:10px 0 0;padding:9px 11px;border-radius:4px;background:#f6f6f1;border:1px solid #ecede6;display:grid;gap:5px}
 .voice-transcript li{font-size:10.5px;line-height:1.5;color:#5d6555}
