@@ -117,7 +117,7 @@ pnpm run doctor -- --live
 pnpm dev
 ```
 
-Open [localhost:5173](http://localhost:5173). The default **Agent lab** view loads the running or latest completed agent experiment; click **Run agent experiment** to start a new one. **Overview** retains the hardware run controls and archived hardware evidence. A fresh agent lab has an explicit unmeasured state.
+Open [localhost:5173](http://localhost:5173) for the optional web interface. **Runs** has one **Start run** action, a live Test → Repair → Verify flow, and a before/after result. Application tabs switch the evidence being inspected. Activity, code, checks and requirements are disclosed on demand. Hardware and checkout examples are available under **Examples**, and provider configuration is in **Settings**.
 
 The default model provider is `AGENT_PROVIDER=codex-cli`. It uses the installed CLI's existing sign-in without reading or copying auth files. `BLUE_MODEL` and `RED_MODEL` may be left blank to use the CLI default. Model jobs are ephemeral, have tools disabled, receive only the relevant contract/source/public evidence, and return schema-validated JSON. Their child environments exclude Daytona, Anchor, and model API keys. Each job has a timeout and bounded output. Codex process, connection, service, or rate failures may retry once within that same time budget, using the identical prompt and schema. Authentication, account quota, schema, output, and timeout failures stop immediately. Attempts have separate private artifacts; displayed token usage comes from the successful process. Private prompts, validated answers, and invocation metadata are saved under `data/runs/<id>/agents/`.
 
@@ -221,7 +221,7 @@ With `ARIZE_SPACE_ID` and `ARIZE_API_KEY` set, every run is traced to Arize AX a
 
 Hollow Purple is also an MCP server, so Claude Code or Claude Desktop can drive the whole loop from a conversation: ask Claude to harden a design and it starts a live Daytona run, follows Blue, Red and the verifier while they work, then reports what Red tried, the reproduced failures, and the verified source. No custom UI is needed. The server calls the controller's HTTP API, so Claude and the dashboard see the same run.
 
-The current MCP tools drive the hardware engine. The three-application agent lab is available through its dashboard, CLI, and dedicated HTTP routes.
+The MCP server exposes the three-application agent loop through `start_agent_hardening`, `watch_agent_run`, and the failure, repair and result tools. Separate hardware tools remain available for explicitly requested hardware work. Both loops use the same controller and evidence as their optional web views.
 
 Start the controller (`pnpm dev`). Claude Code picks up the server from this repository's `.mcp.json`; approve it when prompted. For Claude Desktop, add the server to `claude_desktop_config.json` with absolute paths (`which pnpm` for the command):
 

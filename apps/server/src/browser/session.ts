@@ -58,14 +58,17 @@ export async function runAnchorAudit(input: string): Promise<BrowserAudit> {
     checks.push({ name: "Candidate RTL source opens", passed: await sourceDialog.isVisible() && /module\s+fifo\s*\(/.test(await sourceDialog.locator("code").last().innerText()) });
     checks.push({ name: "Executed source SHA-256 is displayed", passed: await sourceDialog.getByText(/^[a-f0-9]{64}$/).isVisible() });
     await page.getByRole("button", { name: "Close source", exact: true }).click();
-    const navigation = page.getByRole("navigation", { name: "Main navigation" });
-    await navigation.getByRole("button", { name: "Contract", exact: true }).click();
+    const navigate = async (name: string) => {
+      await page!.locator(".app-examples > summary").click();
+      await page!.getByRole("navigation", { name: "Examples", exact: true }).getByRole("button", { name, exact: true }).click();
+    };
+    await navigate("Requirements");
     await page.getByTestId("contract-panel").waitFor({ state: "visible", timeout: 10_000 });
     checks.push({ name: "Frozen contract view opens", passed: await page.getByTestId("contract-panel").isVisible() });
     checks.push({ name: "Contract SHA-256 is displayed", passed: await page.getByText(/^[a-f0-9]{64}$/).isVisible() });
-    await navigation.getByRole("button", { name: "Lineage", exact: true }).click();
+    await navigate("Design lineage");
     checks.push({ name: "Navigation returns to the lineage", passed: await page.getByTestId("lineage-graph").isVisible() });
-    await navigation.getByRole("button", { name: /Evidence/ }).click();
+    await navigate("Failure evidence");
     checks.push({ name: "Evidence navigation opens the failure inspector", passed: await page.getByTestId("evidence-panel").isVisible() });
     const replay = page.getByRole("button", { name: "Play trace replay", exact: true });
     if (await replay.isVisible()) {
@@ -75,7 +78,7 @@ export async function runAnchorAudit(input: string): Promise<BrowserAudit> {
       checks.push({ name: "Failure trace replay responds to browser input", passed: interactive });
       if (interactive) await pause.click();
     }
-    await navigation.getByRole("button", { name: "Overview", exact: true }).click();
+    await navigate("Hardware buffer");
     checks.push({ name: "No uncaught page errors", passed: pageErrors.length === 0 });
     let screenshotPath: string | undefined;
     if (runId && /^[a-zA-Z0-9_-]{1,100}$/.test(runId)) {
