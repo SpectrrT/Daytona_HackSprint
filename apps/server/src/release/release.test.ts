@@ -6,7 +6,7 @@ import { test } from "node:test";
 import { BUFFER_PROMPT, type EvaluationResult, type FailureEvidence } from "@antibody/shared/evolution";
 import { EvolutionEngine } from "../engine/index.js";
 import { RunStore } from "../store.js";
-import { decide, ReleaseError, requestApproval, voiceSession } from "./index.js";
+import { confirmationCode, decide, ReleaseError, requestApproval, spokenDigitRuns, voiceSession } from "./index.js";
 
 const failure: FailureEvidence = {
   id: "regression-1", testId: "simultaneous", testName: "Simultaneous read and write", seed: 42, cycle: 2,
@@ -101,29 +101,45 @@ test("the release gate survives a restart: approval and release are replayed fro
   } finally { await ctx.dispose(); }
 });
 
-test("voice approval needs a conversation ElevenLabs confirms was held with the release agent", async () => {
+test("spoken digits are read from numerals or words", () => {
+  assert.ok(spokenDigitRuns("Yes, four seven one nine.").includes("4719"));
+  assert.ok(spokenDigitRuns("Yes. 4, 7, 1, 9").includes("4719"));
+  assert.ok(spokenDigitRuns("yes 47 19 please").includes("4719"));
+  assert.deepEqual(spokenDigitRuns("Yes, releasing is positive.").filter(Boolean), []);
+});
+
+test("voice approval needs the release agent's conversation and the on-screen code in the person's own words", async () => {
   const saved = { key: process.env.ELEVENLABS_API_KEY, agent: process.env.ELEVENLABS_AGENT_ID, fetch: globalThis.fetch };
   process.env.ELEVENLABS_API_KEY = "test-key";
   process.env.ELEVENLABS_AGENT_ID = "agent_release";
-  const calls: string[] = [];
+  let code = "";
+  const said = (user: string) => new Response(JSON.stringify({ agent_id: "agent_release", status: "done", transcript: [
+    { role: "agent", message: "Do you approve releasing it? Say yes and read the code on your screen." }, { role: "user", message: user }] }), { status: 200 });
   globalThis.fetch = (async (input: string | URL | Request) => {
     const url = String(input);
-    calls.push(url);
     if (url.includes("/convai/conversation/get-signed-url")) return new Response(JSON.stringify({ signed_url: "wss://example/signed" }), { status: 200 });
-    if (url.endsWith("/convai/conversations/conv_good")) return new Response(JSON.stringify({ agent_id: "agent_release" }), { status: 200 });
+    if (url.endsWith("/convai/conversations/conv_good")) return said(`Yes, ${code.split("").join(" ")}.`);
+    // The live failure this guards against: the agent's own question echoed back and transcribed as a yes.
+    if (url.endsWith("/convai/conversations/conv_echo")) return said("Yes, releasing is positive.");
     if (url.endsWith("/convai/conversations/conv_other")) return new Response(JSON.stringify({ agent_id: "agent_someone_else" }), { status: 200 });
     return new Response("{}", { status: 500 });
   }) as typeof fetch;
   const ctx = await completedRun();
   try {
     await requestApproval(ctx.store, ctx.id, "voice");
+    code = confirmationCode(ctx.store.get(ctx.id)!);
+    assert.match(code, /^\d{4}$/);
     const session = await voiceSession(ctx.store, ctx.id);
+    assert.equal(session.code, code);
+    assert.ok(!session.summary.includes(code), "the agent never receives the code");
     assert.equal(session.signedUrl, "wss://example/signed");
     assert.match(session.summary, /passed all \d+ checks: the directed tests, Red's attacks and the hidden checks/);
     assert.doesNotMatch(session.summary, /\?|_/, "the agent asks the question itself and reads the name aloud");
     await assert.rejects(decide(ctx.store, ctx.id, "approve", "voice", ctx.dir), /conversation id/);
     await assert.rejects(decide(ctx.store, ctx.id, "approve", "voice", ctx.dir, { conversationId: "conv_other" }), /not held with the release agent/);
     await assert.rejects(decide(ctx.store, ctx.id, "approve", "dashboard", ctx.dir), /must come from the voice/);
+    await assert.rejects(decide(ctx.store, ctx.id, "approve", "voice", ctx.dir, { conversationId: "conv_echo" }), /did not read the confirmation code/);
+    assert.equal(ctx.store.get(ctx.id)!.approval?.status, "requested", "a rejected voice approval stays pending");
     assert.equal(ctx.store.get(ctx.id)!.release, undefined);
     const run = await decide(ctx.store, ctx.id, "approve", "voice", ctx.dir, { conversationId: "conv_good" });
     assert.equal(run.approval?.status, "approved");

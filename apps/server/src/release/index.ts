@@ -1,4 +1,4 @@
-import { createHash, timingSafeEqual } from "node:crypto";
+import { createHash, createHmac, timingSafeEqual } from "node:crypto";
 import { mkdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { z } from "zod";
@@ -12,6 +12,9 @@ import type { RunStore } from "../store.js";
  * Voice channel (ElevenLabs agent configured): the approver talks to the ElevenLabs release agent in the dashboard.
  * The agent calls its `record_decision` client tool; the dashboard posts that decision with the conversation id,
  * and the controller confirms with ElevenLabs that the conversation was held with this agent before accepting it.
+ * To approve, the person must also read a four-digit code shown only on their screen; the controller finds it in
+ * the person's own turns of the ElevenLabs transcript. The agent never knows the code, so speaker echo or room
+ * noise transcribed as "yes" cannot release anything. Declining needs no code: it can only keep a design unreleased.
  * Phone channel (Twilio number imported into ElevenLabs): an outbound call; the agent's webhook tool posts the
  * decision to /api/approval with the shared secret. Dashboard channel: Approve / Decline buttons.
  * Only the requested channel can decide. On approval the champion's exact RTL and a manifest (source hash, contract
@@ -128,7 +131,20 @@ export async function requestApproval(store: RunStore, runId: string, channel: A
 }
 
 /** A signed ElevenLabs session for the voice channel. The API key never reaches the browser. */
-export async function voiceSession(store: RunStore, runId: string): Promise<{ signedUrl: string; summary: string; agentId: string }> {
+/** Four digits shown only on the approver's screen, derived from a server secret, the run and the request time. */
+export function confirmationCode(run: EvolutionRun): string {
+  const e = env();
+  const digest = createHmac("sha256", e.APPROVE_WEBHOOK_SECRET ?? e.ELEVENLABS_API_KEY ?? "").update(`${run.id}:${run.approval?.requestedAt ?? 0}`).digest();
+  return String(1000 + (digest.readUInt32BE(0) % 9000));
+}
+
+const DIGIT_WORDS: Record<string, string> = { zero: "0", oh: "0", one: "1", two: "2", three: "3", four: "4", five: "5", six: "6", seven: "7", eight: "8", nine: "9" };
+/** Runs of digits a person spoke, transcribed as numerals ("4 7 1 9") or words ("four seven one nine"). */
+export function spokenDigitRuns(text: string): string[] {
+  return text.toLowerCase().split(/[^a-z0-9]+/).filter(Boolean).map((word) => /^\d+$/.test(word) ? word : DIGIT_WORDS[word] ?? "|").join("").split("|");
+}
+
+export async function voiceSession(store: RunStore, runId: string): Promise<{ signedUrl: string; summary: string; agentId: string; code: string }> {
   const run = store.get(runId);
   if (!run) throw new ReleaseError("Run not found.", 404);
   if (run.approval?.status !== "requested" || run.approval.channel !== "voice") throw new ReleaseError("No voice approval is pending for this run.", 409);
@@ -139,25 +155,36 @@ export async function voiceSession(store: RunStore, runId: string): Promise<{ si
   });
   const body = (await response.json().catch(() => ({}))) as { signed_url?: string };
   if (!response.ok || !body.signed_url) throw new ReleaseError(`ElevenLabs did not start a session (${response.status}).`, 502);
-  return { signedUrl: body.signed_url, summary: approvalSummary(run), agentId: e.ELEVENLABS_AGENT_ID! };
+  // The code is for the approver's screen only; it is never sent to the agent.
+  return { signedUrl: body.signed_url, summary: approvalSummary(run), agentId: e.ELEVENLABS_AGENT_ID!, code: confirmationCode(run) };
 }
 
-/** Confirms with ElevenLabs that the conversation exists and was held with the release agent. */
-async function verifyVoiceConversation(conversationId: string): Promise<void> {
+interface VoiceConversation { agent_id?: string; status?: string; transcript?: { role?: string; message?: string | null }[] }
+
+/**
+ * Confirms with ElevenLabs that the conversation was held with the release agent and, for an approval, that the
+ * person read the on-screen code in one of their own turns. Waits briefly for the transcript to catch up.
+ */
+async function verifyVoiceConversation(conversationId: string, code?: string): Promise<void> {
   const e = env();
-  for (let attempt = 0; attempt < 4; attempt++) {
+  const deadline = Date.now() + 25_000;
+  let held = false;
+  for (;;) {
     const response = await fetch(`${ELEVENLABS}/convai/conversations/${encodeURIComponent(conversationId)}`, {
       headers: { "xi-api-key": e.ELEVENLABS_API_KEY! },
       signal: AbortSignal.timeout(10_000),
     }).catch(() => undefined);
     if (response?.ok) {
-      const body = (await response.json().catch(() => ({}))) as { agent_id?: string };
+      const body = (await response.json().catch(() => ({}))) as VoiceConversation;
       if (body.agent_id !== e.ELEVENLABS_AGENT_ID) throw new ReleaseError("That conversation was not held with the release agent.", 403);
-      return;
-    }
-    if (response && response.status !== 404) break;
-    await new Promise((resolve) => setTimeout(resolve, 750));
+      if (!code || (body.transcript ?? []).some((turn) => turn.role === "user" && spokenDigitRuns(turn.message ?? "").some((run) => run.includes(code)))) return;
+      held = true;
+      if (body.status === "done" || body.status === "failed") break;
+    } else if (response && response.status !== 404) break;
+    if (Date.now() >= deadline) break;
+    await new Promise((resolve) => setTimeout(resolve, 1000));
   }
+  if (held) throw new ReleaseError("The approver did not read the confirmation code shown on screen, so nothing was released. Start the conversation again and read the code aloud.", 403);
   throw new ReleaseError("Could not confirm the voice conversation with ElevenLabs.", 502);
 }
 
@@ -176,7 +203,7 @@ export async function decide(
   if (pending.channel !== via) throw new ReleaseError(`This approval must come from the ${pending.channel}.`, 403);
   if (via === "voice") {
     if (!evidence.conversationId) throw new ReleaseError("A voice decision needs its ElevenLabs conversation id.", 403);
-    await verifyVoiceConversation(evidence.conversationId);
+    await verifyVoiceConversation(evidence.conversationId, decision === "approve" ? confirmationCode(run) : undefined);
   }
 
   const decided: ApprovalState = {
