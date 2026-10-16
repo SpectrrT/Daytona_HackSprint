@@ -43,7 +43,7 @@ The same loop runs on a checkout web app: Python and SQLite in Daytona, with Anc
 ## What we learned
 
 - Confidence isn't evidence. A reproduced failure with its exact inputs is.
-- Memory must earn its place. In a small Claude-on-Bedrock pilot, every arm, with or without memory, passed on its first design, so we claim no advantage.
+- Memory must earn its place. Our completed Claude-on-Bedrock synthesis and compound-repair studies did not demonstrate an accuracy advantage for graph memory. The separate concurrent-retry comparison did show a system benefit: 9/9 correct retries with our verified guard versus 0/9 for model-only execution of the same actual Claude proposals, with 9/9 clean controls in both arms. See [measured evidence and limitations](evidence.md).
 - "No failure found" is coverage, not proof.
 - MCP beat building more UI: Claude can already start, follow and explain a run.
 

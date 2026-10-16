@@ -50,12 +50,16 @@ def publish(path):
                 client.experiments.get(experiment=experiment["id"])
             return old
     slots = [{"repeat": key[0], "domain": key[1]} for key in sorted(pairs)]
-    dataset = client.datasets.create(name="hollow-purple-retries-" + evidence["id"], space=os.environ["ARIZE_SPACE_ID"], examples=slots, force_http=True)
+    dataset_name = "hollow-purple-retries-" + evidence["id"]
+    try:
+        dataset = client.datasets.create(name=dataset_name, space=os.environ["ARIZE_SPACE_ID"], examples=slots, force_http=True)
+    except Exception:
+        dataset = client.datasets.get(dataset=dataset_name, space=os.environ["ARIZE_SPACE_ID"])
     receipt = {"status": "pending", "datasetId": dataset.id, "experiments": [], "scope": evidence["scope"]}
     def retry_score(output):
-        return EvaluationResult(score=float(output["retry_pass"]), explanation="Independent oracle checks actual concurrent tool effects and useful task completion.")
+        return EvaluationResult(score=float(output["retry_pass"]), label="pass" if output["retry_pass"] else "fail", explanation="Independent oracle checks actual concurrent tool effects and useful task completion.")
     def control_score(output):
-        return EvaluationResult(score=float(output["clean_pass"]), explanation="The same first model proposal must complete the authorized single-request task.")
+        return EvaluationResult(score=float(output["clean_pass"]), label="pass" if output["clean_pass"] else "fail", explanation="The same first model proposal must complete the authorized single-request task.")
     for arm in ("model-only", "verified-guard"):
         def task(dataset_row):
             pair = pairs[(int(dataset_row["repeat"]), dataset_row["domain"])]
@@ -82,5 +86,11 @@ if __name__ == "__main__":
             result = publish(sys.argv[1])
         print(json.dumps(result))
     except Exception as error:
+        detail = str(getattr(error, "body", None) or error)
+        for key in ("ARIZE_API_KEY", "ARIZE_SPACE_ID"):
+            secret = os.environ.get(key)
+            if secret:
+                detail = detail.replace(secret, "[redacted]")
+        Path(sys.argv[1]).with_name("arize-diagnostic.json").write_text(json.dumps({"errorType": type(error).__name__, "detail": detail[:4000]}))
         print(json.dumps({"status": "missing", "errorType": type(error).__name__}))
         sys.exit(1)

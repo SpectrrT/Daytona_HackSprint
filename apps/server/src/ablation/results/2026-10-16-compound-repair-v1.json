@@ -1,0 +1,1985 @@
+{
+  "schemaVersion": 1,
+  "runId": "abl-0ef9967e-a2ba-4783-b115-9988157c41b9",
+  "status": "completed",
+  "model": "us.anthropic.claude-sonnet-4-6",
+  "provider": "bedrock",
+  "seeds": [
+    910001,
+    917920,
+    925839
+  ],
+  "task": "compound-repair-v1",
+  "repairInputs": [
+    {
+      "seed": 910001,
+      "id": "repair-3",
+      "sourceHash": "a3132218bf4cab4b80defd887eb71b5cba9d2c5715d0a8a59127b2e9ea1fb43b",
+      "manualFixture": true
+    },
+    {
+      "seed": 917920,
+      "id": "repair-2",
+      "sourceHash": "123b2f9febd196da5860828bd8434e45ec6b7d41e7228b7e4dab4babb3bf63ad",
+      "manualFixture": true
+    },
+    {
+      "seed": 925839,
+      "id": "repair-1",
+      "sourceHash": "90b88ddf4d671d45c7d42f63ddd9e0cb08d7218f4b673a1b6bdf7b5434c87202",
+      "manualFixture": true
+    }
+  ],
+  "generations": 2,
+  "orders": [
+    {
+      "seed": 910001,
+      "order": [
+        "graph",
+        "flat",
+        "none"
+      ]
+    },
+    {
+      "seed": 917920,
+      "order": [
+        "graph",
+        "flat",
+        "none"
+      ]
+    },
+    {
+      "seed": 925839,
+      "order": [
+        "none",
+        "graph",
+        "flat"
+      ]
+    }
+  ],
+  "retrievalK": 3,
+  "retrievalTokenBudget": 2048,
+  "tokenCapMethod": "conservative UTF-8 byte upper bound",
+  "maxOutputTokensPerCall": 16384,
+  "temperature": 0.2,
+  "modelSeedSupported": false,
+  "snapshot": "daytona-small",
+  "contractHash": "bb14530a116c8dbc42beb6b5cdc024cf1c4f895205c10f1559c151e368210ce6",
+  "corpusHash": "084c0e9a5db46c025bb6697d42919544dc8bd01ebcf57379cf9f509d51a74430",
+  "development": {
+    "runId": "abl-0ef9967e-a2ba-4783-b115-9988157c41b9-dev",
+    "sourceFamily": "simultaneous",
+    "targetFamily": "empty_boundary",
+    "failures": 1,
+    "validatedLessons": 1
+  },
+  "summary": [
+    {
+      "mode": "none",
+      "trials": 3,
+      "completedTrials": 3,
+      "missingTrials": 0,
+      "heldOut": {
+        "passed": 3,
+        "evaluated": 3
+      },
+      "transfer": {
+        "passed": 3,
+        "evaluated": 3
+      },
+      "acceptedDesigns": 3,
+      "medianGenerationsUntilAllGates": 1,
+      "censoredTrials": 0,
+      "regressionsReintroduced": 0,
+      "totalModelTokens": 38593,
+      "modelTokensPerAcceptedDesign": 12864.333333333334,
+      "wallMsPerAcceptedDesign": 62643.333333333336
+    },
+    {
+      "mode": "flat",
+      "trials": 3,
+      "completedTrials": 3,
+      "missingTrials": 0,
+      "heldOut": {
+        "passed": 3,
+        "evaluated": 3
+      },
+      "transfer": {
+        "passed": 3,
+        "evaluated": 3
+      },
+      "acceptedDesigns": 3,
+      "medianGenerationsUntilAllGates": 1,
+      "censoredTrials": 0,
+      "regressionsReintroduced": 0,
+      "totalModelTokens": 43212,
+      "modelTokensPerAcceptedDesign": 14404,
+      "wallMsPerAcceptedDesign": 63654.333333333336
+    },
+    {
+      "mode": "graph",
+      "trials": 3,
+      "completedTrials": 3,
+      "missingTrials": 0,
+      "heldOut": {
+        "passed": 1,
+        "evaluated": 5
+      },
+      "transfer": {
+        "passed": 3,
+        "evaluated": 3
+      },
+      "acceptedDesigns": 1,
+      "medianGenerationsUntilAllGates": 1,
+      "censoredTrials": 2,
+      "regressionsReintroduced": 0,
+      "totalModelTokens": 70405,
+      "modelTokensPerAcceptedDesign": 70405,
+      "wallMsPerAcceptedDesign": 323007
+    }
+  ],
+  "caveats": [
+    "Small paired pilot, not a statistical superiority claim.",
+    "Hidden checks never enter model prompts or selection decisions. Stopping uses only public gates.",
+    "Development uses one manually planted training bug. Its lesson is validated against real child RTL and the complete gate suite.",
+    "Transfer is measured on an unseen failure family, not an unknown contract rule.",
+    "Token and wall costs exclude shared development; tokens are provider-reported and incomplete calls are not estimated."
+  ],
+  "arize": {
+    "status": "submitted",
+    "datasetId": "RGF0YXNldDozNzAzMDE6TkVtKw==",
+    "runId": "abl-0ef9967e-a2ba-4783-b115-9988157c41b9",
+    "experiments": [
+      {
+        "mode": "none",
+        "id": "RXhwZXJpbWVudDoxNjI1Mzg6Q3lZZQ==",
+        "name": "abl-0ef9967e-a2ba-4783-b115-9988157c41b9 A Claude alone",
+        "rows": 3,
+        "readback": true,
+        "scores": {
+          "eval.held_out_pass.score": {
+            "count": 3,
+            "mean": 1
+          },
+          "eval.first_try_transfer.score": {
+            "count": 3,
+            "mean": 1
+          },
+          "eval.all_gates.score": {
+            "count": 3,
+            "mean": 1
+          },
+          "eval.heldout_pass_count.score": {
+            "count": 3,
+            "mean": 1
+          },
+          "eval.heldout_design_count.score": {
+            "count": 3,
+            "mean": 1
+          }
+        },
+        "remoteRows": 3,
+        "remoteScores": {
+          "held_out_pass": {
+            "count": 3,
+            "sum": 3,
+            "mean": 1
+          },
+          "first_try_transfer": {
+            "count": 3,
+            "sum": 3,
+            "mean": 1
+          },
+          "all_gates": {
+            "count": 3,
+            "sum": 3,
+            "mean": 1
+          },
+          "heldout_pass_count": {
+            "count": 3,
+            "sum": 3,
+            "mean": 1
+          },
+          "heldout_design_count": {
+            "count": 3,
+            "sum": 3,
+            "mean": 1
+          }
+        }
+      },
+      {
+        "mode": "flat",
+        "id": "RXhwZXJpbWVudDoxNjI1Mzk6dVVtNA==",
+        "name": "abl-0ef9967e-a2ba-4783-b115-9988157c41b9 B Raw retrieval",
+        "rows": 3,
+        "readback": true,
+        "scores": {
+          "eval.held_out_pass.score": {
+            "count": 3,
+            "mean": 1
+          },
+          "eval.first_try_transfer.score": {
+            "count": 3,
+            "mean": 1
+          },
+          "eval.all_gates.score": {
+            "count": 3,
+            "mean": 1
+          },
+          "eval.heldout_pass_count.score": {
+            "count": 3,
+            "mean": 1
+          },
+          "eval.heldout_design_count.score": {
+            "count": 3,
+            "mean": 1
+          }
+        },
+        "remoteRows": 3,
+        "remoteScores": {
+          "held_out_pass": {
+            "count": 3,
+            "sum": 3,
+            "mean": 1
+          },
+          "first_try_transfer": {
+            "count": 3,
+            "sum": 3,
+            "mean": 1
+          },
+          "all_gates": {
+            "count": 3,
+            "sum": 3,
+            "mean": 1
+          },
+          "heldout_pass_count": {
+            "count": 3,
+            "sum": 3,
+            "mean": 1
+          },
+          "heldout_design_count": {
+            "count": 3,
+            "sum": 3,
+            "mean": 1
+          }
+        }
+      },
+      {
+        "mode": "graph",
+        "id": "RXhwZXJpbWVudDoxNjI1NDA6K1RLTw==",
+        "name": "abl-0ef9967e-a2ba-4783-b115-9988157c41b9 C Hollow Purple graph",
+        "rows": 3,
+        "readback": true,
+        "scores": {
+          "eval.held_out_pass.score": {
+            "count": 3,
+            "mean": 0.3333333333333333
+          },
+          "eval.first_try_transfer.score": {
+            "count": 3,
+            "mean": 1
+          },
+          "eval.all_gates.score": {
+            "count": 3,
+            "mean": 0.3333333333333333
+          },
+          "eval.heldout_pass_count.score": {
+            "count": 3,
+            "mean": 0.3333333333333333
+          },
+          "eval.heldout_design_count.score": {
+            "count": 3,
+            "mean": 1.6666666666666667
+          }
+        },
+        "remoteRows": 3,
+        "remoteScores": {
+          "held_out_pass": {
+            "count": 3,
+            "sum": 1,
+            "mean": 0.3333333333333333
+          },
+          "first_try_transfer": {
+            "count": 3,
+            "sum": 3,
+            "mean": 1
+          },
+          "all_gates": {
+            "count": 3,
+            "sum": 1,
+            "mean": 0.3333333333333333
+          },
+          "heldout_pass_count": {
+            "count": 3,
+            "sum": 1,
+            "mean": 0.3333333333333333
+          },
+          "heldout_design_count": {
+            "count": 3,
+            "sum": 5,
+            "mean": 1.6666666666666667
+          }
+        }
+      }
+    ],
+    "errors": [],
+    "evidenceMode": "recorded hardware evidence; Arize SDK deterministic evaluators"
+  },
+  "protocolHash": "0bedae3403d25d7b7901e02cb6e7af33c2806458fb0922efb5bfdb4f3efe4d65",
+  "gitCommit": "ce48d7bd86038265bf24b9f818a6cde78cb3826d",
+  "kind": "measured-compound-repair-study",
+  "sourceResultsSha256": "3838da9c32948983221ab64b4f5a323a52847fe9a2e83318cbd35cf17e9bddd4",
+  "cases": [
+    {
+      "seed": 910001,
+      "mode": "graph",
+      "task": "compound-repair-v1",
+      "startingSourceHash": "a3132218bf4cab4b80defd887eb71b5cba9d2c5715d0a8a59127b2e9ea1fb43b",
+      "status": "completed",
+      "generationsUntilAllGates": null,
+      "regressionsReintroduced": 0,
+      "wallMs": 126545,
+      "evaluations": [
+        {
+          "sandboxId": "f41b5ffe-7f68-41fb-9ebd-548a1b7a8785",
+          "sourceHash": "5f606affb21c46b41e586cd24659fcb5d1ed22ceb9738710c3cf2133aa906f5b",
+          "backend": "verilator",
+          "cycles": 2440,
+          "checks": [
+            {
+              "id": "agent-red-full-replace-wrap-pointer",
+              "name": "Red: Full FIFO simultaneous read+write at pointer wrap boundary",
+              "passed": false,
+              "cycles": 64,
+              "hidden": false,
+              "summary": "Cycle 31: expected full=False, observed True"
+            },
+            {
+              "id": "agent-red-mid-fill-repeated-reset-resume",
+              "name": "Red: Repeated resets mid-fill then verify clean state",
+              "passed": false,
+              "cycles": 24,
+              "hidden": false,
+              "summary": "Cycle 9: expected empty=True, observed False"
+            },
+            {
+              "id": "agent-red-empty-concurrent-then-drain-order",
+              "name": "Red: Empty simultaneous read+write then verify no bypass and correct order",
+              "passed": false,
+              "cycles": 19,
+              "hidden": false,
+              "summary": "Cycle 10: expected empty=False, observed True"
+            },
+            {
+              "id": "agent-red-flags-full-empty-transition-accuracy",
+              "name": "Red: Full and empty flag accuracy across boundary transitions",
+              "passed": false,
+              "cycles": 65,
+              "hidden": false,
+              "summary": "Cycle 31: expected full=False, observed True"
+            },
+            {
+              "id": "regression-0",
+              "name": "Regression: Concurrent read/write preserves occupancy",
+              "passed": true,
+              "cycles": 10,
+              "hidden": false,
+              "summary": "All contract observations matched."
+            },
+            {
+              "id": "order",
+              "name": "Order, empty reads, and pointer wrap",
+              "passed": false,
+              "cycles": 96,
+              "hidden": false,
+              "summary": "Cycle 33: expected full=False, observed True"
+            },
+            {
+              "id": "simultaneous",
+              "name": "Concurrent read/write preserves occupancy",
+              "passed": false,
+              "cycles": 61,
+              "hidden": false,
+              "summary": "Cycle 35: expected empty=False, observed True"
+            },
+            {
+              "id": "full-replace",
+              "name": "Full buffer accepts a same-cycle replacement",
+              "passed": false,
+              "cycles": 75,
+              "hidden": false,
+              "summary": "Cycle 31: expected full=False, observed True"
+            },
+            {
+              "id": "empty-concurrent",
+              "name": "Empty simultaneous operations enqueue without bypass",
+              "passed": false,
+              "cycles": 68,
+              "hidden": false,
+              "summary": "Cycle 31: expected full=False, observed True"
+            },
+            {
+              "id": "reset-active",
+              "name": "Reset wins over active reads and writes",
+              "passed": false,
+              "cycles": 63,
+              "hidden": false,
+              "summary": "Cycle 20: expected empty=True, observed False"
+            },
+            {
+              "id": "red-seeded",
+              "name": "Red seeded long-run search",
+              "passed": false,
+              "cycles": 547,
+              "hidden": false,
+              "summary": "Cycle 27: expected empty=False, observed True"
+            },
+            {
+              "id": "held-out",
+              "name": "Independent held-out sequence",
+              "passed": false,
+              "cycles": 1059,
+              "hidden": true,
+              "summary": "Held-out contract check failed."
+            },
+            {
+              "id": "transfer-empty-boundary",
+              "name": "Unseen sibling: empty boundary",
+              "passed": true,
+              "cycles": 257,
+              "hidden": true,
+              "summary": "All contract observations matched."
+            },
+            {
+              "id": "reproduction",
+              "name": "Independent counterexample replay",
+              "passed": true,
+              "cycles": 32,
+              "hidden": false,
+              "summary": "The complete input sequence reproduced the same contract violation from a fresh model."
+            }
+          ],
+          "generation": 0,
+          "blue": {
+            "provider": "bedrock",
+            "model": "us.anthropic.claude-sonnet-4-6",
+            "durationMs": 9435,
+            "inputTokens": 2646,
+            "outputTokens": 1054
+          },
+          "red": {
+            "provider": "bedrock",
+            "model": "us.anthropic.claude-sonnet-4-6",
+            "durationMs": 35581,
+            "inputTokens": 3220,
+            "outputTokens": 5650
+          },
+          "retrieval": {
+            "ids": [
+              "hp:abl-0ef9967e-a2ba-4783-b115-9988157c41b9-dev:lesson:e99fcbae0788c06379d4e432bc0af9c8"
+            ],
+            "bytes": 838,
+            "path": [
+              "empty_boundary",
+              "occupancy",
+              "fifo_contract"
+            ]
+          }
+        },
+        {
+          "sandboxId": "9d84c729-9f44-4c3d-af6b-70256d1c5e98",
+          "sourceHash": "4587e3f1480f6c35c627e5a06accbf77ac1c2148ea0051dc8c1594349f88aa85",
+          "backend": "verilator",
+          "cycles": 2465,
+          "checks": [
+            {
+              "id": "agent-red-full-replace-concurrent-rw-at-32",
+              "name": "Red: Simultaneous read+write when FIFO is exactly full (occupancy=32)",
+              "passed": false,
+              "cycles": 37,
+              "hidden": false,
+              "summary": "Cycle 31: expected full=False, observed True"
+            },
+            {
+              "id": "agent-red-empty-concurrent-rw-bypass-check",
+              "name": "Red: Simultaneous read+write on empty FIFO - no bypass, enqueue only",
+              "passed": true,
+              "cycles": 10,
+              "hidden": false,
+              "summary": "All contract observations matched."
+            },
+            {
+              "id": "agent-red-pointer-wrap-order-after-drain-refill",
+              "name": "Red: Pointer wrap: fill, drain, refill to verify head/tail wrap correctness",
+              "passed": false,
+              "cycles": 81,
+              "hidden": false,
+              "summary": "Cycle 31: expected full=False, observed True"
+            },
+            {
+              "id": "agent-red-mid-fill-reset-then-rw-sequence",
+              "name": "Red: Reset mid-fill then verify clean state with interleaved read+write",
+              "passed": false,
+              "cycles": 37,
+              "hidden": false,
+              "summary": "Cycle 17: expected empty=True, observed False"
+            },
+            {
+              "id": "regression-0",
+              "name": "Regression: Concurrent read/write preserves occupancy",
+              "passed": true,
+              "cycles": 10,
+              "hidden": false,
+              "summary": "All contract observations matched."
+            },
+            {
+              "id": "regression-1",
+              "name": "Regression: Red: Full FIFO simultaneous read+write at pointer wrap boundary",
+              "passed": false,
+              "cycles": 32,
+              "hidden": false,
+              "summary": "Cycle 31: expected full=False, observed True"
+            },
+            {
+              "id": "order",
+              "name": "Order, empty reads, and pointer wrap",
+              "passed": false,
+              "cycles": 96,
+              "hidden": false,
+              "summary": "Cycle 33: expected full=False, observed True"
+            },
+            {
+              "id": "simultaneous",
+              "name": "Concurrent read/write preserves occupancy",
+              "passed": false,
+              "cycles": 61,
+              "hidden": false,
+              "summary": "Cycle 35: expected empty=False, observed True"
+            },
+            {
+              "id": "full-replace",
+              "name": "Full buffer accepts a same-cycle replacement",
+              "passed": false,
+              "cycles": 75,
+              "hidden": false,
+              "summary": "Cycle 31: expected full=False, observed True"
+            },
+            {
+              "id": "empty-concurrent",
+              "name": "Empty simultaneous operations enqueue without bypass",
+              "passed": false,
+              "cycles": 68,
+              "hidden": false,
+              "summary": "Cycle 31: expected full=False, observed True"
+            },
+            {
+              "id": "reset-active",
+              "name": "Reset wins over active reads and writes",
+              "passed": false,
+              "cycles": 63,
+              "hidden": false,
+              "summary": "Cycle 20: expected empty=True, observed False"
+            },
+            {
+              "id": "red-seeded",
+              "name": "Red seeded long-run search",
+              "passed": false,
+              "cycles": 547,
+              "hidden": false,
+              "summary": "Cycle 27: expected empty=False, observed True"
+            },
+            {
+              "id": "held-out",
+              "name": "Independent held-out sequence",
+              "passed": false,
+              "cycles": 1059,
+              "hidden": true,
+              "summary": "Held-out contract check failed."
+            },
+            {
+              "id": "transfer-empty-boundary",
+              "name": "Unseen sibling: empty boundary",
+              "passed": true,
+              "cycles": 257,
+              "hidden": true,
+              "summary": "All contract observations matched."
+            },
+            {
+              "id": "reproduction",
+              "name": "Independent counterexample replay",
+              "passed": true,
+              "cycles": 32,
+              "hidden": false,
+              "summary": "The complete input sequence reproduced the same contract violation from a fresh model."
+            }
+          ],
+          "generation": 1,
+          "blue": {
+            "provider": "bedrock",
+            "model": "us.anthropic.claude-sonnet-4-6",
+            "durationMs": 14610,
+            "inputTokens": 4577,
+            "outputTokens": 1373
+          },
+          "red": {
+            "provider": "bedrock",
+            "model": "us.anthropic.claude-sonnet-4-6",
+            "durationMs": 36530,
+            "inputTokens": 4492,
+            "outputTokens": 5726
+          },
+          "retrieval": {
+            "ids": [
+              "hp:abl-0ef9967e-a2ba-4783-b115-9988157c41b9-dev:lesson:e99fcbae0788c06379d4e432bc0af9c8"
+            ],
+            "bytes": 838,
+            "path": [
+              "empty_boundary",
+              "occupancy",
+              "fifo_contract"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "seed": 910001,
+      "mode": "flat",
+      "task": "compound-repair-v1",
+      "startingSourceHash": "a3132218bf4cab4b80defd887eb71b5cba9d2c5715d0a8a59127b2e9ea1fb43b",
+      "status": "completed",
+      "generationsUntilAllGates": 1,
+      "regressionsReintroduced": 0,
+      "wallMs": 70543,
+      "evaluations": [
+        {
+          "sandboxId": "66fc69a9-a9d9-43e2-a771-dd108d7a8da2",
+          "sourceHash": "546b6e6107db1e05413c37c85bc62209567c8e1b55f49fee0c6b269b2a24cd89",
+          "backend": "verilator",
+          "cycles": 2462,
+          "checks": [
+            {
+              "id": "agent-red-full-replace-occupancy-check",
+              "name": "Red: Full FIFO simultaneous read/write occupancy integrity",
+              "passed": true,
+              "cycles": 80,
+              "hidden": false,
+              "summary": "All contract observations matched."
+            },
+            {
+              "id": "agent-red-occupancy-stale-combinatorial-pop-push",
+              "name": "Red: Stale occupancy in combinatorial pop/push at boundary 8",
+              "passed": true,
+              "cycles": 34,
+              "hidden": false,
+              "summary": "All contract observations matched."
+            },
+            {
+              "id": "agent-red-pointer-wrap-after-32-writes-reads",
+              "name": "Red: Pointer wrap-around after full cycle of 32 writes then 32 reads",
+              "passed": true,
+              "cycles": 74,
+              "hidden": false,
+              "summary": "All contract observations matched."
+            },
+            {
+              "id": "agent-red-mid-stream-reset-then-refill",
+              "name": "Red: Reset mid-stream clears state and allows correct refill",
+              "passed": true,
+              "cycles": 38,
+              "hidden": false,
+              "summary": "All contract observations matched."
+            },
+            {
+              "id": "regression-0",
+              "name": "Regression: Concurrent read/write preserves occupancy",
+              "passed": true,
+              "cycles": 10,
+              "hidden": false,
+              "summary": "All contract observations matched."
+            },
+            {
+              "id": "order",
+              "name": "Order, empty reads, and pointer wrap",
+              "passed": true,
+              "cycles": 96,
+              "hidden": false,
+              "summary": "All contract observations matched."
+            },
+            {
+              "id": "simultaneous",
+              "name": "Concurrent read/write preserves occupancy",
+              "passed": true,
+              "cycles": 61,
+              "hidden": false,
+              "summary": "All contract observations matched."
+            },
+            {
+              "id": "full-replace",
+              "name": "Full buffer accepts a same-cycle replacement",
+              "passed": true,
+              "cycles": 75,
+              "hidden": false,
+              "summary": "All contract observations matched."
+            },
+            {
+              "id": "empty-concurrent",
+              "name": "Empty simultaneous operations enqueue without bypass",
+              "passed": true,
+              "cycles": 68,
+              "hidden": false,
+              "summary": "All contract observations matched."
+            },
+            {
+              "id": "reset-active",
+              "name": "Reset wins over active reads and writes",
+              "passed": true,
+              "cycles": 63,
+              "hidden": false,
+              "summary": "All contract observations matched."
+            },
+            {
+              "id": "red-seeded",
+              "name": "Red seeded long-run search",
+              "passed": true,
+              "cycles": 547,
+              "hidden": false,
+              "summary": "All contract observations matched."
+            },
+            {
+              "id": "held-out",
+              "name": "Independent held-out sequence",
+              "passed": true,
+              "cycles": 1059,
+              "hidden": true,
+              "summary": "All contract observations matched."
+            },
+            {
+              "id": "transfer-empty-boundary",
+              "name": "Unseen sibling: empty boundary",
+              "passed": true,
+              "cycles": 257,
+              "hidden": true,
+              "summary": "All contract observations matched."
+            }
+          ],
+          "generation": 0,
+          "blue": {
+            "provider": "bedrock",
+            "model": "us.anthropic.claude-sonnet-4-6",
+            "durationMs": 10339,
+            "inputTokens": 3242,
+            "outputTokens": 1018
+          },
+          "red": {
+            "provider": "bedrock",
+            "model": "us.anthropic.claude-sonnet-4-6",
+            "durationMs": 45012,
+            "inputTokens": 3767,
+            "outputTokens": 7464
+          },
+          "retrieval": {
+            "ids": [
+              "dev0-simultaneous-cycle-9"
+            ],
+            "bytes": 2048,
+            "path": []
+          }
+        }
+      ]
+    },
+    {
+      "seed": 910001,
+      "mode": "none",
+      "task": "compound-repair-v1",
+      "startingSourceHash": "a3132218bf4cab4b80defd887eb71b5cba9d2c5715d0a8a59127b2e9ea1fb43b",
+      "status": "completed",
+      "generationsUntilAllGates": 1,
+      "regressionsReintroduced": 0,
+      "wallMs": 65270,
+      "evaluations": [
+        {
+          "sandboxId": "7038264f-6842-4929-b25b-91cfe802edd9",
+          "sourceHash": "c777c416069acc9ebe74bddef9efcbcab1e6e2c64375107abed0e13ce97046c1",
+          "backend": "verilator",
+          "cycles": 2431,
+          "checks": [
+            {
+              "id": "agent-red-full-replace-wrap-boundary",
+              "name": "Red: Full FIFO simultaneous read/write at pointer wrap boundary",
+              "passed": true,
+              "cycles": 66,
+              "hidden": false,
+              "summary": "All contract observations matched."
+            },
+            {
+              "id": "agent-red-empty-concurrent-write-then-read-order",
+              "name": "Red: Empty FIFO simultaneous write+read does not bypass, then verify order",
+              "passed": true,
+              "cycles": 12,
+              "hidden": false,
+              "summary": "All contract observations matched."
+            },
+            {
+              "id": "agent-red-repeated-reset-mid-operation",
+              "name": "Red: Reset mid-stream clears all state and no pre-reset data reappears",
+              "passed": true,
+              "cycles": 20,
+              "hidden": false,
+              "summary": "All contract observations matched."
+            },
+            {
+              "id": "agent-red-pointer-wrap-order-after-partial-drain",
+              "name": "Red: Pointer wrap: fill, partial drain, refill past wrap, verify order",
+              "passed": true,
+              "cycles": 97,
+              "hidden": false,
+              "summary": "All contract observations matched."
+            },
+            {
+              "id": "regression-0",
+              "name": "Regression: Concurrent read/write preserves occupancy",
+              "passed": true,
+              "cycles": 10,
+              "hidden": false,
+              "summary": "All contract observations matched."
+            },
+            {
+              "id": "order",
+              "name": "Order, empty reads, and pointer wrap",
+              "passed": true,
+              "cycles": 96,
+              "hidden": false,
+              "summary": "All contract observations matched."
+            },
+            {
+              "id": "simultaneous",
+              "name": "Concurrent read/write preserves occupancy",
+              "passed": true,
+              "cycles": 61,
+              "hidden": false,
+              "summary": "All contract observations matched."
+            },
+            {
+              "id": "full-replace",
+              "name": "Full buffer accepts a same-cycle replacement",
+              "passed": true,
+              "cycles": 75,
+              "hidden": false,
+              "summary": "All contract observations matched."
+            },
+            {
+              "id": "empty-concurrent",
+              "name": "Empty simultaneous operations enqueue without bypass",
+              "passed": true,
+              "cycles": 68,
+              "hidden": false,
+              "summary": "All contract observations matched."
+            },
+            {
+              "id": "reset-active",
+              "name": "Reset wins over active reads and writes",
+              "passed": true,
+              "cycles": 63,
+              "hidden": false,
+              "summary": "All contract observations matched."
+            },
+            {
+              "id": "red-seeded",
+              "name": "Red seeded long-run search",
+              "passed": true,
+              "cycles": 547,
+              "hidden": false,
+              "summary": "All contract observations matched."
+            },
+            {
+              "id": "held-out",
+              "name": "Independent held-out sequence",
+              "passed": true,
+              "cycles": 1059,
+              "hidden": true,
+              "summary": "All contract observations matched."
+            },
+            {
+              "id": "transfer-empty-boundary",
+              "name": "Unseen sibling: empty boundary",
+              "passed": true,
+              "cycles": 257,
+              "hidden": true,
+              "summary": "All contract observations matched."
+            }
+          ],
+          "generation": 0,
+          "blue": {
+            "provider": "bedrock",
+            "model": "us.anthropic.claude-sonnet-4-6",
+            "durationMs": 12171,
+            "inputTokens": 2433,
+            "outputTokens": 1226
+          },
+          "red": {
+            "provider": "bedrock",
+            "model": "us.anthropic.claude-sonnet-4-6",
+            "durationMs": 37535,
+            "inputTokens": 3200,
+            "outputTokens": 6268
+          },
+          "retrieval": {
+            "ids": [],
+            "bytes": 0,
+            "path": []
+          }
+        }
+      ]
+    },
+    {
+      "seed": 917920,
+      "mode": "graph",
+      "task": "compound-repair-v1",
+      "startingSourceHash": "123b2f9febd196da5860828bd8434e45ec6b7d41e7228b7e4dab4babb3bf63ad",
+      "status": "completed",
+      "generationsUntilAllGates": null,
+      "regressionsReintroduced": 0,
+      "wallMs": 135995,
+      "evaluations": [
+        {
+          "sandboxId": "d879894c-4fa1-4d90-b623-b059943bd926",
+          "sourceHash": "f2b4df319511ca82a932d41ce82ece69f01ff97cfeb542733cd7be559e85b51b",
+          "backend": "verilator",
+          "cycles": 2425,
+          "checks": [
+            {
+              "id": "agent-red-full-replace-wrap-pointer",
+              "name": "Red: Full FIFO simultaneous read/write at pointer wrap boundary",
+              "passed": false,
+              "cycles": 43,
+              "hidden": false,
+              "summary": "Cycle 31: expected full=False, observed True"
+            },
+            {
+              "id": "agent-red-empty-simul-rw-then-drain",
+              "name": "Red: Empty FIFO simultaneous read+write then verify order across multiple cycles",
+              "passed": true,
+              "cycles": 15,
+              "hidden": false,
+              "summary": "All contract observations matched."
+            },
+            {
+              "id": "agent-red-repeated-reset-mid-operation",
+              "name": "Red: Reset mid-stream clears all state including data_out and read_valid",
+              "passed": false,
+              "cycles": 22,
+              "hidden": false,
+              "summary": "Cycle 5: expected empty=True, observed False"
+            },
+            {
+              "id": "agent-red-near-full-occupancy-transitions",
+              "name": "Red: Occupancy transitions around 31-32 boundary with interleaved reads and writes",
+              "passed": false,
+              "cycles": 77,
+              "hidden": false,
+              "summary": "Cycle 31: expected full=False, observed True"
+            },
+            {
+              "id": "regression-0",
+              "name": "Regression: Concurrent read/write preserves occupancy",
+              "passed": true,
+              "cycles": 10,
+              "hidden": false,
+              "summary": "All contract observations matched."
+            },
+            {
+              "id": "order",
+              "name": "Order, empty reads, and pointer wrap",
+              "passed": false,
+              "cycles": 96,
+              "hidden": false,
+              "summary": "Cycle 33: expected full=False, observed True"
+            },
+            {
+              "id": "simultaneous",
+              "name": "Concurrent read/write preserves occupancy",
+              "passed": false,
+              "cycles": 61,
+              "hidden": false,
+              "summary": "Cycle 35: expected empty=False, observed True"
+            },
+            {
+              "id": "full-replace",
+              "name": "Full buffer accepts a same-cycle replacement",
+              "passed": false,
+              "cycles": 75,
+              "hidden": false,
+              "summary": "Cycle 31: expected full=False, observed True"
+            },
+            {
+              "id": "empty-concurrent",
+              "name": "Empty simultaneous operations enqueue without bypass",
+              "passed": false,
+              "cycles": 68,
+              "hidden": false,
+              "summary": "Cycle 31: expected full=False, observed True"
+            },
+            {
+              "id": "reset-active",
+              "name": "Reset wins over active reads and writes",
+              "passed": false,
+              "cycles": 63,
+              "hidden": false,
+              "summary": "Cycle 20: expected empty=True, observed False"
+            },
+            {
+              "id": "red-seeded",
+              "name": "Red seeded long-run search",
+              "passed": false,
+              "cycles": 547,
+              "hidden": false,
+              "summary": "Cycle 7: expected empty=True, observed False"
+            },
+            {
+              "id": "held-out",
+              "name": "Independent held-out sequence",
+              "passed": false,
+              "cycles": 1059,
+              "hidden": true,
+              "summary": "Held-out contract check failed."
+            },
+            {
+              "id": "transfer-empty-boundary",
+              "name": "Unseen sibling: empty boundary",
+              "passed": true,
+              "cycles": 257,
+              "hidden": true,
+              "summary": "All contract observations matched."
+            },
+            {
+              "id": "reproduction",
+              "name": "Independent counterexample replay",
+              "passed": true,
+              "cycles": 32,
+              "hidden": false,
+              "summary": "The complete input sequence reproduced the same contract violation from a fresh model."
+            }
+          ],
+          "generation": 0,
+          "blue": {
+            "provider": "bedrock",
+            "model": "us.anthropic.claude-sonnet-4-6",
+            "durationMs": 10450,
+            "inputTokens": 2648,
+            "outputTokens": 1073
+          },
+          "red": {
+            "provider": "bedrock",
+            "model": "us.anthropic.claude-sonnet-4-6",
+            "durationMs": 35688,
+            "inputTokens": 3265,
+            "outputTokens": 5411
+          },
+          "retrieval": {
+            "ids": [
+              "hp:abl-0ef9967e-a2ba-4783-b115-9988157c41b9-dev:lesson:e99fcbae0788c06379d4e432bc0af9c8"
+            ],
+            "bytes": 838,
+            "path": [
+              "empty_boundary",
+              "occupancy",
+              "fifo_contract"
+            ]
+          }
+        },
+        {
+          "sandboxId": "0443b337-cada-4c27-89ad-4a09020199a6",
+          "sourceHash": "660ccd4df59828aa8c605d6aeaea87a04fafcd4ee5962550efef0f11f32ef95c",
+          "backend": "verilator",
+          "cycles": 2492,
+          "checks": [
+            {
+              "id": "agent-red-full-replace-then-drain-order",
+              "name": "Red: Full FIFO simultaneous read/write then full drain order check",
+              "passed": false,
+              "cycles": 66,
+              "hidden": false,
+              "summary": "Cycle 31: expected full=False, observed True"
+            },
+            {
+              "id": "agent-red-empty-simultaneous-rw-then-read",
+              "name": "Red: Empty FIFO simultaneous read+write then immediate read",
+              "passed": true,
+              "cycles": 10,
+              "hidden": false,
+              "summary": "All contract observations matched."
+            },
+            {
+              "id": "agent-red-repeated-reset-mid-operation",
+              "name": "Red: Repeated reset mid-fill clears all state including data_out",
+              "passed": false,
+              "cycles": 20,
+              "hidden": false,
+              "summary": "Cycle 5: expected empty=False, observed True"
+            },
+            {
+              "id": "agent-red-near-full-wrap-pointer-simultaneous",
+              "name": "Red: Near-full pointer wrap with interleaved simultaneous read/write",
+              "passed": false,
+              "cycles": 96,
+              "hidden": false,
+              "summary": "Cycle 31: expected full=False, observed True"
+            },
+            {
+              "id": "regression-0",
+              "name": "Regression: Concurrent read/write preserves occupancy",
+              "passed": true,
+              "cycles": 10,
+              "hidden": false,
+              "summary": "All contract observations matched."
+            },
+            {
+              "id": "regression-1",
+              "name": "Regression: Red: Full FIFO simultaneous read/write at pointer wrap boundary",
+              "passed": false,
+              "cycles": 32,
+              "hidden": false,
+              "summary": "Cycle 31: expected full=False, observed True"
+            },
+            {
+              "id": "order",
+              "name": "Order, empty reads, and pointer wrap",
+              "passed": false,
+              "cycles": 96,
+              "hidden": false,
+              "summary": "Cycle 33: expected full=False, observed True"
+            },
+            {
+              "id": "simultaneous",
+              "name": "Concurrent read/write preserves occupancy",
+              "passed": false,
+              "cycles": 61,
+              "hidden": false,
+              "summary": "Cycle 35: expected empty=False, observed True"
+            },
+            {
+              "id": "full-replace",
+              "name": "Full buffer accepts a same-cycle replacement",
+              "passed": false,
+              "cycles": 75,
+              "hidden": false,
+              "summary": "Cycle 31: expected full=False, observed True"
+            },
+            {
+              "id": "empty-concurrent",
+              "name": "Empty simultaneous operations enqueue without bypass",
+              "passed": false,
+              "cycles": 68,
+              "hidden": false,
+              "summary": "Cycle 31: expected full=False, observed True"
+            },
+            {
+              "id": "reset-active",
+              "name": "Reset wins over active reads and writes",
+              "passed": false,
+              "cycles": 63,
+              "hidden": false,
+              "summary": "Cycle 20: expected empty=True, observed False"
+            },
+            {
+              "id": "red-seeded",
+              "name": "Red seeded long-run search",
+              "passed": false,
+              "cycles": 547,
+              "hidden": false,
+              "summary": "Cycle 7: expected empty=True, observed False"
+            },
+            {
+              "id": "held-out",
+              "name": "Independent held-out sequence",
+              "passed": false,
+              "cycles": 1059,
+              "hidden": true,
+              "summary": "Held-out contract check failed."
+            },
+            {
+              "id": "transfer-empty-boundary",
+              "name": "Unseen sibling: empty boundary",
+              "passed": true,
+              "cycles": 257,
+              "hidden": true,
+              "summary": "All contract observations matched."
+            },
+            {
+              "id": "reproduction",
+              "name": "Independent counterexample replay",
+              "passed": true,
+              "cycles": 32,
+              "hidden": false,
+              "summary": "The complete input sequence reproduced the same contract violation from a fresh model."
+            }
+          ],
+          "generation": 1,
+          "blue": {
+            "provider": "bedrock",
+            "model": "us.anthropic.claude-sonnet-4-6",
+            "durationMs": 20417,
+            "inputTokens": 4614,
+            "outputTokens": 1928
+          },
+          "red": {
+            "provider": "bedrock",
+            "model": "us.anthropic.claude-sonnet-4-6",
+            "durationMs": 34867,
+            "inputTokens": 4551,
+            "outputTokens": 5970
+          },
+          "retrieval": {
+            "ids": [
+              "hp:abl-0ef9967e-a2ba-4783-b115-9988157c41b9-dev:lesson:e99fcbae0788c06379d4e432bc0af9c8"
+            ],
+            "bytes": 838,
+            "path": [
+              "empty_boundary",
+              "occupancy",
+              "fifo_contract"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "seed": 917920,
+      "mode": "flat",
+      "task": "compound-repair-v1",
+      "startingSourceHash": "123b2f9febd196da5860828bd8434e45ec6b7d41e7228b7e4dab4babb3bf63ad",
+      "status": "completed",
+      "generationsUntilAllGates": 1,
+      "regressionsReintroduced": 0,
+      "wallMs": 55117,
+      "evaluations": [
+        {
+          "sandboxId": "dea9db42-74b8-49c9-99e4-994fd79166ac",
+          "sourceHash": "924418716220b53417a1b5c6a1d68920cc1b6a47e7fb6eb912dacaea44fd414c",
+          "backend": "verilator",
+          "cycles": 2385,
+          "checks": [
+            {
+              "id": "agent-red-full-replace-wrap-pointer",
+              "name": "Red: Full FIFO simultaneous read/write at pointer wrap boundary",
+              "passed": true,
+              "cycles": 65,
+              "hidden": false,
+              "summary": "All contract observations matched."
+            },
+            {
+              "id": "agent-red-empty-simultaneous-rw-bypass-check",
+              "name": "Red: Empty FIFO simultaneous read/write: no bypass, read_valid must be low",
+              "passed": true,
+              "cycles": 14,
+              "hidden": false,
+              "summary": "All contract observations matched."
+            },
+            {
+              "id": "agent-red-repeated-reset-mid-operation",
+              "name": "Red: Repeated resets interleaved with writes verify no stale data reappears",
+              "passed": true,
+              "cycles": 21,
+              "hidden": false,
+              "summary": "All contract observations matched."
+            },
+            {
+              "id": "agent-red-occupancy-concurrent-rw-sequence",
+              "name": "Red: Alternating concurrent read/write to detect occupancy drift over many cycles",
+              "passed": true,
+              "cycles": 49,
+              "hidden": false,
+              "summary": "All contract observations matched."
+            },
+            {
+              "id": "regression-0",
+              "name": "Regression: Concurrent read/write preserves occupancy",
+              "passed": true,
+              "cycles": 10,
+              "hidden": false,
+              "summary": "All contract observations matched."
+            },
+            {
+              "id": "order",
+              "name": "Order, empty reads, and pointer wrap",
+              "passed": true,
+              "cycles": 96,
+              "hidden": false,
+              "summary": "All contract observations matched."
+            },
+            {
+              "id": "simultaneous",
+              "name": "Concurrent read/write preserves occupancy",
+              "passed": true,
+              "cycles": 61,
+              "hidden": false,
+              "summary": "All contract observations matched."
+            },
+            {
+              "id": "full-replace",
+              "name": "Full buffer accepts a same-cycle replacement",
+              "passed": true,
+              "cycles": 75,
+              "hidden": false,
+              "summary": "All contract observations matched."
+            },
+            {
+              "id": "empty-concurrent",
+              "name": "Empty simultaneous operations enqueue without bypass",
+              "passed": true,
+              "cycles": 68,
+              "hidden": false,
+              "summary": "All contract observations matched."
+            },
+            {
+              "id": "reset-active",
+              "name": "Reset wins over active reads and writes",
+              "passed": true,
+              "cycles": 63,
+              "hidden": false,
+              "summary": "All contract observations matched."
+            },
+            {
+              "id": "red-seeded",
+              "name": "Red seeded long-run search",
+              "passed": true,
+              "cycles": 547,
+              "hidden": false,
+              "summary": "All contract observations matched."
+            },
+            {
+              "id": "held-out",
+              "name": "Independent held-out sequence",
+              "passed": true,
+              "cycles": 1059,
+              "hidden": true,
+              "summary": "All contract observations matched."
+            },
+            {
+              "id": "transfer-empty-boundary",
+              "name": "Unseen sibling: empty boundary",
+              "passed": true,
+              "cycles": 257,
+              "hidden": true,
+              "summary": "All contract observations matched."
+            }
+          ],
+          "generation": 0,
+          "blue": {
+            "provider": "bedrock",
+            "model": "us.anthropic.claude-sonnet-4-6",
+            "durationMs": 9386,
+            "inputTokens": 3244,
+            "outputTokens": 991
+          },
+          "red": {
+            "provider": "bedrock",
+            "model": "us.anthropic.claude-sonnet-4-6",
+            "durationMs": 31701,
+            "inputTokens": 3778,
+            "outputTokens": 5127
+          },
+          "retrieval": {
+            "ids": [
+              "dev0-simultaneous-cycle-9"
+            ],
+            "bytes": 2048,
+            "path": []
+          }
+        }
+      ]
+    },
+    {
+      "seed": 917920,
+      "mode": "none",
+      "task": "compound-repair-v1",
+      "startingSourceHash": "123b2f9febd196da5860828bd8434e45ec6b7d41e7228b7e4dab4babb3bf63ad",
+      "status": "completed",
+      "generationsUntilAllGates": 1,
+      "regressionsReintroduced": 0,
+      "wallMs": 60976,
+      "evaluations": [
+        {
+          "sandboxId": "e25223c3-cbf7-46c8-83d5-14ce0bd980f2",
+          "sourceHash": "a253248b3e7201a2044d6bde3940c69c65f8f7c730ae1a616ce2b51c7933e3a3",
+          "backend": "verilator",
+          "cycles": 2455,
+          "checks": [
+            {
+              "id": "agent-red-full-replace-simultaneous-rw",
+              "name": "Red: Full FIFO simultaneous read+write replacement cycle",
+              "passed": true,
+              "cycles": 66,
+              "hidden": false,
+              "summary": "All contract observations matched."
+            },
+            {
+              "id": "agent-red-empty-simultaneous-rw-no-bypass",
+              "name": "Red: Empty FIFO simultaneous read+write must not bypass data",
+              "passed": true,
+              "cycles": 7,
+              "hidden": false,
+              "summary": "All contract observations matched."
+            },
+            {
+              "id": "agent-red-pointer-wrap-order-check",
+              "name": "Red: Pointer wrap-around FIFO order preservation",
+              "passed": true,
+              "cycles": 80,
+              "hidden": false,
+              "summary": "All contract observations matched."
+            },
+            {
+              "id": "agent-red-mid-stream-reset-then-rw",
+              "name": "Red: Reset mid-stream clears state then normal operation resumes correctly",
+              "passed": true,
+              "cycles": 66,
+              "hidden": false,
+              "summary": "All contract observations matched."
+            },
+            {
+              "id": "regression-0",
+              "name": "Regression: Concurrent read/write preserves occupancy",
+              "passed": true,
+              "cycles": 10,
+              "hidden": false,
+              "summary": "All contract observations matched."
+            },
+            {
+              "id": "order",
+              "name": "Order, empty reads, and pointer wrap",
+              "passed": true,
+              "cycles": 96,
+              "hidden": false,
+              "summary": "All contract observations matched."
+            },
+            {
+              "id": "simultaneous",
+              "name": "Concurrent read/write preserves occupancy",
+              "passed": true,
+              "cycles": 61,
+              "hidden": false,
+              "summary": "All contract observations matched."
+            },
+            {
+              "id": "full-replace",
+              "name": "Full buffer accepts a same-cycle replacement",
+              "passed": true,
+              "cycles": 75,
+              "hidden": false,
+              "summary": "All contract observations matched."
+            },
+            {
+              "id": "empty-concurrent",
+              "name": "Empty simultaneous operations enqueue without bypass",
+              "passed": true,
+              "cycles": 68,
+              "hidden": false,
+              "summary": "All contract observations matched."
+            },
+            {
+              "id": "reset-active",
+              "name": "Reset wins over active reads and writes",
+              "passed": true,
+              "cycles": 63,
+              "hidden": false,
+              "summary": "All contract observations matched."
+            },
+            {
+              "id": "red-seeded",
+              "name": "Red seeded long-run search",
+              "passed": true,
+              "cycles": 547,
+              "hidden": false,
+              "summary": "All contract observations matched."
+            },
+            {
+              "id": "held-out",
+              "name": "Independent held-out sequence",
+              "passed": true,
+              "cycles": 1059,
+              "hidden": true,
+              "summary": "All contract observations matched."
+            },
+            {
+              "id": "transfer-empty-boundary",
+              "name": "Unseen sibling: empty boundary",
+              "passed": true,
+              "cycles": 257,
+              "hidden": true,
+              "summary": "All contract observations matched."
+            }
+          ],
+          "generation": 0,
+          "blue": {
+            "provider": "bedrock",
+            "model": "us.anthropic.claude-sonnet-4-6",
+            "durationMs": 10216,
+            "inputTokens": 2435,
+            "outputTokens": 1011
+          },
+          "red": {
+            "provider": "bedrock",
+            "model": "us.anthropic.claude-sonnet-4-6",
+            "durationMs": 36999,
+            "inputTokens": 3001,
+            "outputTokens": 6659
+          },
+          "retrieval": {
+            "ids": [],
+            "bytes": 0,
+            "path": []
+          }
+        }
+      ]
+    },
+    {
+      "seed": 925839,
+      "mode": "none",
+      "task": "compound-repair-v1",
+      "startingSourceHash": "90b88ddf4d671d45c7d42f63ddd9e0cb08d7218f4b673a1b6bdf7b5434c87202",
+      "status": "completed",
+      "generationsUntilAllGates": 1,
+      "regressionsReintroduced": 0,
+      "wallMs": 61684,
+      "evaluations": [
+        {
+          "sandboxId": "31ed7dd3-5f27-48ae-b0e1-183533e06cda",
+          "sourceHash": "166bfe8341b05a4d3b0ba282851b486ed9c6a72e12a7777c85fa108e5f2e40fc",
+          "backend": "verilator",
+          "cycles": 2399,
+          "checks": [
+            {
+              "id": "agent-red-empty-simultaneous-rw-bypass-check",
+              "name": "Red: Simultaneous Read+Write on Empty FIFO - No Bypass",
+              "passed": true,
+              "cycles": 4,
+              "hidden": false,
+              "summary": "All contract observations matched."
+            },
+            {
+              "id": "agent-red-full-replace-simultaneous-rw",
+              "name": "Red: Full FIFO Simultaneous Read+Write Replaces Oldest",
+              "passed": true,
+              "cycles": 66,
+              "hidden": false,
+              "summary": "All contract observations matched."
+            },
+            {
+              "id": "agent-red-pointer-wrap-order-after-32-writes-reads",
+              "name": "Red: Pointer Wrap: Fill, Drain, Refill Checks Order After Wrap",
+              "passed": true,
+              "cycles": 72,
+              "hidden": false,
+              "summary": "All contract observations matched."
+            },
+            {
+              "id": "agent-red-mid-stream-reset-clears-state",
+              "name": "Red: Mid-Stream Reset Clears All State Including data_out",
+              "passed": true,
+              "cycles": 21,
+              "hidden": false,
+              "summary": "All contract observations matched."
+            },
+            {
+              "id": "regression-0",
+              "name": "Regression: Concurrent read/write preserves occupancy",
+              "passed": true,
+              "cycles": 10,
+              "hidden": false,
+              "summary": "All contract observations matched."
+            },
+            {
+              "id": "order",
+              "name": "Order, empty reads, and pointer wrap",
+              "passed": true,
+              "cycles": 96,
+              "hidden": false,
+              "summary": "All contract observations matched."
+            },
+            {
+              "id": "simultaneous",
+              "name": "Concurrent read/write preserves occupancy",
+              "passed": true,
+              "cycles": 61,
+              "hidden": false,
+              "summary": "All contract observations matched."
+            },
+            {
+              "id": "full-replace",
+              "name": "Full buffer accepts a same-cycle replacement",
+              "passed": true,
+              "cycles": 75,
+              "hidden": false,
+              "summary": "All contract observations matched."
+            },
+            {
+              "id": "empty-concurrent",
+              "name": "Empty simultaneous operations enqueue without bypass",
+              "passed": true,
+              "cycles": 68,
+              "hidden": false,
+              "summary": "All contract observations matched."
+            },
+            {
+              "id": "reset-active",
+              "name": "Reset wins over active reads and writes",
+              "passed": true,
+              "cycles": 63,
+              "hidden": false,
+              "summary": "All contract observations matched."
+            },
+            {
+              "id": "red-seeded",
+              "name": "Red seeded long-run search",
+              "passed": true,
+              "cycles": 547,
+              "hidden": false,
+              "summary": "All contract observations matched."
+            },
+            {
+              "id": "held-out",
+              "name": "Independent held-out sequence",
+              "passed": true,
+              "cycles": 1059,
+              "hidden": true,
+              "summary": "All contract observations matched."
+            },
+            {
+              "id": "transfer-empty-boundary",
+              "name": "Unseen sibling: empty boundary",
+              "passed": true,
+              "cycles": 257,
+              "hidden": true,
+              "summary": "All contract observations matched."
+            }
+          ],
+          "generation": 0,
+          "blue": {
+            "provider": "bedrock",
+            "model": "us.anthropic.claude-sonnet-4-6",
+            "durationMs": 12939,
+            "inputTokens": 2451,
+            "outputTokens": 1279
+          },
+          "red": {
+            "provider": "bedrock",
+            "model": "us.anthropic.claude-sonnet-4-6",
+            "durationMs": 31695,
+            "inputTokens": 3266,
+            "outputTokens": 5364
+          },
+          "retrieval": {
+            "ids": [],
+            "bytes": 0,
+            "path": []
+          }
+        }
+      ]
+    },
+    {
+      "seed": 925839,
+      "mode": "graph",
+      "task": "compound-repair-v1",
+      "startingSourceHash": "90b88ddf4d671d45c7d42f63ddd9e0cb08d7218f4b673a1b6bdf7b5434c87202",
+      "status": "completed",
+      "generationsUntilAllGates": 1,
+      "regressionsReintroduced": 0,
+      "wallMs": 60467,
+      "evaluations": [
+        {
+          "sandboxId": "4c915c5f-632b-4c08-a5c1-3ed9442d1b97",
+          "sourceHash": "d97476c9f352549ed4537d9b0683779748a734236fbf8a78d128a500415aaa5e",
+          "backend": "verilator",
+          "cycles": 2375,
+          "checks": [
+            {
+              "id": "agent-red-pointer-wrap-full-replace-32",
+              "name": "Red: Pointer wrap after 32 simultaneous read/write cycles",
+              "passed": true,
+              "cycles": 69,
+              "hidden": false,
+              "summary": "All contract observations matched."
+            },
+            {
+              "id": "agent-red-full-flag-timing-post-edge",
+              "name": "Red: Full flag timing: flag uses registered occupancy not next_occ",
+              "passed": true,
+              "cycles": 39,
+              "hidden": false,
+              "summary": "All contract observations matched."
+            },
+            {
+              "id": "agent-red-reset-mid-stream-order-check",
+              "name": "Red: Reset mid-stream then verify no pre-reset data reappears",
+              "passed": true,
+              "cycles": 15,
+              "hidden": false,
+              "summary": "All contract observations matched."
+            },
+            {
+              "id": "agent-red-empty-concurrent-rw-bypass-check",
+              "name": "Red: Simultaneous read+write on empty FIFO must not bypass data",
+              "passed": true,
+              "cycles": 16,
+              "hidden": false,
+              "summary": "All contract observations matched."
+            },
+            {
+              "id": "regression-0",
+              "name": "Regression: Concurrent read/write preserves occupancy",
+              "passed": true,
+              "cycles": 10,
+              "hidden": false,
+              "summary": "All contract observations matched."
+            },
+            {
+              "id": "order",
+              "name": "Order, empty reads, and pointer wrap",
+              "passed": true,
+              "cycles": 96,
+              "hidden": false,
+              "summary": "All contract observations matched."
+            },
+            {
+              "id": "simultaneous",
+              "name": "Concurrent read/write preserves occupancy",
+              "passed": true,
+              "cycles": 61,
+              "hidden": false,
+              "summary": "All contract observations matched."
+            },
+            {
+              "id": "full-replace",
+              "name": "Full buffer accepts a same-cycle replacement",
+              "passed": true,
+              "cycles": 75,
+              "hidden": false,
+              "summary": "All contract observations matched."
+            },
+            {
+              "id": "empty-concurrent",
+              "name": "Empty simultaneous operations enqueue without bypass",
+              "passed": true,
+              "cycles": 68,
+              "hidden": false,
+              "summary": "All contract observations matched."
+            },
+            {
+              "id": "reset-active",
+              "name": "Reset wins over active reads and writes",
+              "passed": true,
+              "cycles": 63,
+              "hidden": false,
+              "summary": "All contract observations matched."
+            },
+            {
+              "id": "red-seeded",
+              "name": "Red seeded long-run search",
+              "passed": true,
+              "cycles": 547,
+              "hidden": false,
+              "summary": "All contract observations matched."
+            },
+            {
+              "id": "held-out",
+              "name": "Independent held-out sequence",
+              "passed": true,
+              "cycles": 1059,
+              "hidden": true,
+              "summary": "All contract observations matched."
+            },
+            {
+              "id": "transfer-empty-boundary",
+              "name": "Unseen sibling: empty boundary",
+              "passed": true,
+              "cycles": 257,
+              "hidden": true,
+              "summary": "All contract observations matched."
+            }
+          ],
+          "generation": 0,
+          "blue": {
+            "provider": "bedrock",
+            "model": "us.anthropic.claude-sonnet-4-6",
+            "durationMs": 10933,
+            "inputTokens": 2664,
+            "outputTokens": 1122
+          },
+          "red": {
+            "provider": "bedrock",
+            "model": "us.anthropic.claude-sonnet-4-6",
+            "durationMs": 34506,
+            "inputTokens": 3328,
+            "outputTokens": 5093
+          },
+          "retrieval": {
+            "ids": [
+              "hp:abl-0ef9967e-a2ba-4783-b115-9988157c41b9-dev:lesson:e99fcbae0788c06379d4e432bc0af9c8"
+            ],
+            "bytes": 838,
+            "path": [
+              "empty_boundary",
+              "occupancy",
+              "fifo_contract"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "seed": 925839,
+      "mode": "flat",
+      "task": "compound-repair-v1",
+      "startingSourceHash": "90b88ddf4d671d45c7d42f63ddd9e0cb08d7218f4b673a1b6bdf7b5434c87202",
+      "status": "completed",
+      "generationsUntilAllGates": 1,
+      "regressionsReintroduced": 0,
+      "wallMs": 65303,
+      "evaluations": [
+        {
+          "sandboxId": "e98106d8-a72c-460b-a2ee-657ff36110c8",
+          "sourceHash": "933d8d5e7117bf570ba61b2e5043d6766ed3daa0ca1781ede9d49c31fe32cd6f",
+          "backend": "verilator",
+          "cycles": 2428,
+          "checks": [
+            {
+              "id": "agent-red-full-replace-order-check",
+              "name": "Red: Full FIFO simultaneous read/write order verification",
+              "passed": true,
+              "cycles": 66,
+              "hidden": false,
+              "summary": "All contract observations matched."
+            },
+            {
+              "id": "agent-red-pointer-wrap-occupancy-after-32-rw",
+              "name": "Red: Pointer wrap: 32 writes then 32 simultaneous read/writes checking occupancy",
+              "passed": true,
+              "cycles": 65,
+              "hidden": false,
+              "summary": "All contract observations matched."
+            },
+            {
+              "id": "agent-red-mid-stream-reset-no-stale-data",
+              "name": "Red: Mid-stream reset clears data_out and read_valid, no stale data reappears",
+              "passed": true,
+              "cycles": 26,
+              "hidden": false,
+              "summary": "All contract observations matched."
+            },
+            {
+              "id": "agent-red-empty-concurrent-rw-occupancy-and-valid",
+              "name": "Red: Simultaneous read+write on empty FIFO: write-only, read_valid must be low, occupancy=1",
+              "passed": true,
+              "cycles": 35,
+              "hidden": false,
+              "summary": "All contract observations matched."
+            },
+            {
+              "id": "regression-0",
+              "name": "Regression: Concurrent read/write preserves occupancy",
+              "passed": true,
+              "cycles": 10,
+              "hidden": false,
+              "summary": "All contract observations matched."
+            },
+            {
+              "id": "order",
+              "name": "Order, empty reads, and pointer wrap",
+              "passed": true,
+              "cycles": 96,
+              "hidden": false,
+              "summary": "All contract observations matched."
+            },
+            {
+              "id": "simultaneous",
+              "name": "Concurrent read/write preserves occupancy",
+              "passed": true,
+              "cycles": 61,
+              "hidden": false,
+              "summary": "All contract observations matched."
+            },
+            {
+              "id": "full-replace",
+              "name": "Full buffer accepts a same-cycle replacement",
+              "passed": true,
+              "cycles": 75,
+              "hidden": false,
+              "summary": "All contract observations matched."
+            },
+            {
+              "id": "empty-concurrent",
+              "name": "Empty simultaneous operations enqueue without bypass",
+              "passed": true,
+              "cycles": 68,
+              "hidden": false,
+              "summary": "All contract observations matched."
+            },
+            {
+              "id": "reset-active",
+              "name": "Reset wins over active reads and writes",
+              "passed": true,
+              "cycles": 63,
+              "hidden": false,
+              "summary": "All contract observations matched."
+            },
+            {
+              "id": "red-seeded",
+              "name": "Red seeded long-run search",
+              "passed": true,
+              "cycles": 547,
+              "hidden": false,
+              "summary": "All contract observations matched."
+            },
+            {
+              "id": "held-out",
+              "name": "Independent held-out sequence",
+              "passed": true,
+              "cycles": 1059,
+              "hidden": true,
+              "summary": "All contract observations matched."
+            },
+            {
+              "id": "transfer-empty-boundary",
+              "name": "Unseen sibling: empty boundary",
+              "passed": true,
+              "cycles": 257,
+              "hidden": true,
+              "summary": "All contract observations matched."
+            }
+          ],
+          "generation": 0,
+          "blue": {
+            "provider": "bedrock",
+            "model": "us.anthropic.claude-sonnet-4-6",
+            "durationMs": 12011,
+            "inputTokens": 3260,
+            "outputTokens": 1180
+          },
+          "red": {
+            "provider": "bedrock",
+            "model": "us.anthropic.claude-sonnet-4-6",
+            "durationMs": 37611,
+            "inputTokens": 3955,
+            "outputTokens": 6186
+          },
+          "retrieval": {
+            "ids": [
+              "dev0-simultaneous-cycle-9"
+            ],
+            "bytes": 2048,
+            "path": []
+          }
+        }
+      ]
+    }
+  ],
+  "limitations": [
+    "Claude alone and raw retrieval passed 3/3 held-out designs. The graph passed 1/5 evaluated designs and accepted 1/3 trials within the same two-generation cap. No graph advantage was observed.",
+    "All arms passed 3/3 first-try sibling transfer probes; that does not imply the complete hidden suite passed.",
+    "Two graph trials emitted status flags from a lookahead counter and exhausted the repair budget. This is a negative result retained unchanged.",
+    "The later invariant-only sibling retrieval revision is not part of this experiment.",
+    "Three seeds and three fixed manual composite inputs. No statistical generalization or superiority claim."
+  ]
+}

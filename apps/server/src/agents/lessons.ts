@@ -47,7 +47,10 @@ export function groundedLesson(input: Parameters<LessonWriter>[0], value: unknow
   const extract = (source: string, selected: number[]) => {
     const lines = source.split("\n");
     if (!selected.length || new Set(selected).size !== selected.length || selected.some(line => line > lines.length)) throw new Error("Lesson citations reference invalid source lines.");
-    const excerpt = selected.map(line => lines[line - 1]!).join("\n");
+    // Include the bounded body when the model cites a control-flow block's endpoints.
+    const ordered = [...selected].sort((a, b) => a - b);
+    const first = ordered[0]!, last = ordered.at(-1)!;
+    const excerpt = last - first <= 8 ? lines.slice(first - 1, last).join("\n") : ordered.map(line => lines[line - 1]!).join("\n");
     if (excerpt.length > 400 || !/[=;]/.test(excerpt)) throw new Error("Lesson citations must select bounded executable source.");
     return excerpt;
   };
@@ -72,7 +75,8 @@ export const writeBlueLesson: LessonWriter = async (input) => {
   try { text = groundedLesson(input, result.answer); }
   catch (error) {
     await writeFile(join(artifactPath, "invocation.json"), JSON.stringify({ ...result.agent, status: "invalid_response" }), { mode: 0o600 });
-    await writeFile(join(artifactPath, "validation-error.json"), JSON.stringify({ category: error instanceof z.ZodError ? "schema" : "grounding", issues: error instanceof z.ZodError ? error.issues.map(issue => ({ code: issue.code, path: issue.path })) : [] }), { mode: 0o600 });
+    await writeFile(join(artifactPath, "validation-error.json"), JSON.stringify({ category: error instanceof z.ZodError ? "schema" : "grounding", reason: error instanceof z.ZodError ? undefined : error instanceof Error ? error.message.slice(0, 300) : "Grounding failed.", issues: error instanceof z.ZodError ? error.issues.map(issue => ({ code: issue.code, path: issue.path })) : [] }), { mode: 0o600 });
+    await writeFile(join(artifactPath, "answer.invalid.json"), JSON.stringify(result.answer), { mode: 0o600 });
     if (attempt === 1) throw new Error("Lesson writer exhausted two strict formatting attempts. No lesson was substituted.");
     continue;
   }
