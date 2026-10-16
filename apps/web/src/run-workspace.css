@@ -125,7 +125,15 @@
 .work-sandbox-grid .work-screen-empty p { font-size:11px; margin-bottom:12px; }
 .work-sandbox-grid .work-screen-footer { align-items:flex-start; flex-direction:column; gap:0; font-size:8px; }
 .work-sandbox-grid .work-screen-footer code { max-width:100%; font-size:8px; }
-.work-pane-hidden { display:none !important; }
+/* noVNC needs a positive viewport even while a different tab is visible.
+   Offscreen viewers retain their DOM, canvas dimensions and WebSocket. */
+.work-pane-hidden { position:fixed !important; inset:auto !important; left:-100000px !important; top:0 !important; visibility:hidden !important; pointer-events:none !important; }
+.work-role-sandbox.work-pane-hidden { width:320px !important; height:320px !important; }
+.work-sandbox-grid.work-pane-hidden { width:calc(100vw - 450px) !important; height:calc(100svh - 375px) !important; min-height:230px; }
+.run-workspace-host[hidden] { display:block !important; position:fixed; left:-100000px; top:0; width:calc(100vw - 56px); visibility:hidden; pointer-events:none; }
+@media(min-width:1700px) { .work-sandbox-grid.work-pane-hidden { width:calc(100vw - 500px) !important; } }
+@media(max-width:1050px) { .work-sandbox-grid.work-pane-hidden { width:calc(100vw - 384px) !important; }.run-workspace-host[hidden] { width:calc(100vw - 40px); } }
+@media(max-width:740px) { .work-sandbox-grid.work-pane-hidden,.run-workspace-host[hidden] { width:calc(100vw - 24px) !important; } }
 .work-preview-expand { position:absolute; inset:0; display:flex; align-items:flex-end; justify-content:flex-end; padding:12px; background:transparent; cursor:zoom-in; }
 .work-preview-expand > span { display:flex; align-items:center; gap:5px; background:#fffffff0; color:#3d4f43; border-radius:5px; font-size:10px; padding:5px 8px; opacity:0; }
 .work-preview-expand:focus-visible > span { opacity:1; }
