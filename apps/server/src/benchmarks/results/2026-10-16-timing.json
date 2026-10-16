@@ -1,0 +1,76 @@
+{
+  "schemaVersion": 1,
+  "kind": "Paired end-to-end Daytona timing, no model calls",
+  "date": "2026-10-16",
+  "runId": "bench-473942f1-8669-4f69-83ba-999d2d4caf05",
+  "gitCommit": "ed73fe961a04cd03ac735bbca7809c237adf8119",
+  "protocolHashes": {
+    "lab/oracle.py": "b9caf937625ff6a754498827cf162913adacee2ec99149351a687bfd4ebd5a23",
+    "lab/verilator_driver.cpp": "af67b9df4610c0846b23639748c66338dc557215c6588618398108eb6150adf3",
+    "apps/server/src/lab/tests.ts": "859fdfab702da02466041964ed0394c12e852abc6727cd2024cbf2f1efb01659",
+    "apps/server/src/benchmarks/fixtures.ts": "561538fdd19b5845bed47fbfbf08ec972a550b1fbc2522f0a1a10a6d2d6acc8f",
+    "apps/server/src/benchmarks/metrics.ts": "a4eed03adfc34d3969c1cbd6995b42ce6cdf7da7c2993612b5407f5ad716d7a2",
+    "apps/server/src/scripts/benchmark.ts": "6a6bc0dd14cc16f1b05f47239832cd3b9b5a5b65a23dab1bcbf09fdaa32df1d6"
+  },
+  "snapshot": {
+    "name": "daytona-small",
+    "state": "active",
+    "cpu": 1,
+    "memoryGiB": 1,
+    "disk": 3,
+    "observedAt": "2026-10-16T17:02:33.375Z",
+    "accountVcpuLimit": null
+  },
+  "candidatesPerArm": 4,
+  "parallelWorkers": 2,
+  "completedEvaluations": 16,
+  "pairs": [
+    {
+      "pair": 0,
+      "firstParallel": false,
+      "candidates": 4,
+      "concurrency": 2,
+      "valid": true,
+      "serialMs": 72588.191458,
+      "parallelMs": 33349.243,
+      "speedup": 2.176606871046518
+    },
+    {
+      "pair": 1,
+      "firstParallel": true,
+      "candidates": 4,
+      "concurrency": 2,
+      "valid": true,
+      "serialMs": 62878.38325000001,
+      "parallelMs": 30520.11695899999,
+      "speedup": 2.0602274668366887
+    }
+  ],
+  "medianSerialMs": 67733.287354,
+  "medianParallelMs": 31934.679979499997,
+  "ratioOfMedianWallTimes": 2.12099471162637,
+  "medianPairedSpeedup": 2.1184171689416034,
+  "totalSimulatedCyclesIncludingReplay": 32680,
+  "sourceHashes": {
+    "case-00": "bcf225c6a34a07292b408f064359b6795fb9656ba396c973c41d0d980c534f5b",
+    "case-01": "6f13c68afa653266ff8c30989d7bc1118e460d9a7d7a769a68e9ef4e7533ae3c",
+    "case-02": "7918dd62cd3df5f93cdf3b51e34da3bc101d11d863de3779d01f9b2cba5a3c16",
+    "case-03": "2e97e10a85db212045efba39bcea834473ae7eb012e396a08c1ebbc34a99b92a"
+  },
+  "rawArtifacts": {
+    "directory": "data/benchmarks/bench-473942f1-8669-4f69-83ba-999d2d4caf05",
+    "pairSha256": {
+      "pair-0.json": "0f7851c52a52abcdcf3071c1034c9a07389456bb795904337076fd85df052704",
+      "pair-1.json": "2c6bdbaae53f1a9a540cb4545c9d678d38098650f85eb5f3fad98c12e5e51e4f"
+    }
+  },
+  "limitations": [
+    "Two pairs on a shared account, preliminary throughput evidence.",
+    "Four manually authored control/mutant designs, not a Blue generation.",
+    "Identical one-vCPU one-GiB sandboxes per evaluation; two workers use twice the instantaneous resources of serial execution.",
+    "Includes provisioning, any bootstrap, compilation, simulation, controller-side grading/replay, persistence and sandbox deletion.",
+    "Default snapshot; no prewarmed snapshot claim. Outbound network blocking is not requested by the current evaluator.",
+    "Observed shared account memory ceiling: 10 GiB. Account vCPU quota not established.",
+    "No model-quality, memory-uplift or formal-correctness conclusion."
+  ]
+}
