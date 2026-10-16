@@ -1,0 +1,38 @@
+:root { background: #faf9fc; }
+.app-shell--focused { background: #faf9fc; min-height: 100svh; color: #29252f; }
+.app-shell--focused .workspace { margin: 0; }
+.app-shell--focused .workspace > main { max-width: 1400px; margin: 0 auto; padding: 49px 48px 0; }
+.app-header { height: 72px; padding: 0 44px; display: flex; align-items: center; gap: 45px; border-bottom: 1px solid #eceaf0; background: #fff; }
+.app-brand { display: inline-flex; align-items: center; min-height: 40px; gap: 11px; color: #312d37; text-decoration: none; white-space: nowrap; }
+.app-brand > span { font-size: 19px; font-weight: 550; letter-spacing: -.65px; }
+.app-primary-nav { height: 100%; display: flex; align-items: stretch; }
+.app-primary-nav button { position: relative; font-size: 13px; padding: 0 5px; color: #92909a; font-weight: 500; }
+.app-primary-nav button.active { color: #5f447e; }
+.app-primary-nav button.active::after { content: ''; position: absolute; height: 2px; bottom: -1px; left: 0; right: 0; background: #9571c4; }
+.app-header-actions { margin-left: auto; display: flex; align-items: center; gap: 24px; }
+.app-examples { position: relative; }
+.app-examples > summary { display: flex; align-items: center; gap: 7px; min-height: 36px; padding: 0 4px; font-size: 12px; color: #797180; list-style: none; cursor: pointer; }
+.app-examples > summary::-webkit-details-marker { display: none; }
+.app-examples nav { position: absolute; z-index: 30; top: 43px; right: 0; width: 208px; padding: 6px; border: 1px solid #e9e5ee; border-radius: 9px; background: #fff; box-shadow: 0 5px 16px #27203212, 0 16px 40px #27203208; }
+.app-examples nav button { width: 100%; min-height: 36px; display: flex; align-items: center; justify-content: space-between; text-align: left; padding: 0 10px; color: #766c80; font-size: 12px; border-radius: 5px; }
+.app-examples nav button:first-child { margin-bottom: 4px; }
+.app-examples nav button:nth-child(2) { border-top: 1px solid #f0edf3; border-radius: 0; padding-top: 4px; }
+.app-settings { width: 34px; height: 34px; display: grid; place-items: center; border-radius: 6px; color: #82768d; }
+.app-settings.active { background: #f2edf8; color: #8962b5; }
+.app-header button:focus-visible, .app-header summary:focus-visible, .app-brand:focus-visible { outline: 2px solid #9774dd; outline-offset: 4px; }
+.detail-run-history { max-width: 180px; min-height: 33px; border: 1px solid #e3dfe8; color: #8b7d97; background: #fff; border-radius: 5px; padding: 0 8px; font-size: 10px; }
+.app-shell--detail .page-heading { margin-bottom: 28px; }
+@media (hover:hover) and (pointer:fine) {
+  .app-examples nav button:hover, .app-settings:hover { color: #7350a2; background: #f5f1f9; }
+  .app-examples > summary:hover { color: #7350a2; }
+}
+@media (max-width:700px) {
+  .app-header { height: 64px; padding: 0 20px; gap: 22px; }
+  .app-brand { gap: 7px; }
+  .app-brand > span { font-size: 17px; }
+  .app-brand > svg { width: 24px; height: 24px; }
+  .app-primary-nav { display: none; }
+  .app-header-actions { gap: 13px; }
+  .app-examples > summary { font-size: 11px; }
+  .app-shell--focused .workspace > main { padding: 29px 20px 0; }
+}
