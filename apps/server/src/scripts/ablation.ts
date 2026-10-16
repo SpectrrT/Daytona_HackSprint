@@ -44,7 +44,7 @@ await save("development");
 try {
   await requireHardwareSnapshot();
   const corpusPath = option("--corpus");
-  corpus = corpusPath ? JSON.parse(await readFile(resolve(corpusPath), "utf8")) as Corpus : await traced("run", `${runId}-dev`, {}, () => developCorpus(runId, directory, developmentGenerations));
+  corpus = corpusPath ? JSON.parse(await readFile(resolve(REPO_ROOT, corpusPath), "utf8")) as Corpus : await traced("run", `${runId}-dev`, {}, () => developCorpus(runId, directory, developmentGenerations));
   assertCorpus(corpus); if (corpus.model !== manifest.model) throw new Error("Development corpus model differs from the experiment model.");
   await writeFile(join(directory, "corpus.json"), JSON.stringify(corpus, null, 2), { mode: 0o600 });
   if (!args.includes("--develop-only")) {
