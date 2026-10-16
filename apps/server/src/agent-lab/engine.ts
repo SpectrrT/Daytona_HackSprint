@@ -85,6 +85,7 @@ export async function runAgentLab(options: { id?: string; signal?: AbortSignal; 
         await retain(candidate, trial, `adapted-${attack.id}`); await reproduce(candidate, adapter, trial);
       }
       await emit("The verifier is checking each tool boundary, repeated effects, and held-out action streams.", candidate.id);
+      await report("independent-checks", "INDEPENDENT TOOL VERIFICATION\n\nChecking actual tool decisions and persisted SQLite effects.\nThe browser will return for legitimate task checks.\nHeld-out inputs stay off the recorded browser display.");
       for (const test of [...gateTests(), ...hiddenGateTests(0x1792 + generation)]) {
         options.signal?.throwIfAborted(); await adapter.reset(); await adapter.tools(test.domain, test.actions);
         const snapshot = await adapter.observe(), check = verifyLab({ id: test.id, domain: test.domain, contract: run.contract, sourceHash: candidate.sourceHash, runtimeHash: adapter.runtimeHash, actions: test.actions, snapshot, hidden: test.hidden, kind: "tool-gate" });
