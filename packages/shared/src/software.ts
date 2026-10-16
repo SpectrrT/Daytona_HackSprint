@@ -18,7 +18,7 @@ export interface ObservedRequest { input: CheckoutInput; response: HttpObservati
 export interface RequestBatch { requests: ObservedRequest[] }
 export interface CheckoutOrder { id: number; requestId: string; quantity: number; totalCents: number }
 export interface LedgerSnapshot { stock: number; orders: CheckoutOrder[]; sourceHash: string; runtimeHash: string }
-export interface SoftwareCheck { id: string; passed: boolean; summary: string; requests: number; hidden: boolean }
+export interface SoftwareCheck { id: string; passed: boolean; summary: string; requests: number; hidden: boolean; recordedAt?: number }
 export interface BrowserTrial {
   attack: WebAttack;
   batches: RequestBatch[];
@@ -44,7 +44,9 @@ export interface SoftwareCandidate {
   appUrl?: string;
   commit?: string;
   error?: string;
+  evaluatedAt?: number;
 }
+export interface SoftwareRunSummary { id: string; status: SoftwareRun["status"]; createdAt: number; championId?: string; candidates: number }
 export interface SoftwareRun {
   id: string;
   status: "running" | "completed" | "failed" | "stopped";
