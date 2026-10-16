@@ -37,10 +37,10 @@ test("one transient retry preserves inputs, separates artifacts, and shares the 
   } finally { await rm(dir, { recursive: true, force: true }); }
 });
 
-test("authentication, quota, schema, response, and budget failures are not retried", async () => {
+test("authentication, quota, schema, content-policy, response, and budget failures are not retried", async () => {
   const dir = await mkdtemp(join(tmpdir(), "hp-agent-no-retry-"));
   const cases: AgentCallError[] = [
-    ...(["authentication", "usage_limit", "invalid_schema"] as AgentFailureCategory[]).map(category => new AgentCallError("process_error", "stop", category)),
+    ...(["authentication", "usage_limit", "invalid_schema", "content_policy"] as AgentFailureCategory[]).map(category => new AgentCallError("process_error", "stop", category)),
     ...(["timeout", "aborted", "output_limit", "invalid_response"] as const).map(reason => new AgentCallError(reason, "stop")),
   ];
   try {
