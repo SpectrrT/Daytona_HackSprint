@@ -20,6 +20,7 @@ import { arizeConfigured, startArizeTracing } from "./telemetry/arize.js";
 import type { EvolutionEvent } from "@hollow-purple/shared/evolution";
 import { SoftwareService } from "./software/service.js";
 import { AgentLabService } from "./agent-lab/service.js";
+import { retrySummary } from "./benchmarks/retry-summary.js";
 import { AGENT_ENVIRONMENTS } from "@hollow-purple/shared/agent-lab";
 import { labDirectory } from "./agent-lab/engine.js";
 import { readFile } from "node:fs/promises";
@@ -59,6 +60,9 @@ export function createApp(store: RunStore = defaultStore, engine = new Evolution
   app.get("/api/ablation/latest", async c => {
     try { return c.json(await readAblationSummary()); }
     catch { return c.json({ status: "missing", summary: [] }); }
+  });
+  app.get("/api/benchmarks/retries/latest", async c => {
+    try { return c.json(await retrySummary()); } catch { return c.json({ status: "no run yet", summary: [] }); }
   });
   app.get("/api/charts/:id/events", c => {
     const id=c.req.param("id");
