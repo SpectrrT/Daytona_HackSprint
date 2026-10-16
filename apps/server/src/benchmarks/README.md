@@ -82,6 +82,8 @@ The verified repair field requires a completed run, a source-bound model-written
 
 Use actual run records to report the first failing candidate, reproduced failures retained, model-written descendant generations until acceptance, wall time, calls/tokens and full inherited-regression pass status. Branching siblings are not successive generations. Hidden validation failures provide no public counterexample and must not be fabricated into lessons.
 
+Current regression inheritance is within a run. The evaluator retains the first public reproduced counterexample from an evaluation, not every failed check or every attempted attack. Journaling keeps that evidence durable, but a new run does not automatically inherit the old run's regression library. Phrase the demo accordingly.
+
 Report authored attack sequences, successful Verilator builds, simulation invocations, cycles including replay, unique retained counterexamples and provider/build failures separately. The current CLI counts sequences, evaluator-completed hardware evaluations, cycles and reproduced counterexamples. It does not yet instrument individual compiler/simulator process counts or prove a repaired regression can never fail again.
 
 The claim we want is narrow and reproducible: **"On this frozen FIFO task, this approach found more seeded defects or produced more passing final designs at the same budget than the baseline."**

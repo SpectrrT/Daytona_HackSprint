@@ -52,7 +52,10 @@ export function parseRunEvidence(text: string): EvolutionRun {
 /** Aggregate provenance and observations without exposing prompts, source, traces or capabilities. */
 export function summarizeRun(run: EvolutionRun) {
   assertFrozenContract(run.contract);
-  const snapshots = [...run.candidates, ...run.events.filter((event) => event.type === "candidate.created" || event.type === "candidate.updated").map((event) => event.payload as Candidate)];
+  const candidateEvents = run.events.filter((event) => event.type === "candidate.created" || event.type === "candidate.updated");
+  const payload = (event: EvolutionEvent): Candidate | undefined => event.payload && typeof event.payload === "object" && Array.isArray((event.payload as Candidate).checks) ? event.payload as Candidate : undefined;
+  const completeCandidateHistory = candidateEvents.length > 0 && candidateEvents.every((event) => !!payload(event));
+  const snapshots = [...run.candidates, ...candidateEvents.flatMap((event) => payload(event) ? [payload(event)!] : [])];
   const calls = new Map<string, AgentInvocation>();
   const authored = new Map<string, number>();
   for (const candidate of snapshots) {
@@ -66,7 +69,8 @@ export function summarizeRun(run: EvolutionRun) {
   const pending = new Map<string, number>();
   for (const event of run.events) {
     if (event.type !== "candidate.updated") continue;
-    const candidate = event.payload as Candidate;
+    const candidate = payload(event);
+    if (!candidate) continue;
     if (candidate.status === "testing") pending.set(candidate.id, event.ts);
     if (!final.has(candidate.status) || !candidate.backend || !candidate.checks.length) continue;
     const key = `${candidate.id}:${candidate.cycles}:${candidate.sandboxId ?? "local"}:${candidate.redAgent?.startedAt ?? "fixture"}`;
@@ -104,6 +108,7 @@ export function summarizeRun(run: EvolutionRun) {
     }, run.regressions.length, attacks);
   return {
     schemaVersion: 1, runId: run.id, status: run.status, provider: run.provider,
+    completeCandidateEventPayloads: completeCandidateHistory,
     provenance: run.verificationFixture ? "Imported manual faulty fixture with model-written repair children" : run.strategy === "curriculum" ? "Owned curriculum fixtures, not model-written designs" : "Agent experiment",
     wallMs: run.finishedAt === undefined ? null : run.finishedAt - run.createdAt,
     candidates: { total: run.candidates.length, modelWritten: run.candidates.filter((candidate) => !!candidate.agent).length, maximumRecordedGeneration: Math.max(0, ...run.candidates.map((candidate) => candidate.generation)) },
@@ -136,6 +141,6 @@ export function summarizeRun(run: EvolutionRun) {
       callsMissingAttemptCounts: actualCalls.filter((call) => call.attempts === undefined).length,
       pricingDollars: null },
     evaluations: [...evaluations.values()].map(({ candidate, eventWindowMs }) => ({ candidateId: candidate.id, backend: candidate.backend, eventWindowMs })),
-    limitations: ["Counts reflect retained records, not unrecorded failed attempts.", "Evaluation windows derive from testing/result event timestamps; they are not instrumented stage timings.", "Simulation batches are a lower bound; failed compiler/runtime attempts lack full process telemetry.", "Completed Blue/Red calls exclude lesson-writer calls not represented by full invocation metadata in the run journal.", "Token totals are observed subsets when usage fields are missing; dollar cost is unknown.", "Validated lesson counts come from journal transitions, not a fresh database audit.", "Seeded hidden checks are validation, not a one-time final exam.", "Repair edges follow champion ancestry; sibling candidates do not count as extra generations."],
+    limitations: ["Counts reflect retained records, not unrecorded failed attempts.", "Sanitized previews omit event payloads. Without completeCandidateEventPayloads, evaluation history, prior requalification calls and validated lessons may be unavailable; zero recorded events does not establish zero activity.", "Evaluation windows derive from testing/result event timestamps; they are not instrumented stage timings.", "Simulation batches are a lower bound; failed compiler/runtime attempts lack full process telemetry.", "Completed Blue/Red calls exclude lesson-writer calls not represented by full invocation metadata in the run journal.", "Token totals are observed subsets when usage fields are missing; dollar cost is unknown.", "Validated lesson counts come from journal transitions, not a fresh database audit.", "Seeded hidden checks are validation, not a one-time final exam.", "Repair edges follow champion ancestry; sibling candidates do not count as extra generations."],
   };
 }

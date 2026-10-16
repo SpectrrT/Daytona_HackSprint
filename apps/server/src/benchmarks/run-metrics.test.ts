@@ -91,3 +91,13 @@ test("journal reconstruction is strict and read-only, including torn-tail and se
   assert.throws(() => parseRunEvidence(text.replace('"seq":2', '"seq":9')));
   assert.equal(parseRunEvidence(JSON.stringify(parsed)).id, "test");
 });
+
+test("sanitized preview exports with omitted event payloads do not invent complete history", () => {
+  const r = run(); const c = candidate("c1"); r.candidates = [c]; r.championId = c.id;
+  r.events = [{ seq: 1, ts: 1, runId: r.id, type: "candidate.updated", message: "public event without private payload" }];
+  const stats = summarizeRun(parseRunEvidence(JSON.stringify(r)));
+  assert.equal(stats.completeCandidateEventPayloads, false);
+  assert.equal(stats.coverage.completedHardwareEvaluationRecords, 0);
+  assert.equal(stats.models.completedBlueRedInvocations, 2);
+  assert.equal(stats.repair.verifiedModelWrittenChampion, true);
+});
