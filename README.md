@@ -2,7 +2,7 @@
 
 A general adversarial engineering system. **Blue builds candidates. Red searches for reproducible failures. An independent verifier checks the evidence against a frozen contract.** Verified failures become permanent regression tests and guide repaired descendants.
 
-**The first working example is hardware:** a synchronous **32 × 16-bit sensor FIFO**. It makes ordering, concurrency, reset failures, and repairs easy to inspect. New runs use actual model jobs and actual Verilator execution in Daytona. The old fixed variants are retained only for archived examples and isolated tests; they are never substituted into a live agent run.
+The working examples are a **32 × 16-bit hardware FIFO** and a **checkout web app with safe retries and bounded stock**. Hardware uses actual model jobs and Verilator execution in Daytona. Software uses actual Python web servers and SQLite in Daytona, with Red's browser actions executed through Anchor. The old fixed hardware variants are retained only for archived examples and isolated tests; they are never substituted into a live agent run.
 
 The product's output is a tested design, reproducible failure cases, readable lessons, and evidence of improvement across a tree of versions. Hardware is one application of that loop.
 
@@ -20,9 +20,27 @@ The same product can apply this loop to software. For a web application, Daytona
 | Example | Candidate execution | Reproducible failure evidence | Implementation status |
 | --- | --- | --- | --- |
 | Hardware buffer | Verilator in Daytona | Clock-edge input sequence and observed signal values | Implemented and verified |
-| Web application or API | Running software in Daytona; Anchor for browser actions | Requests or browser actions, responses, and state changes | Extension design; execution adapter not yet implemented |
+| Checkout web app | Python + SQLite in separate Daytona candidate sandboxes; Anchor operates native Chromium | Actual browser responses, exact actions, independent SQLite snapshots | Implemented; run `pnpm software:demo --open` |
 
-Each new example needs its own contract, Blue/Red instructions, execution driver, attack format, and independent verifier. Shared contract fields live in `EngineeringContract`; the current FIFO contract extends them. The current agent instructions, input sequences, failure traces, and acceptance logic still specialize the working example to FIFO hardware. Supporting software requires implementing those parts for the new task; a free-form prompt alone does not provide a trustworthy verifier.
+Each new example needs its own contract, Blue/Red instructions, execution driver, attack format, and independent verifier. Both the FIFO and checkout contracts extend `EngineeringContract`. The current adapters implement these two tasks; additional applications still need their own execution and verification definitions. A free-form prompt alone does not provide a trustworthy verifier.
+
+## Run the software example
+
+```sh
+pnpm software:demo --open
+```
+
+The command uses the configured Daytona and Anchor keys and the existing model runtime. It provisions a real storefront in Daytona, records its native XFCE desktop, and opens the completed MP4 in QuickTime on macOS when `--open` is present. The storefront makes demo purchases only; it has no payment provider.
+
+The initial backend is an explicitly labelled **manually fault-seeded fixture**, never attributed to Blue. Red receives its actual source and returns two bounded browser action sequences. Anchor connects to noVNC and sends mouse and keyboard events into the Chromium window inside Daytona. A separate private CDP connection only reads target geometry and actual browser responses; it also performs fresh-test page setup. This is a recording of the actual sandbox desktop, including the live storefront and terminal.
+
+The independent verifier runs on the controller. It checks the observed HTTP statuses and receipts against a reference purchase model, reads SQLite directly through Daytona, and binds the result to the exact candidate and trusted runtime hashes. Concurrent groups must admit a legal serial ordering. A failure becomes a regression only after the same Anchor actions fail again with a new server process and database.
+
+Blue then writes two real `checkout.py` repair candidates. Each gets its own Daytona sandbox and Git revision. Daytona's supported linked-sandbox network connects the desktop storefront to these isolated backends; it does not require outbound access to external preview hosts. The example freezes the storefront, web harness, and SQLite schema so repairs focus on the backend transaction logic. Children must pass inherited browser regressions, the original attacks, newly adapted Red attacks, seven directed API checks, and two controller-owned held-out streams. Later discoveries also gate earlier candidates. No model self-assessment selects a winner.
+
+The run has a fixed limit of three candidates, 120 adversarial browser actions, and 300 purchase requests. Model calls retain the existing timeouts and bounded transient retry; content-policy refusals stop immediately. Evidence, source, private model provenance, event history, and the MP4 are saved under `data/software-runs/<id>/`. Hidden input sequences are not given to either agent or exported as test artifacts. The desktop and winning application remain available for inspection with 30-minute idle auto-stop; linked app sandboxes are ephemeral and delete when stopped. Other repair sandboxes are removed. Provider keys and the independent verifier never enter candidate sandboxes.
+
+The controller also exposes `POST /api/software/runs` with `{"example":"checkout"}`, plus `GET /api/software/runs`, `GET /api/software/runs/:id`, `GET /api/software/runs/:id/export`, and `POST /api/software/runs/:id/stop`. Starting an API run dispatches the same recorded execution path. Software evidence is stored separately from existing hardware experiments.
 
 ## Start the system
 
@@ -126,11 +144,13 @@ apps/server/src/agents/           Blue/Red prompts, schemas, bounded Codex/Anthr
 apps/server/src/engine/           Frozen contract, generation/repair/requalification loop
 apps/server/src/store.ts          Durable append-only events and replay
 apps/server/src/lab/              RTL gate, directed/hidden tests, Daytona simulation, oracle bridge
+apps/server/src/software/         Checkout contract, agents, Daytona adapter, Anchor driver, independent verifier, repair loop
 apps/server/src/daytona/          Sandbox lifecycle and file/process adapter
 apps/server/src/browser/          Anchor session lifecycle and product audit
 apps/server/src/scripts/          Doctor, snapshot, live smoke, evidence publishing, cleanup
 apps/web/                        Lineage, agent/attack inspection, contract, waveform, source viewer
 lab/                             Python oracle, fixed Verilator driver, read-only preview server
+lab/software/                    Fixed storefront/runtime, source gate, private CDP relay, explicit faulty checkout fixture
 ```
 
 The development controller has no user authentication; keep it private. Only the sanitized, read-only evidence server is published by the supplied helper. RTL filtering plus sandbox isolation is a restricted demo execution boundary, not a general guarantee for arbitrary hostile hardware descriptions. No formal or synthesis/timing result is claimed.

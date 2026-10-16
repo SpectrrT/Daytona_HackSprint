@@ -12,6 +12,7 @@ import { requireHardwareSnapshot } from "./daytona/client.js";
 import { runAnchorAudit } from "./browser/session.js";
 import { store as defaultStore, type RunStore } from "./store.js";
 import type { EvolutionEvent } from "@hollow-purple/shared/evolution";
+import { SoftwareService } from "./software/service.js";
 
 const createSchema = z.object({
   prompt: z.string().trim().min(10).max(2000).refine(supportsPrompt, "The current hardware example supports a 32-entry, 16-bit synchronous FIFO. Other engineering tasks need their own contract and verifier."),
@@ -32,7 +33,7 @@ function agentsReady(): boolean {
   return agentCheck.ready;
 }
 
-export function createApp(store: RunStore = defaultStore, engine = new EvolutionEngine(store)): Hono {
+export function createApp(store: RunStore = defaultStore, engine = new EvolutionEngine(store), software = new SoftwareService()): Hono {
   const app = new Hono();
   const audits = new Set<string>();
   app.use("/api/*", bodyLimit({ maxSize: 16 * 1024, onError: (c) => c.json({ error: "Request body exceeds 16 KiB." }, 413) }));
@@ -43,6 +44,31 @@ export function createApp(store: RunStore = defaultStore, engine = new Evolution
     return c.json({ error: "The request failed. Check the server log and retained run evidence." }, 500);
   });
   app.get("/api/health", (c) => c.json({ status: "ok" }));
+  app.get("/api/software/runs", async c => c.json(await software.list()));
+  app.post("/api/software/runs", async c => {
+    const body = z.object({ example: z.literal("checkout") }).strict().safeParse(await c.req.json().catch(() => undefined));
+    if (!body.success) return c.json({ error: "Use {example:'checkout'} for the current software adapter." }, 400);
+    try { return c.json({ id: software.start() }, 202); }
+    catch (error) { return c.json({ error: error instanceof Error ? error.message : "Software run could not start." }, 409); }
+  });
+  app.get("/api/software/runs/:id", async c => {
+    if (!/^[a-zA-Z0-9_-]{1,100}$/.test(c.req.param("id"))) return c.json({ error: "Invalid run ID." }, 400);
+    const run = await software.get(c.req.param("id"));
+    return run ? c.json(run) : c.json({ error: "Software run not found." }, 404);
+  });
+  app.get("/api/software/runs/:id/export", async c => {
+    if (!/^[a-zA-Z0-9_-]{1,100}$/.test(c.req.param("id"))) return c.json({ error: "Invalid run ID." }, 400);
+    const run = await software.get(c.req.param("id"));
+    if (!run) return c.json({ error: "Software run not found." }, 404);
+    c.header("Content-Disposition", `attachment; filename="software-${run.id}.json"`);
+    return c.json(run);
+  });
+  app.post("/api/software/runs/:id/stop", async c => {
+    const id = c.req.param("id");
+    if (!/^[a-zA-Z0-9_-]{1,100}$/.test(id)) return c.json({ error: "Invalid run ID." }, 400);
+    if (!await software.get(id)) return c.json({ error: "Software run not found." }, 404);
+    await software.stop(id); return c.json(await software.get(id));
+  });
   app.get("/api/system", (c) => c.json({
     providers: { daytona: Boolean(config.DAYTONA_API_KEY), anchor: Boolean(config.ANCHOR_API_KEY && config.PUBLIC_DASHBOARD_URL), model: agentsReady() },
     agentsReady: agentsReady(), agentProvider: config.AGENT_PROVIDER,
@@ -138,12 +164,14 @@ export function createApp(store: RunStore = defaultStore, engine = new Evolution
 export async function startServer(): Promise<void> {
   await defaultStore.load();
   const engine = new EvolutionEngine(defaultStore);
-  const server = serve({ fetch: createApp(defaultStore, engine).fetch, port: config.PORT, hostname: "0.0.0.0" });
+  const software = new SoftwareService();
+  const server = serve({ fetch: createApp(defaultStore, engine, software).fetch, port: config.PORT, hostname: "0.0.0.0" });
   console.log(`Hollow Purple controller listening on http://localhost:${config.PORT}`);
   let closing = false;
   const shutdown = async () => {
     if (closing) return; closing = true;
     await engine.stopAll();
+    await software.stopAll();
     await defaultStore.flush();
     server.close();
   };
