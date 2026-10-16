@@ -62,6 +62,16 @@ Use the returned URL as `PUBLIC_DASHBOARD_URL` in `.env`, restart the local cont
 
 Preview metadata is stored at `data/runs/<id>/evidence-preview.json`. Signed links expire after six hours, and the preview sandbox auto-stops after 30 idle minutes. Use the scoped cleanup command when it is no longer needed. Browser checks verify the product; the independent hardware verifier controls design acceptance.
 
+## Record a browser walkthrough
+
+With ffmpeg installed, record a completed repair run after publishing its evidence and configuring `PUBLIC_DASHBOARD_URL`:
+
+```sh
+pnpm --filter @hollow-purple/server exec node --import tsx src/scripts/record-demo.ts <verified-repair-run-id>
+```
+
+Anchor opens the actual Daytona-hosted dashboard, replays the failure, inspects the original and repaired RTL, and shows both verified children. Browser frames are encoded locally into `data/runs/<id>/hollow-purple-daytona-walkthrough.mp4`. Captions explicitly identify the recording as a replay of completed execution and identify imported manual fixtures. The video contains no provider credentials or private model transcripts. Its Anchor session is closed after recording.
+
 ## Verify changes
 
 ```sh
