@@ -2,7 +2,12 @@
 
 A general adversarial engineering system. **Blue builds candidates. Red searches for reproducible failures. An independent verifier checks the evidence against a frozen contract.** Verified failures become permanent regression tests and guide repaired descendants.
 
-The entry point is **Claude Code in your terminal**. Tell Claude to harden the agents; it starts the real loop in Daytona, follows Red's attacks through Anchor, reads reproduced effects, and returns Blue's repaired code and the independent verdict. A website is not required. The lead suite spans customer support, purchasing, and engineering. Additional adapters cover a hardware FIFO and a checkout web application.
+There are two ways to drive a run. Both control the same controller on your machine:
+
+- **Claude Code in your terminal** (`pnpm claude`, or `pnpm demo` for the four-panel layout). Through this repository's MCP server, Claude starts the real loop in Daytona, follows Red's attacks through Anchor, reads reproduced effects, and returns Blue's repaired code and the independent verdict.
+- **The website** (`pnpm dev`, then [localhost:5173](http://localhost:5173)). A one-line prompt starts a run, and live Daytona desktops show Blue, Red and the target while it works.
+
+Neither front end does the hardening itself. The controller runs every step. Blue, Red and the target assistant are each one model call that returns structured JSON; none of them gets shell, browser or MCP tools. The lead suite spans customer support, purchasing, and engineering. Additional adapters cover a hardware FIFO and a checkout web application.
 
 The product's output is a tested design, reproducible failure cases, readable lessons, and evidence of improvement across a tree of versions. Hardware is one application of that loop.
 
@@ -34,7 +39,9 @@ Then tell Claude:
 
 The terminal tools are `agent_lab_status`, `start_agent_hardening`, `watch_agent_run`, `get_agent_failures`, `get_agent_repair`, `get_agent_result`, `list_agent_runs`, and `stop_agent_run`. Watching uses an event cursor so Claude can follow a long experiment without losing or repeating a page of progress. A new run provisions actual Daytona sandboxes; it does not replay a saved demonstration. The controller owns browser execution and independent verification. Claude orchestrates that controller rather than pretending to click a browser itself.
 
-The current suite tests all three supported application contracts together, within three candidates and 36 model jobs. It typically takes 15–25 minutes. Arbitrary production applications require their own adapter, frozen contract and independent verifier. The optional website remains an evidence viewer for the team's existing examples; it is not the product entry point or the terminal demonstration.
+The current suite tests all three supported application contracts together, within three candidates and 36 model jobs. It typically takes 15–25 minutes. Arbitrary production applications require their own adapter, frozen contract and independent verifier.
+
+A run can carry a short run request, typed in the website's prompt box or passed by Claude as `run_request`, for example "Focus on purchasing approvals". Red and Blue use it only to prioritize their search. It cannot change the frozen contract, add targets or grant tools, and every run still tests all three applications.
 
 ## One loop, different engineering examples
 
@@ -136,11 +143,13 @@ pnpm run doctor -- --live
 pnpm dev
 ```
 
-Open [localhost:5173](http://localhost:5173) for the optional web interface. **Runs** has one **Start run** action, a live Test → Repair → Verify flow, and a before/after result. Application tabs switch the evidence being inspected. Activity, code, checks and requirements are disclosed on demand. Hardware and checkout examples are available under **Examples**, and provider configuration is in **Settings**.
+Open [localhost:5173](http://localhost:5173) for the web interface. **Runs** has one **Start run** action, a live Test → Repair → Verify flow, and a before/after result. Application tabs switch the evidence being inspected. Activity, code, checks and requirements are disclosed on demand. Hardware and checkout examples are available under **Examples**, and provider configuration is in **Settings**.
 
 The run workspace shows compact **Blue**, **Red**, and **Target** native Daytona desktops together. Click a preview to expand it; close or Escape returns to the grid. Sandbox tabs, expansion, and Examples navigation keep the same iframe and connection mounted. The one-line prompt submits with Enter and grows with Shift+Enter. A page reload, selecting another run, a confirmed sandbox stop, or an expired viewer link requires a new connection.
 
 Blue and Red have distinct private VMs and files, in addition to the target and candidate applications. Model inference stays on the controller. Blue's VM validates and commits the actual returned guard; Red's VM validates and commits its actual returned attack inputs. Their native terminals show public source, findings, validation receipts, and recorded events. Hidden inputs and provider credentials remain on the controller. These workspaces do not turn model sessions into unrestricted shell agents.
+
+Each run uses about 7 GiB of Daytona memory and 17 GiB of disk: the desktop (4 GiB memory, 8 GiB disk), the candidate application (1 GiB, 3 GiB), and the Blue and Red workspaces (1 GiB, 3 GiB each). With a 10 GiB memory and 30 GiB disk limit, only one run fits at a time. Stopped sandboxes keep their disk until they are archived.
 
 `pnpm dev` starts the model API on 8787, the workspace companion on 8788, and Vite on 5173. The companion lets native viewers and role workspaces update without restarting an active model run. A run-scoped lease prevents duplicate provisioning. Native viewers use a scoped HTTP/WebSocket proxy with Daytona's documented warning-bypass header; preview capabilities expire and cannot select arbitrary targets. Daytona capacity failures remain visible and do not change application verdicts.
 
@@ -254,7 +263,7 @@ With `ARIZE_SPACE_ID` and `ARIZE_API_KEY` set, every run is traced to Arize AX a
 
 Antibody is also an MCP server, so Claude Code or Claude Desktop can drive the whole loop from a conversation: ask Claude to harden a design and it starts a live Daytona run, follows Blue, Red and the verifier while they work, then reports what Red tried, the reproduced failures, and the verified source. No custom UI is needed. The server calls the controller's HTTP API, so Claude and the dashboard see the same run.
 
-The MCP server exposes the three-application agent loop through `start_agent_hardening`, `watch_agent_run`, and the failure, repair and result tools. Separate hardware tools remain available for explicitly requested hardware work. Both loops use the same controller and evidence as their optional web views.
+The MCP server exposes the three-application agent loop through `start_agent_hardening` (with an optional `run_request`, the same focus hint as the website's prompt box), `watch_agent_run`, and the failure, repair and result tools. Separate hardware tools remain available for explicitly requested hardware work. Both loops use the same controller and evidence as their optional web views.
 
 Start the controller (`pnpm dev`). Claude Code picks up the server from this repository's `.mcp.json`; approve it when prompted. For Claude Desktop, add the server to `claude_desktop_config.json` with absolute paths (`which pnpm` for the command):
 

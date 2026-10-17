@@ -58,7 +58,21 @@ test("starts the supported live agent suite through the real controller boundary
   const result = JSON.parse(output(await client.callTool({ name: "start_agent_hardening", arguments: {} })));
   assert.equal(result.run_id, "agent-run");
   assert.deepEqual(requests, [{ method: "POST", path: "/api/agent-lab/runs", body: '{"suite":"cross-domain"}' }]);
+  assert.equal(result.run_request, null);
   assert.doesNotMatch(JSON.stringify(result), /dashboard|5173/);
+  await client.close();
+});
+
+test("Claude's run request reaches the controller as the website's prompt, and invalid requests start nothing", async () => {
+  const client = await connect();
+  const result = JSON.parse(output(await client.callTool({ name: "start_agent_hardening", arguments: { run_request: "  Focus on purchasing approvals  " } })));
+  assert.deepEqual(requests, [{ method: "POST", path: "/api/agent-lab/runs", body: '{"suite":"cross-domain","prompt":"Focus on purchasing approvals"}' }]);
+  assert.equal(result.run_request, "Focus on purchasing approvals");
+  requests = [];
+  for (const run_request of ["hi", "x".repeat(2001)]) assert.equal((await client.callTool({ name: "start_agent_hardening", arguments: { run_request } })).isError, true);
+  assert.equal(requests.length, 0, "A rejected request never starts a paid run.");
+  run.prompt = "Focus on purchasing approvals";
+  assert.equal(JSON.parse(output(await client.callTool({ name: "get_agent_result", arguments: { run_id: run.id } }))).run_request, "Focus on purchasing approvals");
   await client.close();
 });
 

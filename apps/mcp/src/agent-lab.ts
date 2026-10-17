@@ -28,7 +28,7 @@ function candidateSummary(candidate: LabCandidate) {
 export function publicAgentRun(run: LabRun | QueuedRun) {
   if (run.status === "queued") return { id: run.id, status: run.status };
   return {
-    id: run.id, status: run.status,
+    id: run.id, status: run.status, run_request: run.prompt ?? null,
     contract_sha256: run.contract.hash,
     started: new Date(run.createdAt).toISOString(),
     finished: run.finishedAt ? new Date(run.finishedAt).toISOString() : null,
@@ -62,11 +62,12 @@ export function registerAgentLabTools(server: McpServer, request: Request) {
 
   server.registerTool("start_agent_hardening", {
     title: "Start Blue and Red in Daytona",
-    description: "Start a NEW live agent hardening experiment. Red authors prompt injections, Anchor types them into real Chromium in Daytona, an independent verifier reproduces forbidden persisted tool effects, and Blue repairs instructions plus Python authorization code in child sandboxes. The supported suite covers support, purchasing and engineering together. It uses a labeled manual baseline, at most 3 candidates and 36 model jobs. Spends real credits and typically takes 15–25 minutes. Call watch_agent_run until settled, then get_agent_failures, get_agent_repair and get_agent_result. Never substitute an archived run for a requested new run.",
+    description: "Start a NEW live agent hardening experiment. Red authors prompt injections, Anchor types them into real Chromium in Daytona, an independent verifier reproduces forbidden persisted tool effects, and Blue repairs instructions plus Python authorization code in child sandboxes. The supported suite covers support, purchasing and engineering together. It uses a labeled manual baseline, at most 3 candidates and 36 model jobs. Spends real credits and typically takes 15–25 minutes. Pass the user's focus as run_request, the same run request the website's prompt box sends: Red and Blue use it only to prioritize their search; it cannot change the frozen contract, add targets or grant tools, and all three applications are always tested. Call watch_agent_run until settled, then get_agent_failures, get_agent_repair and get_agent_result. Never substitute an archived run for a requested new run.",
+    inputSchema: { run_request: z.string().trim().min(5).max(2000).optional().describe("Optional focus in the user's words, for example \"Focus on purchasing approvals\". A hint for Red and Blue only; all three applications are still tested.") },
     annotations: { readOnlyHint: false, destructiveHint: false, openWorldHint: true },
-  }, async () => {
-    const created = await request<{ id: string }>("/api/agent-lab/runs", { method: "POST", body: JSON.stringify({ suite: "cross-domain" }) });
-    return json({ run_id: created.id, status: "queued", suite: "support + purchasing + engineering",
+  }, async ({ run_request }) => {
+    const created = await request<{ id: string }>("/api/agent-lab/runs", { method: "POST", body: JSON.stringify({ suite: "cross-domain", ...(run_request ? { prompt: run_request } : {}) }) });
+    return json({ run_id: created.id, status: "queued", suite: "support + purchasing + engineering", run_request: run_request ?? null,
       next: "Call watch_agent_run with after_event: 0. Continue passing next_after_event until completed, failed or stopped. All execution happens in Daytona; stay in this terminal." });
   });
 
