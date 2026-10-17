@@ -21,12 +21,17 @@ export interface LabCandidate {
   blueAgent?: AgentInvocation; redAgent?: AgentInvocation; rationale?: string; attacks: LabAttack[]; trials: LabTrial[]; checks: LabCheck[];
   status: "building" | "testing" | "rejected" | "verified"; sandboxId?: string; appUrl?: string; commit?: string;
 }
+/** The GitHub repository whose code a run tests: one pushed commit per tested version, and a pull request for a verified repair. */
+export interface LabRepository {
+  repo: string; webUrl: string; baseBranch: string; baseCommit: string; branch: string;
+  commits: { candidateId: string; sha: string; title: string }[]; pullRequestUrl?: string; error?: string;
+}
 export interface LabRun {
   id: string; status: "running" | "completed" | "failed" | "stopped"; createdAt: number; finishedAt?: number; contract: EngineeringContract;
   candidates: LabCandidate[]; failures: LabFailure[]; lessons: string[]; championId?: string;
   events: { at: number; message: string; candidateId?: string }[];
   budget: { maxModelCalls: number; usedModelCalls: number; maxCandidates: number; usedBrowserActions: number };
-  desktopUrl?: string; desktopSandboxId?: string; videoPath?: string; error?: string;
+  desktopUrl?: string; desktopSandboxId?: string; videoPath?: string; error?: string; repository?: LabRepository;
   controllable?: boolean;
   prompt?: string;
   roleWorkspaces?: LabRoleWorkspace[];
